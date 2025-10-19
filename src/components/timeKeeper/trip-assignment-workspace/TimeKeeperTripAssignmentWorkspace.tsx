@@ -10,10 +10,10 @@ import type { TripResponse } from '@/lib/api-client/route-management/models/Trip
 import type { BulkPspAssignmentRequest } from '@/lib/api-client/route-management/models/BulkPspAssignmentRequest';
 
 // Workspace Sections
-import { TimeKeeperAssignmentPanel } from './TimeKeeperAssignmentPanel';
-import { TimeKeeperTripsWorkspace } from './TimeKeeperTripsWorkspace';
-import { TimeKeeperWorkspaceHeader } from './TimeKeeperWorkspaceHeader';
-import { TimeKeeperWorkspaceSidebar } from './TimeKeeperWorkspaceSidebar';
+import { TimeKeeperTripsWorkspace } from './components/TimeKeeperTripsWorkspace';
+import { TimeKeeperWorkspaceHeader } from './components/TimeKeeperWorkspaceHeader';
+import { TimeKeeperWorkspaceSidebar } from './components/TimeKeeperWorkspaceSidebar';
+import { TimeKeeperAssignmentPanel } from './components/TimeKeeperAssignmentPanel';
 
 export interface TimeKeeperWorkspaceState {
   // TimeKeeper specific
