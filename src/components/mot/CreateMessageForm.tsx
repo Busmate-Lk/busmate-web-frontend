@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { Send } from "lucide-react"
+import { Send, Loader2 } from "lucide-react"
 
 interface CreateMessageFormProps {
-  onSendMessage: (messageData: any) => void
+  onSendMessage: (messageData: any) => Promise<void>
   onSaveDraft: (messageData: any) => void
 }
 
@@ -16,22 +16,44 @@ export default function CreateMessageForm({ onSendMessage, onSaveDraft }: Create
   const [category, setCategory] = useState("General")
   const [scheduledTime, setScheduledTime] = useState("")
   const [isScheduled, setIsScheduled] = useState(false)
+  const [isSending, setIsSending] = useState(false)
 
   const handleGroupToggle = (group: string) => {
     setSelectedGroups((prev) => (prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]))
   }
 
-  const handleSendMessage = () => {
-    const messageData = { messageTitle, messageBody, selectedGroups, priority, category, scheduledTime, isScheduled }
-    onSendMessage(messageData)
-    // Reset form
-    setMessageTitle("")
-    setMessageBody("")
-    setSelectedGroups([])
-    setPriority("Medium")
-    setCategory("General")
-    setScheduledTime("")
-    setIsScheduled(false)
+  const handleSendMessage = async () => {
+    // Validate required fields
+    if (!messageTitle.trim()) {
+      alert("Please enter a message title")
+      return
+    }
+    if (!messageBody.trim()) {
+      alert("Please enter message content")
+      return
+    }
+    if (selectedGroups.length === 0) {
+      alert("Please select at least one target group")
+      return
+    }
+
+    setIsSending(true)
+    try {
+      const messageData = { messageTitle, messageBody, selectedGroups, priority, category, scheduledTime, isScheduled }
+      await onSendMessage(messageData)
+      // Reset form only on success
+      setMessageTitle("")
+      setMessageBody("")
+      setSelectedGroups([])
+      setPriority("Medium")
+      setCategory("General")
+      setScheduledTime("")
+      setIsScheduled(false)
+    } catch (error) {
+      console.error("Error sending message:", error)
+    } finally {
+      setIsSending(false)
+    }
   }
 
   const handleSaveDraft = () => {
@@ -152,14 +174,25 @@ export default function CreateMessageForm({ onSendMessage, onSaveDraft }: Create
           <div className="flex gap-3 pt-4">
             <button
               onClick={handleSendMessage}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center justify-center gap-2"
+              disabled={isSending}
+              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center justify-center gap-2 disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4" />
-              {isScheduled ? "Schedule Message" : "Send Now"}
+              {isSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  {isScheduled ? "Schedule Message" : "Send Now"}
+                </>
+              )}
             </button>
             <button
               onClick={handleSaveDraft}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+              disabled={isSending}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100 disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
               Save Draft
             </button>

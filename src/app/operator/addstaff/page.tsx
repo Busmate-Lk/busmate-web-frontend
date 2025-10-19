@@ -1,10 +1,13 @@
 "use client"
 import { ArrowLeft } from "lucide-react"
 import { AddStaffForm } from "@/components/operator/add-staff-form"
+import { useRouter } from "next/navigation"
 
 export default function AddStaff() {
+  const router = useRouter()
+
   const handleBack = () => {
-    console.log("Navigate back")
+    router.push('/operator/staffManagement')
   }
 
   return (
@@ -29,8 +32,8 @@ export default function AddStaff() {
       </div>
 
       {/* Form Content */}
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="container mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto">
           <AddStaffForm />
         </div>
       </div>

@@ -34,7 +34,7 @@ export default function NotificationsLayout({
             {/* Send New Message Button */}
             {!isComposePage && (
                 <div className="flex justify-end px-6 mt-2">
-                    <Button onClick={handleSendMessage} className="bg-blue-500/90 text-white hover:bg-blue-600 shadow-md">
+                    <Button onClick={handleSendMessage} className="bg-blue-600 text-white hover:bg-blue-900 shadow-md">
                         <Send className="h-4 w-4 mr-2" />
                         Send New Message
                     </Button>

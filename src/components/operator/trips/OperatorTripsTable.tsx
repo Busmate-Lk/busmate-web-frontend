@@ -57,7 +57,7 @@ export function OperatorTripsTable({
     if (currentSort.field !== field) {
       return <ChevronUp className="w-4 h-4 text-gray-300" />;
     }
-    return currentSort.direction === 'asc' 
+    return currentSort.direction === 'asc'
       ? <ChevronUp className="w-4 h-4 text-blue-600" />
       : <ChevronDown className="w-4 h-4 text-blue-600" />;
   };
@@ -117,7 +117,7 @@ export function OperatorTripsTable({
 
   const getStatusLabel = (status?: string) => {
     if (!status) return 'Unknown';
-    return status.replace('_', ' ').split(' ').map(word => 
+    return status.replace('_', ' ').split(' ').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     ).join(' ');
   };
@@ -143,22 +143,6 @@ export function OperatorTripsTable({
       default:
         return 'bg-gray-100 text-gray-600 border-gray-200';
     }
-  };
-
-  const canStart = (status?: string) => {
-    return status?.toLowerCase() === 'pending';
-  };
-
-  const canComplete = (status?: string) => {
-    return ['active', 'in_transit', 'departed'].includes(status?.toLowerCase() || '');
-  };
-
-  const canCancel = (status?: string) => {
-    return !['completed', 'cancelled'].includes(status?.toLowerCase() || '');
-  };
-
-  const canEdit = (status?: string) => {
-    return status?.toLowerCase() === 'pending';
   };
 
   if (loading && trips.length === 0) {
@@ -368,69 +352,6 @@ export function OperatorTripsTable({
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-
-                    {/* Edit (only for pending trips) */}
-                    {canEdit(trip.status) && (
-                      <button
-                        onClick={() => onEdit(trip.id!)}
-                        className="text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Edit trip"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    {/* Start Trip */}
-                    {canStart(trip.status) && (
-                      <button
-                        onClick={() => onStart(trip.id!)}
-                        className="text-gray-400 hover:text-green-600 transition-colors"
-                        title="Start trip"
-                      >
-                        <Play className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    {/* Complete Trip */}
-                    {canComplete(trip.status) && (
-                      <button
-                        onClick={() => onComplete(trip.id!)}
-                        className="text-gray-400 hover:text-emerald-600 transition-colors"
-                        title="Complete trip"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    {/* Assign PSP (only if not assigned) */}
-                    {!trip.passengerServicePermitId && (
-                      <button
-                        onClick={() => onAssignPsp(trip.id!)}
-                        className="text-gray-400 hover:text-purple-600 transition-colors"
-                        title="Assign service permit"
-                      >
-                        <FileText className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    {/* Cancel Trip */}
-                    {canCancel(trip.status) && (
-                      <button
-                        onClick={() => onCancel(trip.id!)}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
-                        title="Cancel trip"
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    {/* More options dropdown placeholder */}
-                    <button
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                      title="More options"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
                   </div>
                 </td>
               </tr>
@@ -438,7 +359,7 @@ export function OperatorTripsTable({
           </tbody>
         </table>
       </div>
-      
+
       {loading && trips.length > 0 && (
         <div className="px-6 py-3 bg-blue-50 border-t border-blue-100">
           <div className="flex items-center justify-center">

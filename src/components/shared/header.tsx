@@ -3,6 +3,8 @@
 import { Bus, ChevronDown, Bell, User, LogOut } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
+import { usePathname, useRouter } from "next/navigation"
+import { listNotifications, type NotificationListItem } from "@/lib/services/notificationService"
 
 interface HeaderProps {
   pageTitle?: string
@@ -14,49 +16,98 @@ interface Notification {
   title: string
   message: string
   time: string
-  type: 'info' | 'warning' | 'success' | 'error'
+  type: 'info' | 'warning' | 'success' | 'error' | 'critical' | 'maintenance'
   redirectUrl?: string
   isRead: boolean
+}
+
+function toRelativeTime(dateStr?: string) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const diff = Date.now() - d.getTime()
+  const sec = Math.floor(diff / 1000)
+  if (sec < 60) return `${sec}s ago`
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  const day = Math.floor(hr / 24)
+  return `${day}d ago`
 }
 
 export function Header({ pageTitle, pageDescription }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const { user, logout, isLoading } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notificationRef = useRef<HTMLDivElement>(null)
 
-  // Sample notifications - replace with actual data from your API
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'New Bus Registration',
-      message: 'Bus #LK-1234 has been registered successfully',
-      time: '2 minutes ago',
-      type: 'success',
-      redirectUrl: '/buses',
-      isRead: false
-    },
-    {
-      id: '2',
-      title: 'Route Update',
-      message: 'Route Colombo-Kandy has been modified',
-      time: '1 hour ago',
-      type: 'info',
-      redirectUrl: '/routes',
-      isRead: false
-    },
-    {
-      id: '3',
-      title: 'Maintenance Alert',
-      message: 'Bus #LK-5678 requires maintenance',
-      time: '3 hours ago',
-      type: 'warning',
-      redirectUrl: '/maintenance',
-      isRead: true
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // Fetch notifications from backend
+  useEffect(() => {
+    let mounted = true
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true)
+        const data = await listNotifications(5) // Get latest 5 notifications
+        if (mounted) {
+          // Filter based on role and map to our Notification interface
+          const isMot = pathname?.startsWith("/mot")
+          const isAdmin = pathname?.startsWith("/admin")
+
+          let filtered = data
+          if (isMot) {
+            // MoT only sees admin-sent messages to mot or all
+            filtered = data.filter(n => {
+              const senderOk = (n.senderRole || '').toLowerCase() === 'admin'
+              const ta = (n.targetAudience || '').toLowerCase()
+              const targetOk = ta === 'mot_officers' || ta === 'all'
+              return senderOk && targetOk
+            })
+          } else if (isAdmin) {
+            // Admin doesn't see their own messages or admin-sent messages in received
+            filtered = data.filter(n => {
+              const isAdminSender = (n.senderRole || '').toLowerCase() === 'admin'
+              const isMine = n.adminId && user?.id ? n.adminId === user.id : false
+              return !isAdminSender && !isMine
+            })
+          }
+
+          const mapped: Notification[] = filtered.map(n => ({
+            id: n.notificationId,
+            title: n.title,
+            message: n.body,
+            time: toRelativeTime(n.createdAt),
+            type: (n.messageType || 'info') as any,
+            redirectUrl: `${pathname?.startsWith('/mot') ? '/mot' : '/admin'}/notifications/detail/${n.notificationId}`,
+            isRead: false // We can track this locally or from backend if available
+          }))
+
+          setNotifications(mapped)
+        }
+      } catch (e) {
+        console.error('Failed to load notifications:', e)
+      } finally {
+        if (mounted) setLoading(false)
+      }
     }
-  ])
+
+    if (user && !isLoading) {
+      fetchNotifications()
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 5000)
+      return () => {
+        mounted = false
+        clearInterval(interval)
+      }
+    }
+    return () => { mounted = false }
+  }, [user, isLoading, pathname])
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
@@ -140,17 +191,22 @@ export function Header({ pageTitle, pageDescription }: HeaderProps) {
   }
 
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
+    // Mark as read locally
     setNotifications(prev =>
       prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
     )
 
-    // Redirect to relevant page
+    // Navigate to detail page
     if (notification.redirectUrl) {
-      // Replace with your routing logic (e.g., router.push for Next.js)
-      window.location.href = notification.redirectUrl
+      router.push(notification.redirectUrl)
     }
 
+    setIsNotificationOpen(false)
+  }
+
+  const handleViewAllNotifications = () => {
+    const base = pathname?.startsWith('/mot') ? '/mot' : '/admin'
+    router.push(`${base}/notifications/received`)
     setIsNotificationOpen(false)
   }
 
@@ -158,8 +214,21 @@ export function Header({ pageTitle, pageDescription }: HeaderProps) {
     switch (type) {
       case 'success': return '✅'
       case 'warning': return '⚠️'
+      case 'critical': return '🚨'
+      case 'maintenance': return '🔧'
       case 'error': return '❌'
       default: return 'ℹ️'
+    }
+  }
+
+  const getNotificationColor = (type: Notification['type']) => {
+    switch (type) {
+      case 'success': return 'border-green-500 bg-green-50/30'
+      case 'warning': return 'border-yellow-500 bg-yellow-50/30'
+      case 'critical': return 'border-red-500 bg-red-50/30'
+      case 'maintenance': return 'border-purple-500 bg-purple-50/30'
+      case 'error': return 'border-red-500 bg-red-50/30'
+      default: return 'border-blue-500 bg-blue-50/30'
     }
   }
 
@@ -220,13 +289,13 @@ export function Header({ pageTitle, pageDescription }: HeaderProps) {
               <label className="inline-flex items-center">
                 <input
                   type="checkbox"
-                // checked={useRealApi}
-                // onChange={(e) => setUseRealApi(e.target.checked)}
-                className="form-checkbox h-4 w-4 text-blue-600"
-              />
-              <span className="ml-2 text-sm text-gray-700">Use Real API</span>
-            </label>
-          </div>
+                  // checked={useRealApi}
+                  // onChange={(e) => setUseRealApi(e.target.checked)}
+                  className="form-checkbox h-4 w-4 text-blue-600"
+                />
+                <span className="ml-2 text-sm text-gray-700">Use Real API</span>
+              </label>
+            </div>
           )}
 
           {/* Notifications */}
@@ -253,7 +322,12 @@ export function Header({ pageTitle, pageDescription }: HeaderProps) {
                   <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
                 </div>
 
-                {notifications.length === 0 ? (
+                {loading ? (
+                  <div className="px-4 py-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-xs text-gray-400 mt-2">Loading notifications...</p>
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="px-4 py-8 text-center">
                     <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-sm text-gray-500">No notifications yet</p>
@@ -265,24 +339,24 @@ export function Header({ pageTitle, pageDescription }: HeaderProps) {
                       <div
                         key={notification.id}
                         className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-l-4 transition-colors ${notification.isRead
-                            ? 'border-transparent bg-gray-50/50'
-                            : 'border-blue-500 bg-blue-50/30'
+                          ? 'border-transparent bg-gray-50/50'
+                          : getNotificationColor(notification.type)
                           }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
                         <div className="flex items-start gap-3">
-                          <span className="text-lg">{getNotificationIcon(notification.type)}</span>
+                          <span className="text-lg flex-shrink-0">{getNotificationIcon(notification.type)}</span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className={`text-sm font-medium ${notification.isRead ? 'text-gray-600' : 'text-gray-900'
+                              <p className={`text-sm font-medium line-clamp-1 ${notification.isRead ? 'text-gray-600' : 'text-gray-900'
                                 }`}>
                                 {notification.title}
                               </p>
                               {!notification.isRead && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></div>
                               )}
                             </div>
-                            <p className={`text-xs mt-1 ${notification.isRead ? 'text-gray-400' : 'text-gray-600'
+                            <p className={`text-xs mt-1 line-clamp-2 ${notification.isRead ? 'text-gray-400' : 'text-gray-600'
                               }`}>
                               {notification.message}
                             </p>
@@ -296,7 +370,10 @@ export function Header({ pageTitle, pageDescription }: HeaderProps) {
 
                 {notifications.length > 0 && (
                   <div className="px-4 py-2 border-t border-gray-100">
-                    <button className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                    <button
+                      onClick={handleViewAllNotifications}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                    >
                       View all notifications
                     </button>
                   </div>

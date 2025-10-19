@@ -1,11 +1,18 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { User, Camera, Upload, FileText, Calendar, ChevronDown } from "lucide-react"
+import { staffManagementService, ConductorProfile, DriverProfile } from "@/lib/services/staff-management-service"
+import { getCookie } from "@/lib/utils/cookieUtils"
+import { getUserFromToken } from "@/lib/utils/jwtHandler"
 
 interface StaffFormData {
   role: "Driver" | "Conductor"
   fullName: string
+  username: string
+  email: string
+  password: string
   nicNumber: string
   dateOfBirth: string
   gender: string
@@ -25,12 +32,21 @@ interface StaffFormData {
   assignImmediately: boolean
   selectedBus: string
   selectedRoute: string
+  employeeId: string
+  shiftStatus: string
 }
 
 export function AddStaffForm() {
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const [formData, setFormData] = useState<StaffFormData>({
-    role: "Driver",
+    role: "Conductor",
     fullName: "",
+    username: "",
+    email: "",
+    password: "",
     nicNumber: "",
     dateOfBirth: "",
     gender: "",
@@ -50,6 +66,8 @@ export function AddStaffForm() {
     assignImmediately: false,
     selectedBus: "",
     selectedRoute: "",
+    employeeId: "",
+    shiftStatus: "available",
   })
 
   const [genderOpen, setGenderOpen] = useState(false)
@@ -78,19 +96,113 @@ export function AddStaffForm() {
   }
 
   const handleCancel = () => {
-    console.log("Cancel")
+    router.push('/operator/staffManagement')
   }
 
   const handleSaveDraft = () => {
     console.log("Save as draft:", formData)
+    // TODO: Implement save as draft functionality
   }
 
-  const handleSubmit = () => {
-    console.log("Submit staff profile:", formData)
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true)
+      setError(null)
+
+      // Validate required fields
+      if (!formData.fullName || !formData.nicNumber || !formData.phoneNumber) {
+        setError('Please fill in all required fields')
+        return
+      }
+
+      // Generate username from full name if not provided
+      const username = formData.username || formData.fullName.toLowerCase().replace(/\s+/g, '.')
+
+      // Generate employee ID if not provided
+      const employeeId = formData.employeeId || `${formData.role.substring(0, 3).toUpperCase()}${Date.now().toString().slice(-6)}`
+
+      const token = getCookie('access_token') || ''
+
+      // Get operator ID from token
+      const userFromToken = getUserFromToken(token)
+      const operatorId = userFromToken?.id || ''
+
+      if (formData.role === 'Conductor') {
+        const conductorData: Omit<ConductorProfile, 'userId'> = {
+          fullName: formData.fullName,
+          username: username,
+          email: formData.email || formData.emailAddress,
+          role: 'conductor',
+          accountStatus: 'active',
+          isVerified: false,
+          phoneNumber: formData.phoneNumber,
+          employee_id: employeeId,
+          assign_operator_id: operatorId, // Set from logged-in operator
+          shift_status: formData.shiftStatus || 'available',
+          nicNumber: formData.nicNumber,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          pr_img_path: formData.photo ? '/uploads/conductor-photos/' + formData.photo.name : '',
+          password: formData.password || 'TempPassword123!', // Should be changed on first login
+        }
+
+        await staffManagementService.registerConductor(token, conductorData)
+        alert('Conductor registered successfully!')
+        router.push('/operator/staffManagement')
+      } else {
+        // Driver registration (mock for now)
+        const driverData: Omit<DriverProfile, 'userId'> = {
+          fullName: formData.fullName,
+          username: username,
+          email: formData.email || formData.emailAddress,
+          role: 'driver',
+          accountStatus: 'active',
+          isVerified: false,
+          phoneNumber: formData.phoneNumber,
+          employee_id: employeeId,
+          assign_operator_id: operatorId, // Set from logged-in operator
+          shift_status: formData.shiftStatus || 'available',
+          nicNumber: formData.nicNumber,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          pr_img_path: formData.photo ? '/uploads/driver-photos/' + formData.photo.name : '',
+          licenseNumber: formData.licenseNumber,
+          licenseExpiry: formData.licenseExpiryDate,
+          password: formData.password || 'TempPassword123!',
+        }
+
+        await staffManagementService.registerDriver(token, driverData)
+        alert('Driver registered successfully! (Mock - API not ready)')
+        router.push('/operator/staffManagement')
+      }
+    } catch (err) {
+      console.error('Error submitting staff profile:', err)
+      setError('Failed to register staff member. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <div className="space-y-8">
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="text-sm text-red-600 hover:text-red-800 underline mt-2"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Role & Personal Information */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="p-6">
@@ -110,21 +222,19 @@ export function AddStaffForm() {
               <div className="flex gap-4">
                 <button
                   onClick={() => updateFormData("role", "Driver")}
-                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                    formData.role === "Driver"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${formData.role === "Driver"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   Driver
                 </button>
                 <button
                   onClick={() => updateFormData("role", "Conductor")}
-                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                    formData.role === "Conductor"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${formData.role === "Conductor"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                 >
                   Conductor
                 </button>
@@ -148,6 +258,19 @@ export function AddStaffForm() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Username <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter username (auto-generated if empty)"
+                  value={formData.username}
+                  onChange={(e) => updateFormData("username", e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   NIC Number or Passport ID <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -155,6 +278,32 @@ export function AddStaffForm() {
                   placeholder="Enter NIC or Passport ID"
                   value={formData.nicNumber}
                   onChange={(e) => updateFormData("nicNumber", e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="email@example.com"
+                  value={formData.email}
+                  onChange={(e) => updateFormData("email", e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter password (or auto-generate)"
+                  value={formData.password}
+                  onChange={(e) => updateFormData("password", e.target.value)}
                   className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 />
               </div>
@@ -461,14 +610,12 @@ export function AddStaffForm() {
                 <span className="text-sm text-gray-600">Available</span>
                 <button
                   onClick={() => updateFormData("availabilityStatus", !formData.availabilityStatus)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.availabilityStatus ? "bg-green-600" : "bg-gray-300"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.availabilityStatus ? "bg-green-600" : "bg-gray-300"
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      formData.availabilityStatus ? "translate-x-6" : "translate-x-1"
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.availabilityStatus ? "translate-x-6" : "translate-x-1"
+                      }`}
                   />
                 </button>
               </div>
@@ -560,7 +707,8 @@ export function AddStaffForm() {
       <div className="flex items-center justify-between pt-6">
         <button
           onClick={handleCancel}
-          className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          disabled={isSubmitting}
+          className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
@@ -568,15 +716,20 @@ export function AddStaffForm() {
         <div className="flex items-center gap-4">
           <button
             onClick={handleSaveDraft}
-            className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            disabled={isSubmitting}
+            className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save as Draft
           </button>
           <button
             onClick={handleSubmit}
-            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            disabled={isSubmitting}
+            className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Submit Staff Profile
+            {isSubmitting && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            )}
+            {isSubmitting ? 'Submitting...' : 'Submit Staff Profile'}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/admin/ui/button"
 import { Input } from "@/components/admin/ui/input"
 import { Label } from "@/components/admin/ui/label"
@@ -9,21 +9,136 @@ import { Checkbox } from "@/components/admin/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/admin/ui/radio-group"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/admin/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/admin/ui/select"
-import { Bold, Italic, Underline, Link, List, Calendar, Clock, Send, Save, ArrowLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Bold, Italic, Underline, Link, List, Calendar, Clock, Send, Save, ArrowLeft, Loader2 } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { sendNotification } from "@/lib/services/notificationService"
+import type { SendNotificationRequest } from "@/lib/services/notificationService"
 
 export function ComposeMessage() {
   const router = useRouter()
-  const [messageType, setMessageType] = useState("info")
+  const pathname = usePathname()
+  const [messageType, setMessageType] = useState<"info" | "warning" | "critical" | "maintenance">("info")
   const [scheduling, setScheduling] = useState("now")
-  const [allUsers, setAllUsers] = useState(true)
+  const [allUsers, setAllUsers] = useState(false)
+  const [subject, setSubject] = useState("")
+  const [messageContent, setMessageContent] = useState("")
+  const [isSending, setIsSending] = useState(false)
+
+  // Target audience checkboxes
+  const [targetPassengers, setTargetPassengers] = useState(false)
+  const [targetConductors, setTargetConductors] = useState(false)
+  const [targetFleetOps, setTargetFleetOps] = useState(false)
+  const [targetMotOfficials, setTargetMotOfficials] = useState(false)
+
+  // Location filters
+  const [province, setProvince] = useState<string>("all")
+  const [city, setCity] = useState<string>("all")
+  const [route, setRoute] = useState<string>("all")
+
+  // Sri Lanka provinces and cities mapping
+  const sriLankaProvinces = [
+    'Western', 'Central', 'Southern', 'Northern', 'Eastern', 'North Western', 'North Central', 'Uva', 'Sabaragamuwa'
+  ] as const
+  const sriLankaCitiesByProvince: Record<string, string[]> = {
+    'Western': ['Colombo', 'Gampaha', 'Kalutara', 'Moratuwa', 'Dehiwala', 'Maharagama'],
+    'Central': ['Kandy', 'Matale', 'Nuwara Eliya', 'Gampola', 'Hatton'],
+    'Southern': ['Galle', 'Matara', 'Hambantota', 'Ambalangoda'],
+    'Northern': ['Jaffna', 'Kilinochchi', 'Mannar', 'Vavuniya', 'Mullaitivu'],
+    'Eastern': ['Trincomalee', 'Batticaloa', 'Ampara', 'Kalmunai'],
+    'North Western': ['Kurunegala', 'Puttalam', 'Chilaw'],
+    'North Central': ['Anuradhapura', 'Polonnaruwa'],
+    'Uva': ['Badulla', 'Monaragala', 'Bandarawela'],
+    'Sabaragamuwa': ['Ratnapura', 'Kegalle']
+  }
+  const cityOptions = useMemo(() => {
+    if (!province || province === 'all') return []
+    return sriLankaCitiesByProvince[province] || []
+  }, [province])
+
+  // Determine target audience based on selections
+  const getTargetAudience = (): SendNotificationRequest['targetAudience'] => {
+    if (allUsers) return 'all'
+    if (targetPassengers) return 'passengers'
+    if (targetConductors) return 'conductors'
+    if (targetFleetOps) return 'fleet_operators'
+    if (targetMotOfficials) return 'mot_officers'
+    return 'all'
+  }
+
+  const handleSendMessage = async () => {
+    // Validation
+    if (!subject.trim()) {
+      alert("Please enter a subject")
+      return
+    }
+    if (!messageContent.trim()) {
+      alert("Please enter message content")
+      return
+    }
+
+    setIsSending(true)
+    try {
+      const request: SendNotificationRequest = {
+        title: subject,
+        subject: subject,
+        body: messageContent,
+        messageType: messageType,
+        targetAudience: getTargetAudience(),
+      }
+
+      // Add optional location filters if set
+      // Always include location filters: when 'all' is chosen, send the string 'all'
+      request.province = province || 'all'
+      request.city = city || 'all'
+      request.route = route || 'all'
+
+      const response = await sendNotification(request)
+
+      alert(
+        `Message sent successfully!\n\n` +
+        `Notification ID: ${response.notificationId}\n` +
+        `Total Sent: ${response.stats.totalSent}\n` +
+        `Successful: ${response.stats.successful}\n` +
+        `Failed: ${response.stats.failed}\n\n` +
+        `Web: ${response.stats.web.successful} successful, ${response.stats.web.failed} failed\n` +
+        `Mobile: ${response.stats.mobile.successful} successful, ${response.stats.mobile.failed} failed`
+      )
+
+      // Reset form
+      setSubject("")
+      setMessageContent("")
+      setMessageType("info")
+      setAllUsers(true)
+      setTargetPassengers(false)
+      setTargetConductors(false)
+      setTargetFleetOps(false)
+      setTargetMotOfficials(false)
+      setProvince('all')
+      setCity('all')
+      setRoute('all')
+
+      // Navigate back after short delay
+      setTimeout(() => {
+        const base = pathname?.startsWith('/mot') ? '/mot' : '/admin'
+        router.push(`${base}/notifications/sent`)
+      }, 2000)
+
+    } catch (error: any) {
+      console.error("Error sending notification:", error)
+      alert(`Failed to send message: ${error.message || 'Unknown error occurred'}`)
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  const estimatedRecipients = allUsers ? 12847 : Math.floor(Math.random() * 5000) + 1000
 
   return (
     <div className="p-1">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-4">
-          <Button className="bg-gray-500/20 text-gray-600 hover:bg-gray-500/30 shadow-md" variant="ghost" size="sm" onClick={() => router.push("/admin/notifications/sent")}>
+          <Button className="bg-gray-500/20 text-gray-600 hover:bg-gray-500/30 shadow-md" variant="ghost" size="sm" onClick={() => router.push(`${pathname?.startsWith('/mot') ? '/mot' : '/admin'}/notifications/sent`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Messages
           </Button>
@@ -90,7 +205,13 @@ export function ComposeMessage() {
               {/* Subject */}
               <div>
                 <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" placeholder="Enter message subject..." className="mt-2" />
+                <Input
+                  id="subject"
+                  placeholder="Enter message subject..."
+                  className="mt-2"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                />
               </div>
 
               {/* Target Audience */}
@@ -99,29 +220,71 @@ export function ComposeMessage() {
                 <div className="grid grid-cols-2 gap-6 mt-3">
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="all-users" checked={allUsers} onCheckedChange={checked => setAllUsers(checked === true)} />
+                      <Checkbox
+                        id="all-users"
+                        checked={allUsers}
+                        onCheckedChange={(checked) => {
+                          const v = checked === true;
+                          setAllUsers(v);
+                          if (v) {
+                            // Clear specific selections when All Users is selected
+                            setTargetPassengers(false);
+                            setTargetConductors(false);
+                            setTargetFleetOps(false);
+                            setTargetMotOfficials(false);
+                          }
+                        }}
+                      />
                       <Label htmlFor="all-users">All Users</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="passengers" />
+                      <Checkbox
+                        id="passengers"
+                        checked={targetPassengers}
+                        onCheckedChange={checked => {
+                          setAllUsers(false);
+                          setTargetPassengers(checked === true);
+                        }}
+                      />
                       <Label htmlFor="passengers">Passengers</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="conductors" />
+                      <Checkbox
+                        id="conductors"
+                        checked={targetConductors}
+                        onCheckedChange={checked => {
+                          setAllUsers(false);
+                          setTargetConductors(checked === true);
+                        }}
+                      />
                       <Label htmlFor="conductors">Conductors</Label>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="fleet-operators" />
+                      <Checkbox
+                        id="fleet-operators"
+                        checked={targetFleetOps}
+                        onCheckedChange={checked => {
+                          setAllUsers(false);
+                          setTargetFleetOps(checked === true);
+                        }}
+                      />
                       <Label htmlFor="fleet-operators">Fleet Operators</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="mot-officials" />
+                      <Checkbox
+                        id="mot-officials"
+                        checked={targetMotOfficials}
+                        onCheckedChange={checked => {
+                          setAllUsers(false);
+                          setTargetMotOfficials(checked === true);
+                        }}
+                      />
                       <Label htmlFor="mot-officials">MoT Officials</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="custom" />
+                      <Checkbox id="custom" disabled />
                       <Label htmlFor="custom">Custom Selection</Label>
                     </div>
                   </div>
@@ -134,42 +297,43 @@ export function ComposeMessage() {
                 <div className="grid grid-cols-3 gap-4 mt-3">
                   <div>
                     <Label htmlFor="province">Province</Label>
-                    <Select>
-                      <SelectTrigger>
+                    <Select value={province} onValueChange={(v) => { setProvince(v); setCity('') }}>
+                      <SelectTrigger className="bg-white">
                         <SelectValue placeholder="All Provinces" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-white text-gray-900">
                         <SelectItem value="all">All Provinces</SelectItem>
-                        <SelectItem value="western">Western</SelectItem>
-                        <SelectItem value="central">Central</SelectItem>
-                        <SelectItem value="southern">Southern</SelectItem>
+                        {sriLankaProvinces.map(p => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="city">City</Label>
-                    <Select>
-                      <SelectTrigger>
+                    <Select value={city} onValueChange={setCity} disabled={!province || province === 'all'}>
+                      <SelectTrigger className="bg-white disabled:opacity-70">
                         <SelectValue placeholder="All Cities" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-white text-gray-900">
                         <SelectItem value="all">All Cities</SelectItem>
-                        <SelectItem value="colombo">Colombo</SelectItem>
-                        <SelectItem value="kandy">Kandy</SelectItem>
-                        <SelectItem value="galle">Galle</SelectItem>
+                        {cityOptions.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="route">Route</Label>
-                    <Select>
-                      <SelectTrigger>
+                    <Select value={route} onValueChange={setRoute}>
+                      <SelectTrigger className="bg-white">
                         <SelectValue placeholder="All Routes" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-white text-gray-900">
                         <SelectItem value="all">All Routes</SelectItem>
-                        <SelectItem value="route-001">Route 001</SelectItem>
-                        <SelectItem value="route-138">Route 138</SelectItem>
+                        <SelectItem value="001">Route 001</SelectItem>
+                        <SelectItem value="138">Route 138</SelectItem>
+                        <SelectItem value="177">Route 177</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -200,11 +364,13 @@ export function ComposeMessage() {
                   <Textarea
                     placeholder="Type your message here..."
                     className="min-h-32 resize-none focus-visible:ring-0 shadow border-none"
+                    value={messageContent}
+                    onChange={(e) => setMessageContent(e.target.value)}
                   />
                 </div>
                 <div className="flex justify-between text-sm text-gray-500 mt-2">
-                  <span>Characters: 0/1000</span>
-                  <span>Estimated recipients: 12,847</span>
+                  <span>Characters: {messageContent.length}/1000</span>
+                  <span>Estimated recipients: {estimatedRecipients.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -238,15 +404,28 @@ export function ComposeMessage() {
 
               {/* Actions */}
               <div className="flex justify-between pt-6 border-t">
-                <Button variant="outline">
+                <Button variant="outline" disabled={isSending}>
                   <Save className="h-4 w-4 mr-2" />
                   Save as Template
                 </Button>
                 <div className="flex space-x-3">
-                  <Button variant="outline">Preview</Button>
-                  <Button className="bg-blue-500/90 text-white hover:bg-blue-600 shadow-md">
-                    <Send className="h-4 w-4 mr-2" />
-                    Send Message
+                  <Button variant="outline" disabled={isSending}>Preview</Button>
+                  <Button
+                    className="bg-blue-500/90 text-white hover:bg-blue-600 shadow-md disabled:bg-blue-400 disabled:cursor-not-allowed"
+                    onClick={handleSendMessage}
+                    disabled={isSending}
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Send Message
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -276,11 +455,23 @@ export function ComposeMessage() {
 
                 <div className="bg-white rounded-lg p-3">
                   <div className="flex items-center space-x-2 mb-2">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                    <span className="text-xs font-medium text-blue-600">INFO</span>
+                    <span className={`w-2 h-2 rounded-full ${messageType === "info" ? "bg-blue-500" :
+                      messageType === "warning" ? "bg-yellow-500" :
+                        messageType === "critical" ? "bg-red-500" :
+                          "bg-purple-500"
+                      }`}></span>
+                    <span className={`text-xs font-medium uppercase ${messageType === "info" ? "text-blue-600" :
+                      messageType === "warning" ? "text-yellow-600" :
+                        messageType === "critical" ? "text-red-600" :
+                          "text-purple-600"
+                      }`}>{messageType}</span>
                   </div>
-                  <h4 className="font-medium text-sm mb-1">Message Subject</h4>
-                  <p className="text-sm text-gray-600">Your message content will appear here...</p>
+                  <h4 className="font-medium text-sm mb-1">
+                    {subject || "Message Subject"}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {messageContent || "Your message content will appear here..."}
+                  </p>
                 </div>
               </div>
             </CardContent>

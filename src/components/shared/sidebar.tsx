@@ -131,10 +131,10 @@ export function Sidebar({
       href: '/mot/staff-management',
     },
     {
-      icon: MessageSquare,
-      label: 'Broadcast Messages',
-      active: activeItem === 'broadcast',
-      href: '/mot/broadcast-messages',
+      icon: Bell,
+      label: 'Notifications',
+      active: activeItem === 'notifications',
+      href: '/mot/notifications',
     },
     {
       icon: BarChart3,

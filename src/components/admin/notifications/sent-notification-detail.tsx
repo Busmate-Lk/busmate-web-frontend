@@ -1,19 +1,19 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/admin/ui/button"
 import { Card, CardContent } from "@/components/admin/ui/card"
 import { Badge } from "@/components/admin/ui/badge"
-import { ArrowLeft, Clock, AlertTriangle, Info, CheckCircle, Calendar, User } from "lucide-react"
+import { ArrowLeft, Clock, AlertTriangle, Info, CheckCircle, Calendar } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { getNotificationDetails, type NotificationDetails } from "@/lib/services/notificationService"
 
-interface NotificationDetailProps {
+interface SentNotificationDetailProps {
     notificationId: string
 }
 
-export function NotificationDetail({ notificationId }: NotificationDetailProps) {
+export function SentNotificationDetail({ notificationId }: SentNotificationDetailProps) {
     const router = useRouter()
     const pathname = usePathname()
     const [notification, setNotification] = useState<NotificationDetails | null>(null)
@@ -47,8 +47,8 @@ export function NotificationDetail({ notificationId }: NotificationDetailProps) 
             <div className="text-center py-12">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">Notification Not Found</h2>
                 <p className="text-gray-600 mb-4">{error || "The notification you're looking for doesn't exist or has been removed."}</p>
-                <Button onClick={() => router.push(`${pathname?.startsWith('/mot') ? '/mot' : '/admin'}/notifications/received`)} className="bg-blue-500/90 text-white hover:bg-blue-600 shadow-md">
-                    Back to Notifications
+                <Button onClick={() => router.push(`${pathname?.startsWith('/mot') ? '/mot' : '/admin'}/notifications/sent`)} className="bg-blue-500/90 text-white hover:bg-blue-600 shadow-md">
+                    Back to Sent Notifications
                 </Button>
             </div>
         )
@@ -78,7 +78,6 @@ export function NotificationDetail({ notificationId }: NotificationDetailProps) 
         }
     }
 
-    // Derive sent time without using a hook to avoid hook order changes across renders
     const sentTime = notification?.createdAt || ''
 
     return (
@@ -87,9 +86,9 @@ export function NotificationDetail({ notificationId }: NotificationDetailProps) 
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4">
                     <Button variant="ghost" size="sm" asChild className="bg-gray-500/20 text-gray-600 hover:bg-gray-500/30 shadow-md">
-                        <Link href={`${pathname?.startsWith('/mot') ? '/mot' : '/admin'}/notifications/received`}>
+                        <Link href={`${pathname?.startsWith('/mot') ? '/mot' : '/admin'}/notifications/sent`}>
                             <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back to Notifications
+                            Back to Sent Notifications
                         </Link>
                     </Button>
                 </div>
@@ -150,7 +149,7 @@ export function NotificationDetail({ notificationId }: NotificationDetailProps) 
                                 <div className="flex items-center space-x-3 p-3 bg-white rounded-lg shadow-sm">
                                     <Clock className="h-5 w-5 text-gray-500" />
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-900">Received</p>
+                                        <p className="text-sm font-semibold text-gray-900">Sent At</p>
                                         <p className="text-sm text-gray-600">{sentTime}</p>
                                     </div>
                                 </div>

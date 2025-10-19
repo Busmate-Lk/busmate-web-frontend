@@ -1,55 +1,53 @@
 'use client';
 
-import React from 'react';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
-  MapPin, 
-  Wrench, 
-  Bus, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import React, { useState } from 'react';
+import {
+  Eye,
+  Trash2,
+  Bus,
+  CheckCircle,
+  XCircle,
+  Clock,
   AlertCircle,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  FileText
 } from 'lucide-react';
+import { PermitManagementModal } from './PermitManagementModal';
 
 interface FleetTableProps {
   buses: any[];
   onView: (busId: string) => void;
-  onEdit: (busId: string) => void;
   onDelete: (busId: string, busRegistration: string) => void;
-  onAssignRoute?: (busId: string, busRegistration: string) => void;
-  onScheduleMaintenance?: (busId: string, busRegistration: string) => void;
   onSort: (sortBy: string, sortDir: 'asc' | 'desc') => void;
   activeFilters: Record<string, any>;
   loading: boolean;
   currentSort: { field: string; direction: 'asc' | 'desc' };
+  busPermits?: Record<string, { permitNumber: string; permitType?: string } | null>;
+  onPermitsChanged?: () => void;
 }
 
 export function FleetTable({
   buses,
   onView,
-  onEdit,
   onDelete,
-  onAssignRoute,
-  onScheduleMaintenance,
   onSort,
   activeFilters,
   loading,
-  currentSort
+  currentSort,
+  busPermits = {},
+  onPermitsChanged
 }: FleetTableProps) {
+  const [permitModalBus, setPermitModalBus] = useState<{ id: string; registration: string } | null>(null);
   const formatFacilities = (facilities: any): string => {
     if (!facilities) return 'No facilities listed';
-    
+
     try {
       // If it's already an array
       if (Array.isArray(facilities)) {
         return facilities.join(', ');
       }
-      
+
       // If it's a string that might be JSON
       if (typeof facilities === 'string') {
         // Try to parse as JSON if it looks like JSON
@@ -62,12 +60,12 @@ export function FleetTable({
         }
         return facilities;
       }
-      
+
       // If it's an object, convert to string representation
       if (typeof facilities === 'object') {
         return Object.values(facilities).join(', ');
       }
-      
+
       // Fallback to string conversion
       return String(facilities);
     } catch (error) {
@@ -80,7 +78,7 @@ export function FleetTable({
     if (currentSort.field !== field) {
       return <ChevronUp className="w-4 h-4 text-gray-300" />;
     }
-    return currentSort.direction === 'asc' 
+    return currentSort.direction === 'asc'
       ? <ChevronUp className="w-4 h-4 text-blue-600" />
       : <ChevronDown className="w-4 h-4 text-blue-600" />;
   };
@@ -171,7 +169,7 @@ export function FleetTable({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => handleSort('ntcRegistrationNumber')}
               >
@@ -180,7 +178,7 @@ export function FleetTable({
                   {getSortIcon('ntcRegistrationNumber')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => handleSort('plateNumber')}
               >
@@ -189,7 +187,7 @@ export function FleetTable({
                   {getSortIcon('plateNumber')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => handleSort('model')}
               >
@@ -198,7 +196,7 @@ export function FleetTable({
                   {getSortIcon('model')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => handleSort('capacity')}
               >
@@ -207,7 +205,7 @@ export function FleetTable({
                   {getSortIcon('capacity')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => handleSort('status')}
               >
@@ -219,7 +217,7 @@ export function FleetTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Current Route
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => handleSort('createdAt')}
               >
@@ -227,6 +225,9 @@ export function FleetTable({
                   Added Date
                   {getSortIcon('createdAt')}
                 </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Permit
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -276,8 +277,7 @@ export function FleetTable({
                   <div className="text-sm text-gray-900">
                     {bus.currentRoute ? (
                       <div className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-gray-400" />
-                        {bus.currentRoute}
+                        <span>{bus.currentRoute}</span>
                       </div>
                     ) : (
                       <span className="text-gray-400">Not assigned</span>
@@ -286,6 +286,27 @@ export function FleetTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(bus.createdAt)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {busPermits[bus.id] ? (
+                    <button
+                      onClick={() => setPermitModalBus({ id: bus.id, registration: bus.ntcRegistrationNumber })}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 hover:bg-green-200 transition-colors"
+                      title="View/manage permits"
+                    >
+                      <FileText className="w-3 h-3" />
+                      {busPermits[bus.id]?.permitNumber || 'Unknown'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setPermitModalBus({ id: bus.id, registration: bus.ntcRegistrationNumber })}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200 transition-colors"
+                      title="Assign permit"
+                    >
+                      <FileText className="w-3 h-3" />
+                      Not assigned
+                    </button>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
@@ -296,31 +317,6 @@ export function FleetTable({
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onEdit(bus.id)}
-                      className="text-gray-600 hover:text-gray-800 transition-colors p-1 rounded hover:bg-gray-50"
-                      title="Edit bus"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    {onAssignRoute && (
-                      <button
-                        onClick={() => onAssignRoute(bus.id, bus.ntcRegistrationNumber)}
-                        className="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-50"
-                        title="Assign route"
-                      >
-                        <MapPin className="w-4 h-4" />
-                      </button>
-                    )}
-                    {onScheduleMaintenance && (
-                      <button
-                        onClick={() => onScheduleMaintenance(bus.id, bus.ntcRegistrationNumber)}
-                        className="text-orange-600 hover:text-orange-800 transition-colors p-1 rounded hover:bg-orange-50"
-                        title="Schedule maintenance"
-                      >
-                        <Wrench className="w-4 h-4" />
-                      </button>
-                    )}
                     <button
                       onClick={() => onDelete(bus.id, bus.ntcRegistrationNumber)}
                       className="text-red-600 hover:text-red-800 transition-colors p-1 rounded hover:bg-red-50"
@@ -335,7 +331,7 @@ export function FleetTable({
           </tbody>
         </table>
       </div>
-      
+
       {loading && buses.length > 0 && (
         <div className="px-6 py-3 bg-blue-50 border-t border-blue-100">
           <div className="flex items-center gap-2">
@@ -343,6 +339,16 @@ export function FleetTable({
             <span className="text-xs text-blue-800">Updating fleet...</span>
           </div>
         </div>
+      )}
+
+      {permitModalBus && (
+        <PermitManagementModal
+          isOpen={!!permitModalBus}
+          onClose={() => setPermitModalBus(null)}
+          busId={permitModalBus.id}
+          busRegistration={permitModalBus.registration}
+          onChanged={onPermitsChanged}
+        />
       )}
     </div>
   );

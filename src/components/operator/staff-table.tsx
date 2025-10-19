@@ -22,9 +22,10 @@ interface StaffTableProps {
   onPageChange: (page: number) => void
   onEdit?: (staffId: string) => void
   onDelete?: (staffId: string) => void
+  onView?: (staffId: string) => void
 }
 
-export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdit, onDelete }: StaffTableProps) {
+export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdit, onDelete, onView }: StaffTableProps) {
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null)
   const [showModal, setShowModal] = useState(false)
 
@@ -41,8 +42,12 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
   }
 
   const handleViewStaff = (staff: StaffMember) => {
-    setSelectedStaff(staff)
-    setShowModal(true)
+    if (onView) {
+      onView(staff.id)
+    } else {
+      setSelectedStaff(staff)
+      setShowModal(true)
+    }
   }
 
   const closeModal = () => {
@@ -100,6 +105,7 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
                     <button
                       className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
                       onClick={() => handleViewStaff(member)}
+                      title="View details"
                     >
                       <Eye className="w-4 h-4 text-blue-600" />
                     </button>
@@ -109,6 +115,7 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
                     <button
                       className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
                       onClick={() => onDelete?.(member.id)}
+                      title={`Delete ${member.role.toLowerCase()}`}
                     >
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
@@ -155,7 +162,7 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getProfileIconColor(selectedStaff.role)}`}>
@@ -168,28 +175,28 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
                   </span>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">NIC Number</label>
                   <p className="text-gray-900">{selectedStaff.nic}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-500">Phone Number</label>
                   <p className="text-gray-900">{selectedStaff.phone}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-500">Address</label>
                   <p className="text-gray-900">{selectedStaff.address}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-500">Assigned Bus</label>
                   <p className="text-gray-900">{selectedStaff.assignment}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-500">Status</label>
                   <div className="mt-1">
@@ -200,7 +207,7 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
                 </div>
               </div>
             </div>
-            
+
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
               <button
                 onClick={closeModal}
