@@ -1,78 +1,51 @@
 'use client';
 
 import React from 'react';
-import { Plus, Upload, Download, CheckSquare } from 'lucide-react';
+import { Plus, CheckSquare, Loader2 } from 'lucide-react';
 
 interface TimekeeperActionButtonsProps {
-    onAddTimekeeper: () => void;
-    onImportTimekeepers: () => void;
-    onExportAll: () => void;
-    onBulkOperations?: () => void;
-    isLoading?: boolean;
-    selectedCount?: number;
+  onAddTimekeeper: () => void;
+  onBulkOperations?: () => void;
+  isLoading?: boolean;
+  selectedCount?: number;
 }
 
 export function TimekeeperActionButtons({
-    onAddTimekeeper,
-    onImportTimekeepers,
-    onExportAll,
-    onBulkOperations,
-    isLoading = false,
-    selectedCount = 0
+  onAddTimekeeper,
+  onBulkOperations,
+  isLoading = false,
+  selectedCount = 0,
 }: TimekeeperActionButtonsProps) {
-    return (
-        <div className="flex flex-col sm:flex-row gap-3">
-            {/* Primary Actions */}
-            <div className="flex gap-3">
-                <button
-                    onClick={onAddTimekeeper}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                >
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Add Timekeeper</span>
-                    <span className="sm:hidden">Add</span>
-                </button>
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 justify-between items-center">
+      {/* Primary Actions */}
+      <div className="flex gap-3 flex-wrap">
+        <button
+          onClick={onAddTimekeeper}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 shadow hover:scale-105 transform transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Add Timekeeper</span>
+          <span className="sm:hidden">Add</span>
+        </button>
+      </div>
 
-                <button
-                    onClick={onImportTimekeepers}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 border border-blue-600 text-blue-600 bg-white px-4 py-2 rounded-lg hover:bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                >
-                    <Upload className="h-4 w-4" />
-                    <span className="hidden sm:inline">Import</span>
-                </button>
-            </div>
-
-            {/* Secondary Actions */}
-            <div className="flex gap-3">
-                <button
-                    onClick={onExportAll}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                >
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Export All</span>
-                    <span className="sm:hidden">Export</span>
-                </button>
-
-                {/* Bulk Operations - Only show when items are selected */}
-                {selectedCount > 0 && onBulkOperations && (
-                    <button
-                        onClick={onBulkOperations}
-                        disabled={isLoading}
-                        className="flex items-center gap-2 border border-orange-300 text-orange-700 bg-orange-50 px-4 py-2 rounded-lg hover:bg-orange-100 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                    >
-                        <CheckSquare className="h-4 w-4" />
-                        <span className="hidden sm:inline">
-                            Bulk Actions ({selectedCount})
-                        </span>
-                        <span className="sm:hidden">
-                            Actions ({selectedCount})
-                        </span>
-                    </button>
-                )}
-            </div>
+      {/* Bulk Actions (only visible when items are selected) */}
+      {selectedCount > 0 && onBulkOperations && (
+        <div className="flex gap-3 flex-wrap mt-2 sm:mt-0">
+          <button
+            onClick={onBulkOperations}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-orange-400 to-orange-500 shadow hover:scale-105 transform transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <CheckSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">Bulk Actions ({selectedCount})</span>
+            <span className="sm:hidden">Actions ({selectedCount})</span>
+          </button>
         </div>
-    );
+      )}
+    </div>
+  );
 }
