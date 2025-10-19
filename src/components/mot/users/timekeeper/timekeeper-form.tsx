@@ -72,14 +72,25 @@ export default function TimekeeperForm({ timekeeperId, onSuccess, onCancel }: Ti
     const newErrors: FormErrors = {};
 
     if (!formData.fullname.trim()) newErrors.fullname = 'Full name is required';
-    if (!formData.phonenumber.trim()) newErrors.phonenumber = 'Phone number is required';
+
+    if (!/^\d{10}$/.test(formData.phonenumber))
+      newErrors.phonenumber = 'Phone number must be exactly 10 digits';
+
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Invalid email format';
+
     if (!formData.assign_stand.trim()) newErrors.assign_stand = 'Assigned stand is required';
-    if (!formData.nic.trim()) newErrors.nic = 'NIC is required';
+
+    if (!/^\d{11,12}[vV]?$/.test(formData.nic))
+      newErrors.nic = 'NIC must be 11 or 12 digits, may end with V';
+
     if (!formData.province.trim()) newErrors.province = 'Province is required';
-    if (!isEditMode && (!formData.password || formData.password.length < 6))
-      newErrors.password = 'Password must be at least 6 characters';
+
+    if (!isEditMode) {
+      if (!formData.password) newErrors.password = 'Password is required';
+      else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}/.test(formData.password))
+        newErrors.password = 'Password must be min 6 chars, include upper/lowercase, number & special char';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -175,109 +186,20 @@ export default function TimekeeperForm({ timekeeperId, onSuccess, onCancel }: Ti
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Full Name */}
-          <FormInput
-            label="Full Name"
-            required
-            value={formData.fullname}
-            error={errors.fullname}
-            onChange={value => handleInputChange('fullname', value)}
-            placeholder="Enter full name"
-          />
-
-          {/* Phone Number */}
-          <FormInput
-            label="Phone Number"
-            required
-            value={formData.phonenumber}
-            error={errors.phonenumber}
-            onChange={value => handleInputChange('phonenumber', value)}
-            placeholder="Enter phone number"
-          />
-
-          {/* Email */}
-          <FormInput
-            label="Email"
-            required
-            value={formData.email}
-            error={errors.email}
-            onChange={value => handleInputChange('email', value)}
-            placeholder="Enter email address"
-          />
-
-          {/* NIC */}
-          <FormInput
-            label="NIC"
-            required
-            value={formData.nic}
-            error={errors.nic}
-            onChange={value => handleInputChange('nic', value)}
-            placeholder="Enter NIC number"
-          />
-
-          {/* Assigned Stand */}
-          <FormSelect
-            label="Assigned Stand"
-            required
-            value={formData.assign_stand}
-            options={busStops.map(bs => ({ value: bs.stopName, label: bs.stopName }))}
-            error={errors.assign_stand}
-            disabled={loadingBusStops}
-            placeholder={loadingBusStops ? 'Loading bus stops...' : 'Select a bus stop'}
-            onChange={value => handleInputChange('assign_stand', value)}
-          />
-
-          {/* Province */}
-          <FormSelect
-            label="Province"
-            required
-            value={formData.province}
-            options={SRI_LANKAN_PROVINCES.map(p => ({ value: p, label: p }))}
-            error={errors.province}
-            placeholder="Select a province"
-            onChange={value => handleInputChange('province', value)}
-          />
-
-          {/* Password */}
-          <FormInput
-            label="Password"
-            type="password"
-            required={!isEditMode}
-            value={formData.password}
-            error={errors.password}
-            placeholder={isEditMode ? 'Enter new password' : 'Enter password (min 6 chars)'}
-            hint={isEditMode ? 'Leave blank to keep current password' : undefined}
-            onChange={value => handleInputChange('password', value)}
-          />
+          <FormInput label="Full Name" required value={formData.fullname} error={errors.fullname} onChange={v => handleInputChange('fullname', v)} placeholder="Enter full name" />
+          <FormInput label="Phone Number" required value={formData.phonenumber} error={errors.phonenumber} onChange={v => handleInputChange('phonenumber', v)} placeholder="10 digits" />
+          <FormInput label="Email" required value={formData.email} error={errors.email} onChange={v => handleInputChange('email', v)} placeholder="Enter email address" />
+          <FormInput label="NIC" required value={formData.nic} error={errors.nic} onChange={v => handleInputChange('nic', v)} placeholder="11 or 12 digits, may end with V" />
+          <FormSelect label="Assigned Stand" required value={formData.assign_stand} options={busStops.map(bs => ({ value: bs.stopName, label: bs.stopName }))} error={errors.assign_stand} disabled={loadingBusStops} placeholder={loadingBusStops ? 'Loading bus stops...' : 'Select a bus stop'} onChange={v => handleInputChange('assign_stand', v)} />
+          <FormSelect label="Province" required value={formData.province} options={SRI_LANKAN_PROVINCES.map(p => ({ value: p, label: p }))} error={errors.province} placeholder="Select a province" onChange={v => handleInputChange('province', v)} />
+          <FormInput label="Password" type="password" required={!isEditMode} value={formData.password} error={errors.password} placeholder={isEditMode ? 'Enter new password' : 'Min 6 chars, include upper/lower, number, special'} hint={isEditMode ? 'Leave blank to keep current password' : undefined} onChange={v => handleInputChange('password', v)} />
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={handleCancel}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          disabled={loading || !isDirty}
-          className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {isEditMode ? 'Updating...' : 'Creating...'}
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              {isEditMode ? 'Update Timekeeper' : 'Create Timekeeper'}
-            </>
-          )}
+        <button type="button" onClick={handleCancel} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+        <button type="submit" disabled={loading || !isDirty} className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{isEditMode ? 'Updating...' : 'Creating...'}</> : <><Save className="w-4 h-4 mr-2" />{isEditMode ? 'Update Timekeeper' : 'Create Timekeeper'}</>}
         </button>
       </div>
     </form>
@@ -285,61 +207,26 @@ export default function TimekeeperForm({ timekeeperId, onSuccess, onCancel }: Ti
 }
 
 // ---------------- Reusable Input Components ----------------
-interface FormInputProps {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  type?: string;
-  required?: boolean;
-  error?: string;
-  hint?: string;
-}
-function FormInput({ label, value, onChange, placeholder, type = 'text', required, error, hint }: FormInputProps) {
+function FormInput({ label, value, onChange, placeholder, type = 'text', required, error, hint }: { label: string, value: string, onChange: (v:string)=>void, placeholder?: string, type?: string, required?: boolean, error?: string, hint?: string }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
         {hint && <span className="text-gray-400 text-xs ml-1">{hint}</span>}
       </label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full px-3 py-2 border rounded-md ${error ? 'border-red-300' : 'border-gray-300'}`}
-      />
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={`w-full px-3 py-2 border rounded-md ${error ? 'border-red-300' : 'border-gray-300'}`} />
       {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
     </div>
   );
 }
 
-interface FormSelectProps {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-  placeholder?: string;
-  required?: boolean;
-  error?: string;
-  disabled?: boolean;
-}
-function FormSelect({ label, value, onChange, options, placeholder, required, error, disabled }: FormSelectProps) {
+function FormSelect({ label, value, onChange, options, placeholder, required, error, disabled }: { label:string, value:string, onChange:(v:string)=>void, options:{value:string,label:string}[], placeholder?:string, required?:boolean, error?:string, disabled?:boolean }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        disabled={disabled}
-        className={`w-full px-3 py-2 border rounded-md ${error ? 'border-red-300' : 'border-gray-300'}`}
-      >
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
+      <select value={value} onChange={e=>onChange(e.target.value)} disabled={disabled} className={`w-full px-3 py-2 border rounded-md ${error ? 'border-red-300' : 'border-gray-300'}`}>
         <option value="">{placeholder || 'Select...'}</option>
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
+        {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
       </select>
       {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
     </div>
