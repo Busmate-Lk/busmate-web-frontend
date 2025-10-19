@@ -69,32 +69,36 @@ export default function TimekeeperForm({ timekeeperId, onSuccess, onCancel }: Ti
 
   // ---------------- Form Validation ----------------
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+  const newErrors: FormErrors = {};
 
-    if (!formData.fullname.trim()) newErrors.fullname = 'Full name is required';
+  if (!formData.fullname.trim()) newErrors.fullname = 'Full name is required';
 
-    if (!/^\d{10}$/.test(formData.phonenumber))
-      newErrors.phonenumber = 'Phone number must be exactly 10 digits';
+  // Phone number: exactly 10 digits
+  if (!/^\d{10}$/.test(formData.phonenumber))
+    newErrors.phonenumber = 'Phone number must be exactly 10 digits';
 
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Invalid email format';
+  // Email validation
+  if (!formData.email.trim()) newErrors.email = 'Email is required';
+  else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = 'Invalid email format';
 
-    if (!formData.assign_stand.trim()) newErrors.assign_stand = 'Assigned stand is required';
+  if (!formData.assign_stand.trim()) newErrors.assign_stand = 'Assigned stand is required';
 
-    if (!/^\d{11,12}[vV]?$/.test(formData.nic))
-      newErrors.nic = 'NIC must be 11 or 12 digits, may end with V';
+  // NIC: 12 digits or 11 digits ending with v/V
+  if (!/^(\d{12}|\d{11}[vV])$/.test(formData.nic))
+    newErrors.nic = 'NIC must be 12 digits or 11 digits ending with V';
 
-    if (!formData.province.trim()) newErrors.province = 'Province is required';
+  if (!formData.province.trim()) newErrors.province = 'Province is required';
 
-    if (!isEditMode) {
-      if (!formData.password) newErrors.password = 'Password is required';
-      else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}/.test(formData.password))
-        newErrors.password = 'Password must be min 6 chars, include upper/lowercase, number & special char';
-    }
+  // Password: min 6 chars, at least one lowercase, uppercase, number, special
+  if (!isEditMode) {
+    if (!formData.password) newErrors.password = 'Password is required';
+    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}/.test(formData.password))
+      newErrors.password = 'Password must be at least 6 chars, include uppercase, lowercase, number & special char';
+  }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   // ---------------- Fetch Bus Stops ----------------
   useEffect(() => {
