@@ -17,6 +17,7 @@ export default function OperatorLayout({ children }: { children: React.ReactNode
     if (pathname.startsWith("/operator/busTracking")) return "busTracking";
     if (pathname.startsWith("/operator/staffManagement")) return "staff";
     if (pathname.startsWith("/operator/addstaff")) return "staff";
+    if (pathname.startsWith("/operator/staff-assignment")) return "staff-assignment";
     if (pathname.startsWith("/operator/passenger-service-permits")) return "passenger-service-permits";
     if (pathname.startsWith("/operator/revenueManagement")) return "revenue";
     if (pathname.startsWith("/operator/busSeatView")) return "busTracking";
