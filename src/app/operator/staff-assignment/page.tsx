@@ -6,7 +6,7 @@ import { Header } from '@/components/operator/header';
 import { TripManagementService } from '@/lib/api-client/route-management/services/TripManagementService';
 import { BusOperatorOperationsService } from '@/lib/api-client/route-management/services/BusOperatorOperationsService';
 import type { TripResponse } from '@/lib/api-client/route-management/models/TripResponse';
-import { staffManagementService, type ConductorProfile } from '@/lib/services/staff-management-service';
+import { staffManagementService, type ConductorProfile, type DriverProfile } from '@/lib/services/staff-management-service';
 import { getCookie } from '@/lib/utils/cookieUtils';
 import {
     Calendar,
@@ -37,6 +37,7 @@ export default function StaffAssignmentPage() {
     // State
     const [trips, setTrips] = useState<TripResponse[]>([]);
     const [conductors, setConductors] = useState<ConductorProfile[]>([]);
+    const [drivers, setDrivers] = useState<DriverProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -132,10 +133,22 @@ export default function StaffAssignmentPage() {
         }
     }, []);
 
+    // Load drivers
+    const loadDrivers = useCallback(async () => {
+        try {
+            const token = getCookie('access_token') || '';
+            const driverList = await staffManagementService.getDrivers(token);
+            setDrivers(driverList.filter((d: DriverProfile) => d.accountStatus?.toLowerCase() === 'active'));
+        } catch (err) {
+            console.error('Error loading drivers:', err);
+        }
+    }, []);
+
     useEffect(() => {
         loadTrips();
         loadConductors();
-    }, [loadTrips, loadConductors]);
+        loadDrivers();
+    }, [loadTrips, loadConductors, loadDrivers]);
 
     // Filter and search trips
     const filteredTrips = useMemo(() => {
@@ -279,8 +292,15 @@ export default function StaffAssignmentPage() {
     };
 
     const getConductorName = (conductorId?: string) => {
+        if (!conductorId) return 'Not assigned';
         const conductor = conductors.find(c => c.userId === conductorId);
         return conductor?.fullName || 'Unknown';
+    };
+
+    const getDriverName = (driverId?: string) => {
+        if (!driverId) return 'Not assigned';
+        const driver = drivers.find(d => d.userId === driverId);
+        return driver?.fullName || 'Unknown';
     };
 
     return (
@@ -291,12 +311,6 @@ export default function StaffAssignmentPage() {
             />
 
             <div className="container mx-auto px-4 py-6">
-                {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-900">Staff Assignment</h1>
-                    <p className="text-gray-600 mt-1">Assign conductors to trips</p>
-                </div>
-
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -475,7 +489,7 @@ export default function StaffAssignmentPage() {
                                                     {trip.driverId ? (
                                                         <div className="flex items-center gap-2">
                                                             <UserCheck className="w-4 h-4 text-green-600" />
-                                                            <span className="text-sm text-gray-900">Driver Assigned</span>
+                                                            <span className="text-sm text-gray-900">{getDriverName(trip.driverId)}</span>
                                                         </div>
                                                     ) : (
                                                         <div className="flex items-center gap-2">

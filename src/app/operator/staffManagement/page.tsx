@@ -175,27 +175,46 @@ export default function StaffManagement() {
           )}
 
           {/* Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <MetricCard
-              title="Total Staff"
-              value={stats.totalStaff}
-              icon={<Users className="w-5 h-5 text-blue-600" />}
-            />
-            <MetricCard
-              title="Drivers"
-              value={stats.totalDrivers}
-              icon={<Car className="w-5 h-5 text-green-600" />}
-            />
-            <MetricCard
-              title="Conductors"
-              value={stats.totalConductors}
-              icon={<Ticket className="w-5 h-5 text-purple-600" />}
-            />
-            <MetricCard
-              title="Assigned Today"
-              value={stats.assignedToday}
-              icon={<Calendar className="w-5 h-5 text-orange-600" />}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Staff</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalStaff}</p>
+                </div>
+                <Users className="w-8 h-8 text-blue-600" />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Drivers</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalDrivers}</p>
+                </div>
+                <Car className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Conductors</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalConductors}</p>
+                </div>
+                <Ticket className="w-8 h-8 text-purple-600" />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Assigned Today</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.assignedToday}</p>
+                </div>
+                <Calendar className="w-8 h-8 text-orange-600" />
+              </div>
+            </div>
           </div>
 
           {/* Add Staff Button */}
