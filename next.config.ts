@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/user-management/:path*',
-        destination: 'http://18.140.161.237:8081/:path*' // Vercel will proxy server-side
+        destination: 'http://107.21.189.199:8081/:path*' // Vercel will proxy server-side
       },
       {
         source: '/api/route-management/:path*',
