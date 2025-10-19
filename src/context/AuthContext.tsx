@@ -7,6 +7,7 @@ import { LoginRequest } from '@/types/requestdto/auth';
 import { getUserFromToken, isTokenExpired } from '@/lib/utils/jwtHandler';
 import { getCookie, setCookie, clearAuthCookies, setSecureAuthCookie } from '@/lib/utils/cookieUtils';
 import { OpenAPI } from '@/lib/api-client/route-management';
+import { unsubscribeUserFromPush } from '@/lib/push/registerServiceWorker';
 
 interface AuthState {
   user: User | null;
@@ -48,10 +49,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
-      
+
       // Get token from cookie
       const token = getCookie('access_token');
-      
+
       if (!token) {
         // No token found, user is not authenticated
         setUser(null);
@@ -63,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Check if token is expired
       if (isTokenExpired(token)) {
         console.log('Token expired, attempting refresh...');
-        
+
         // Try to refresh token
         const refreshToken = getCookie('refresh_token');
         if (refreshToken) {
@@ -79,14 +80,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             if (response.ok) {
               const authData = await response.json();
-              
+
               // Set new tokens in cookies
               setSecureAuthCookie('access_token', authData.access_token, authData.expires_in);
               setSecureAuthCookie('refresh_token', authData.refresh_token, 30 * 24 * 60 * 60); // 30 days
-              
+
               // Configure API client with new token
               configureApiToken();
-              
+
               // Extract and set user data
               const userFromToken = getUserFromToken(authData.access_token);
               if (userFromToken) {
@@ -105,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error('Token refresh failed:', refreshError);
           }
         }
-        
+
         // Refresh failed, clear cookies and redirect
         clearAuthCookies(['access_token', 'refresh_token']);
         clearApiToken();
@@ -148,17 +149,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (credentials: LoginRequest) => {
     try {
       setIsLoading(true);
-      
+
       // Use the API helper function to get auth response
       const authResponse = await apiLogin(credentials);
-      
+
       // Set tokens in cookies with proper security settings
       setSecureAuthCookie('access_token', authResponse.access_token, authResponse.expires_in);
       setSecureAuthCookie('refresh_token', authResponse.refresh_token, 30 * 24 * 60 * 60); // 30 days
-      
+
       // Configure API client with new token
       configureApiToken();
-      
+
       // Extract user data from response
       const userData: User = {
         id: authResponse.user.id,
@@ -188,7 +189,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setIsLoading(true);
-      
+
+      // Get auth token before clearing
+      const authToken = getCookie('access_token');
+
+      // Unsubscribe from push notifications
+      if (authToken) {
+        await unsubscribeUserFromPush(authToken);
+      }
+
       // Use the API helper function
       await apiLogout();
     } catch (error) {
@@ -197,15 +206,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clear client-side state and cookies regardless of API call result
       setUser(null);
       setIsAuthenticated(false);
-      
+
       // Clear all auth-related cookies
       clearAuthCookies(['access_token', 'refresh_token']);
-      
+
       // Clear API token
       clearApiToken();
-      
+
       setIsLoading(false);
-      
+
       // Redirect to login page
       if (typeof window !== 'undefined') {
         window.location.href = '/';

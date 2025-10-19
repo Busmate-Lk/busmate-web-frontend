@@ -40,6 +40,13 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 export async function subscribeUserToPush(authToken?: string, deviceId?: string) {
   if (typeof window === 'undefined') return null;
   if (!('serviceWorker' in navigator)) return null;
+
+  // Require auth token to ensure we have user context
+  if (!authToken) {
+    console.warn('[subscribeUserToPush] No auth token provided, skipping subscription');
+    return null;
+  }
+
   try {
     const permission = await requestNotificationPermission();
     if (permission !== 'granted') {
@@ -66,18 +73,34 @@ export async function subscribeUserToPush(authToken?: string, deviceId?: string)
       });
     }
 
-    // Send subscription to backend
+    // Send subscription to backend with auth token and deviceId
     try {
-      await fetch(`${API_BASE}/api/push/subscribe`, {
+      console.log('[subscribeUserToPush] Sending subscription to backend with auth token');
+      const response = await fetch(`${API_BASE}/api/push/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ subscription, deviceId }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to subscribe' }));
+        console.error('Backend subscription failed:', errorData);
+        throw new Error(errorData.message || 'Failed to subscribe to push notifications');
+      }
+
+      const result = await response.json();
+      console.log('[subscribeUserToPush] Successfully subscribed:', result);
+
+      // Store subscription info if available
+      if (result.subscriptionId) {
+        localStorage.setItem('pushSubscriptionId', result.subscriptionId);
+      }
     } catch (e) {
       console.error('Failed to send subscription to backend', e);
+      throw e;
     }
 
     return subscription;
@@ -96,4 +119,49 @@ function urlBase64ToUint8Array(base64String: string) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
+}
+
+export async function unsubscribeUserFromPush(authToken?: string) {
+  if (typeof window === 'undefined') return;
+  if (!('serviceWorker' in navigator)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    if (!registration || !registration.pushManager) return;
+
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      console.log('[unsubscribeUserFromPush] No subscription found');
+      return;
+    }
+
+    // Get stored subscription ID
+    const subscriptionId = localStorage.getItem('pushSubscriptionId');
+
+    // Unsubscribe from push manager
+    await subscription.unsubscribe();
+    console.log('[unsubscribeUserFromPush] Unsubscribed from push manager');
+
+    // Notify backend to remove subscription
+    if (subscriptionId) {
+      try {
+        await fetch(`${API_BASE}/api/push/unsubscribe`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          body: JSON.stringify({ subscriptionId }),
+        });
+        console.log('[unsubscribeUserFromPush] Notified backend of unsubscription');
+      } catch (e) {
+        console.error('Failed to notify backend of unsubscription', e);
+      }
+    }
+
+    // Clear local storage
+    localStorage.removeItem('pushSubscriptionId');
+  } catch (e) {
+    console.error('Push unsubscribe failed:', e);
+  }
 }
