@@ -77,74 +77,56 @@ export default function TimekeepersPage() {
     provincesCount: { count: 0 },
   });
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [timekeeperToDelete, setTimekeeperToDelete] = useState<TimekeeperResponse | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  /** Load all timekeepers */
+  /** Load all timekeepers from backend */
   const loadTimekeepers = useCallback(async () => {
-  try {
-    setIsLoading(true);
-    setError(null);
-
-    const response = await TimekeeperControllerService.getAllTimekeepers();
-    console.log('Timekeepers response:', response);
-
-    // normalize response items to match TimekeeperResponse shape
-    const normalized = (response || []).map((r: any) => ({
-      id: r.id ?? r.timekeeperId ?? r._id ?? r.userId ?? '',
-      fullname: r.fullname ?? r.name ?? '',
-      phonenumber: r.phonenumber ?? r.phone ?? '',
-      email: r.email ?? '',
-      assign_stand: r.assign_stand ?? r.assignStand ?? r.assignedStand ?? '',
-      nic: r.nic ?? '',
-      province: r.province ?? '',
-      user_id: r.user_id ?? r.userId ?? undefined,
-      createdAt: r.createdAt ?? r.created_at ?? undefined,
-      status: r.status ?? undefined,
-    }));
-
-    setTimekeepers(normalized);
-    setPagination({
-      currentPage: 0,
-      totalPages: 1,
-      totalElements: normalized.length || 0,
-      pageSize: normalized.length || 10,
-    });
-  } catch (err) {
-    console.error('Error loading timekeepers:', err);
-    setError('Failed to load timekeepers. Please try again.');
-    setTimekeepers([]);
-  } finally {
-    setIsLoading(false);
-  }
-}, []);
-
-  /** Load stats */
-  /**const loadStatistics = useCallback(async () => {
     try {
-      const s = await TimekeeperControllerService.getTimekeeperStatistics();
-      setStats({
-        totalTimekeepers: { count: s.totalTimekeepers || 0 },
-        activeTimekeepers: { count: s.activeTimekeepers || 0 },
-        inactiveTimekeepers: { count: s.inactiveTimekeepers || 0 },
-        provincesCount: {
-          count: s.timekeepersByProvince ? Object.keys(s.timekeepersByProvince).length : 0,
-        },
+      setIsLoading(true);
+      setError(null);
+
+      const response = await TimekeeperControllerService.getAllTimekeepers();
+      console.log(' Timekeepers response:', response);
+
+      const normalized = (response || []).map((r: any) => ({
+        id: r.id ?? r.timekeeperId ?? r._id ?? r.userId ?? '',
+        fullname: r.fullname ?? r.name ?? '',
+        phonenumber: r.phonenumber ?? r.phone ?? '',
+        email: r.email ?? '',
+        assign_stand: r.assign_stand ?? r.assignStand ?? r.assignedStand ?? '',
+        nic: r.nic ?? '',
+        province: r.province ?? '',
+        user_id: r.user_id ?? r.userId ?? undefined,
+        createdAt: r.createdAt ?? r.created_at ?? undefined,
+        status: r.status ?? 'active',
+      }));
+
+      setTimekeepers(normalized);
+
+      // derive province & stand filters dynamically
+      const provinces = [...new Set(normalized.map((t) => t.province).filter(Boolean))];
+      const stands = [...new Set(normalized.map((t) => t.assign_stand).filter(Boolean))];
+      setFilterOptions((prev) => ({ ...prev, provinces, stands }));
+
+      setPagination({
+        currentPage: 0,
+        totalPages: 1,
+        totalElements: normalized.length,
+        pageSize: normalized.length || 10,
       });
     } catch (err) {
-      console.error('Error loading timekeeper statistics:', err);
+      console.error(' Error loading timekeepers:', err);
+      setError('Failed to load timekeepers. Please try again.');
+      setTimekeepers([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);*/
+  }, []);
 
-  /** ✅ Initial load */
-  /** 
+  /**Initial data load */
   useEffect(() => {
     loadTimekeepers();
-    loadStatistics();
-  }, [loadTimekeepers, loadStatistics]); */
+  }, [loadTimekeepers]);
 
-  /** ✅ Update query params */
+  /**Update query params */
   const updateQueryParams = useCallback(
     (updates: Partial<QueryParams>) => {
       setQueryParams((prev) => {
@@ -169,14 +151,13 @@ export default function TimekeepersPage() {
     return () => clearTimeout(timer);
   }, [statusFilter, provinceFilter, standFilter, updateQueryParams]);
 
-  /** ✅ Actions */
+  /** Actions */
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     updateQueryParams({ search: term, page: 0 });
   };
 
   const handleAddNew = () => {
-    // 🔹 Navigate to Add New Timekeeper page
     router.push('/mot/staff-management/add-new');
   };
 
@@ -230,53 +211,34 @@ export default function TimekeepersPage() {
 
   const handleView = (id: string) => router.push(`/mot/users/timekeepers/${id}`);
   const handleEdit = (id: string) => router.push(`/mot/users/timekeepers/${id}/edit`);
+  const handleDelete = (id: string) => alert(`Delete not implemented yet for ID: ${id}`);
 
-  const handleDelete = (id: string) => {
-    const tk = timekeepers.find((t) => t.id === id);
-    if (tk) {
-      setTimekeeperToDelete(tk);
-      setShowDeleteModal(true);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setShowDeleteModal(false);
-    setTimekeeperToDelete(null);
-  };
-/** 
-  const handleDeleteConfirm = async () => {
-    if (!timekeeperToDelete?.id) return;
-    try {
-      setIsDeleting(true);
-      await TimekeeperControllerService.deleteTimekeeper(timekeeperToDelete.id);
-      await loadTimekeepers();
-      await loadStatistics();
-      setShowDeleteModal(false);
-      setTimekeeperToDelete(null);
-    } catch (err) {
-      console.error('Error deleting timekeeper:', err);
-      setError('Failed to delete timekeeper. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
-  }; */
-
-  /** ✅ Filters and table data */
+  /**Filters and table data */
   const filteredTimekeepers = React.useMemo(() => {
     let list = timekeepers;
     if (provinceFilter !== 'all') list = list.filter((t) => t.province === provinceFilter);
     if (standFilter !== 'all') list = list.filter((t) => t.assign_stand === standFilter);
+    if (statusFilter !== 'all') list = list.filter((t) => t.status === statusFilter);
+    if (searchTerm)
+      list = list.filter((t) =>
+        [t.fullname, t.email, t.nic, t.assign_stand, t.province]
+          .join(' ')
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      );
     return list;
-  }, [timekeepers, provinceFilter, standFilter]);
+  }, [timekeepers, provinceFilter, standFilter, statusFilter, searchTerm]);
 
   const transformed = React.useMemo(
     () =>
       filteredTimekeepers.map((tk) => ({
-        id: tk.id || '',
-        fullname: tk.fullname || '',
-        phonenumber: tk.phonenumber || '',
-        assign_stand: tk.assign_stand || '',
-        province: tk.province || '',
+        id: tk.id,
+        fullname: tk.fullname,
+        phonenumber: tk.phonenumber,
+        email: tk.email,
+        assign_stand: tk.assign_stand,
+        province: tk.province,
+        nic: tk.nic,
         status: tk.status,
         createdAt: tk.createdAt,
       })),
@@ -307,14 +269,12 @@ export default function TimekeepersPage() {
         {/* Stats cards */}
         <TimekeeperStatsCards stats={stats} />
 
-        {/* Add & Export buttons */}
-         
+        {/* Action buttons */}
         <TimekeeperActionButtons
           onAddTimekeeper={handleAddNew}
           onImportTimekeepers={() => {}}
           onExportAll={handleExportAll}
-          //isLoading={isLoading}
-        />  
+        />
 
         {/* Filters */}
         <TimekeeperAdvancedFilters
@@ -327,7 +287,7 @@ export default function TimekeepersPage() {
           standFilter={standFilter}
           setStandFilter={setStandFilter}
           filterOptions={filterOptions}
-          loading={false}
+          loading={isLoading}
           totalCount={pagination.totalElements}
           filteredCount={transformed.length}
           onSearch={handleSearch}
@@ -377,16 +337,6 @@ export default function TimekeepersPage() {
             </div>
           )}
         </div>
-
-        {/* Delete modal */}
-        {/*
-        <DeleteTimekeeperModal
-          isOpen={showDeleteModal}
-          onClose={handleDeleteCancel}
-          onConfirm={handleDeleteConfirm}
-          timekeeper={timekeeperToDelete}
-          isDeleting={isDeleting}
-        />*/}
       </div>
     </Layout>
   );
