@@ -1,35 +1,27 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Search,
-  X,
-  ChevronDown,
-  Filter,
-  CheckCircle,
-  XCircle,
-  Clock,
-  MapPin,
-  Building
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, X, ChevronDown, Filter, CheckCircle, XCircle, Clock, MapPin, Building } from 'lucide-react';
+
+type StandOption = { id: string; name: string };
 
 interface FilterOptions {
-  statuses: Array< 'active' | 'inactive' >;
-  provinces: Array<string>;
-  stands: Array<string>;
+  statuses: string[];
+  provinces: string[];
+  stands: StandOption[]; // expects [{ id, name }]
 }
 
 interface TimekeeperAdvancedFiltersProps {
   searchTerm: string;
-  setSearchTerm: (value: string) => void;
+  setSearchTerm: (v: string) => void;
   statusFilter: string;
-  setStatusFilter: (value: string) => void;
+  setStatusFilter: (v: string) => void;
   provinceFilter: string;
-  setProvinceFilter: (value: string) => void;
+  setProvinceFilter: (v: string) => void;
   standFilter: string;
-  setStandFilter: (value: string) => void;
+  setStandFilter: (v: string) => void;
   filterOptions: FilterOptions;
-  loading: boolean;
+  loading?: boolean;
   totalCount?: number;
   filteredCount?: number;
   onClearAll?: () => void;
@@ -46,29 +38,25 @@ export default function TimekeeperAdvancedFilters({
   standFilter,
   setStandFilter,
   filterOptions,
-  loading,
+  loading = false,
   totalCount = 0,
   filteredCount = 0,
   onClearAll,
-  onSearch
+  onSearch,
 }: TimekeeperAdvancedFiltersProps) {
-  const [searchValue, setSearchValue] = useState(searchTerm);
+  const [localSearch, setLocalSearch] = useState(searchTerm);
 
-  // Debounce search input
+  useEffect(() => setLocalSearch(searchTerm), [searchTerm]);
+
   useEffect(() => {
-    const handler = setTimeout(() => {
-      if (searchValue !== searchTerm) {
-        setSearchTerm(searchValue);
-        onSearch?.(searchValue);
+    const t = setTimeout(() => {
+      if (localSearch !== searchTerm) {
+        setSearchTerm(localSearch);
+        onSearch?.(localSearch);
       }
-    }, 400);
-    return () => clearTimeout(handler);
-  }, [searchValue, searchTerm, setSearchTerm, onSearch]);
-
-  // Sync local state when props change
-  useEffect(() => {
-    if (searchTerm !== searchValue) setSearchValue(searchTerm);
-  }, [searchTerm]);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [localSearch, searchTerm, setSearchTerm, onSearch]);
 
   const hasActiveFilters =
     Boolean(searchTerm) ||
@@ -76,192 +64,148 @@ export default function TimekeeperAdvancedFilters({
     provinceFilter !== 'all' ||
     standFilter !== 'all';
 
-  const activeFilterCount = [
-    searchTerm && 'search',
-    statusFilter !== 'all' && 'status',
-    provinceFilter !== 'all' && 'province',
-    standFilter !== 'all' && 'stand'
-  ].filter(Boolean).length;
+  const statusIcon = (s: string) =>
+    s === 'active' ? <CheckCircle className="w-4 h-4 text-green-600" /> :
+      s === 'inactive' ? <XCircle className="w-4 h-4 text-red-600" /> :
+        s === 'pending' ? <Clock className="w-4 h-4 text-yellow-600" /> :
+          <Filter className="w-4 h-4 text-gray-600" />;
 
-  const handleClearAll = useCallback(() => {
-    setSearchValue('');
-    setStatusFilter('all');
-    setProvinceFilter('all');
-    setStandFilter('all');
-    onClearAll?.();
-  }, [setStatusFilter, setProvinceFilter, setStandFilter, onClearAll]);
-
-  const getStatusIcon = (value: string) => {
-    switch (value) {
-      case 'active':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'inactive':
-        return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-600" />;
-      case 'cancelled':
-        return <XCircle className="w-4 h-4 text-gray-600" />;
-      default:
-        return <Filter className="w-4 h-4 text-gray-600" />;
-    }
-  };
-
-  const getStatusLabel = (value: string) => {
-    switch (value) {
-      case 'active':
-        return 'Active Only';
-      case 'inactive':
-        return 'Inactive Only';
-      case 'pending':
-        return 'Pending Only';
-      case 'cancelled':
-        return 'Cancelled Only';
-      default:
-        return 'All Statuses';
-    }
-  };
-
-  const getProvinceIcon = () => <MapPin className="w-4 h-4 text-indigo-600" />;
-  const getStandIcon = () => <Building className="w-4 h-4 text-blue-600" />;
+  const prettifyAll = (s: string) => s || '';
 
   return (
-    <div className="rounded-2xl backdrop-blur-md bg-white/80 border border-gray-100 shadow-lg transition-all duration-300 p-6 hover:shadow-xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+    <div className="rounded-lg bg-white/90 border border-gray-100 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Search className="h-5 w-5 text-blue-500" />
-          <h3 className="text-lg font-semibold text-gray-900 tracking-tight">
-            Search & Filters
-          </h3>
+          <Search className="w-4 h-4 text-blue-600" />
+          <h3 className="text-sm font-semibold text-gray-900">Search & Filters</h3>
         </div>
         <div className="text-sm text-gray-500">
-          <span className="font-medium text-gray-900">{filteredCount}</span> /{' '}
-          {totalCount} timekeepers
+          <span className="font-medium text-gray-900">{filteredCount}</span> / {totalCount}
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-4">
-        <input
-          type="text"
-          placeholder="🔍 Search by name, stand, or ID..."
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          className="block w-full rounded-xl border border-gray-200 bg-white/70 pl-4 pr-10 py-2.5 text-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-        />
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-          {searchValue && (
+      <div className="mb-4">
+        <div className="relative">
+          <input
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            placeholder="Search by name, stand, NIC, email..."
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+          />
+          {localSearch && (
             <button
-              onClick={() => setSearchValue('')}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              onClick={() => setLocalSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+              aria-label="clear search"
             >
-              <X className="h-4 w-4" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col lg:flex-row gap-3">
-        {[
-          {
-            label: 'Status',
-            value: statusFilter,
-            onChange: setStatusFilter,
-            options: ['all', ...filterOptions.statuses],
-            color: 'blue'
-          },
-          {
-            label: 'Province',
-            value: provinceFilter,
-            onChange: setProvinceFilter,
-            options: ['all', ...filterOptions.provinces],
-            color: 'indigo'
-          },
-          {
-            label: 'Stand',
-            value: standFilter,
-            onChange: setStandFilter,
-            options: ['all', ...filterOptions.stands],
-            color: 'purple'
-          }
-        ].map((filter, idx) => (
-          <div key={idx} className="relative flex-1">
-            <select
-              value={filter.value}
-              onChange={(e) => filter.onChange(e.target.value)}
-              disabled={loading}
-              className={`block w-full rounded-xl border border-gray-200 bg-white/70 pl-3 pr-8 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-${filter.color}-500 focus:border-${filter.color}-500 disabled:opacity-50 appearance-none`}
-            >
-              {filter.options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt === 'all' ? `All ${filter.label}s` : opt}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Status */}
+        <div>
+          <label className="sr-only">Status</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            disabled={loading}
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+          >
+            <option value="all">All Statuses</option>
+            {filterOptions.statuses?.map((s) => (
+              <option key={s} value={s}>
+                {prettifyAll(s)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Province */}
+        <div>
+          <label className="sr-only">Province</label>
+          <select
+            value={provinceFilter}
+            onChange={(e) => setProvinceFilter(e.target.value)}
+            disabled={loading}
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+          >
+            <option value="all">All Provinces</option>
+            {filterOptions.provinces?.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Stand (shows names but value is id) */}
+        <div>
+          <label className="sr-only">Stand</label>
+          <select
+            value={standFilter}
+            onChange={(e) => setStandFilter(e.target.value)}
+            disabled={loading}
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm appearance-none"
+          >
+            <option value="all">All Stands</option>
+            {filterOptions.stands?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 mt-2 pointer-events-none" />
+        </div>
       </div>
 
-      {/* Active Filters */}
       {hasActiveFilters && (
-        <div className="mt-5 border-t border-gray-100 pt-3">
+        <div className="mt-4 border-t pt-3">
           <div className="flex items-center justify-between">
             <div className="flex flex-wrap gap-2">
               {searchTerm && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-blue-100 text-blue-700">
-                  <Search className="w-3 h-3 mr-1" />
-                  “{searchTerm}”
-                  <button
-                    onClick={() => setSearchValue('')}
-                    className="ml-1 hover:text-blue-800"
-                  >
+                <span className="inline-flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs">
+                  <Search className="w-3 h-3 mr-1" /> {searchTerm}
+                  <button onClick={() => setSearchTerm('')} className="ml-2">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
+
               {statusFilter !== 'all' && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-green-100 text-green-700">
-                  {getStatusIcon(statusFilter)}
-                  <span className="ml-1">{getStatusLabel(statusFilter)}</span>
-                  <button
-                    onClick={() => setStatusFilter('all')}
-                    className="ml-1 hover:text-green-800"
-                  >
+                <span className="inline-flex items-center bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs">
+                  {statusIcon(statusFilter)} <span className="ml-1">{statusFilter}</span>
+                  <button onClick={() => setStatusFilter('all')} className="ml-2">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
+
               {provinceFilter !== 'all' && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-indigo-100 text-indigo-700">
-                  {getProvinceIcon()}
-                  <span className="ml-1">{provinceFilter}</span>
-                  <button
-                    onClick={() => setProvinceFilter('all')}
-                    className="ml-1 hover:text-indigo-800"
-                  >
+                <span className="inline-flex items-center bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-xs">
+                  <MapPin className="w-3 h-3" /> <span className="ml-1">{provinceFilter}</span>
+                  <button onClick={() => setProvinceFilter('all')} className="ml-2">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
+
               {standFilter !== 'all' && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs bg-purple-100 text-purple-700">
-                  {getStandIcon()}
-                  <span className="ml-1">{standFilter}</span>
-                  <button
-                    onClick={() => setStandFilter('all')}
-                    className="ml-1 hover:text-purple-800"
-                  >
+                <span className="inline-flex items-center bg-purple-100 text-purple-700 px-2 py-1 rounded-md text-xs">
+                  <Building className="w-3 h-3" />
+                  <span className="ml-1">
+                    {filterOptions.stands?.find((s) => s.id === standFilter)?.name ?? standFilter}
+                  </span>
+                  <button onClick={() => setStandFilter('all')} className="ml-2">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
               )}
             </div>
-            <button
-              onClick={handleClearAll}
-              className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
-            >
+
+            <button onClick={() => { setSearchTerm(''); setStatusFilter('all'); setProvinceFilter('all'); setStandFilter('all'); onClearAll?.(); }} className="text-xs text-blue-600">
               Clear all
             </button>
           </div>
@@ -269,8 +213,8 @@ export default function TimekeeperAdvancedFilters({
       )}
 
       {loading && (
-        <div className="mt-3 flex items-center gap-2 text-sm text-blue-600">
-          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+        <div className="mt-3 text-sm text-gray-500 flex items-center gap-2">
+          <div className="animate-spin h-3 w-3 rounded-full border-b-2 border-blue-600"></div>
           Loading filter options...
         </div>
       )}
