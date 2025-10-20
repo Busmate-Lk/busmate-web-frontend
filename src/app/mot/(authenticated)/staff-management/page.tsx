@@ -9,6 +9,7 @@ import { TimekeeperStatsCards } from '@/components/mot/timekeepers/TimekeeperSta
 import { TimekeepersTable } from '@/components/mot/timekeepers/TimekeepersTable/page';
 import Pagination from '@/components/shared/Pagination';
 import { TimekeeperControllerService } from '@/lib/api-client/user-management/services/TimekeeperControllerService';
+import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService'; // added import
 
 interface TimekeeperResponse {
   id: string;
@@ -35,7 +36,7 @@ interface QueryParams {
 interface FilterOptions {
   statuses: Array<'active' | 'inactive'>;
   provinces: string[];
-  stands: string[];
+  stands: Array<{ id: string; name: string }>; // changed to objects with id + name
 }
 
 export default function TimekeepersPage() {
@@ -90,10 +91,13 @@ export default function TimekeepersPage() {
       setIsLoading(true);
       setError(null);
 
-      const response = await TimekeeperControllerService.getAllTimekeepers();
-      console.log('Timekeepers response:', response);
+      // fetch timekeepers and stops in parallel
+      const [tkResponse, stopsResp] = await Promise.all([
+        TimekeeperControllerService.getAllTimekeepers(),
+        BusStopManagementService.getAllStopsAsList().catch(() => []), // get all stops from DB
+      ]);
 
-      const normalized = (response || []).map((r: any) => ({
+      const normalized = (tkResponse || []).map((r: any) => ({
         id: r.id ?? r.timekeeperId ?? r._id ?? r.userId ?? '',
         fullname: r.fullname ?? r.name ?? '',
         phonenumber: r.phonenumber ?? r.phone ?? '',
@@ -106,7 +110,22 @@ export default function TimekeepersPage() {
         status: r.status ?? 'active',
       }));
 
-      setTimekeepers(normalized);
+      // build stop id -> name map from stops service
+      const stopsArray = (stopsResp || []) as any[];
+      const stopsMap: Record<string, string> = {};
+      const stopsList = stopsArray.map((s: any) => {
+        const id = s.id ?? s.stop_id ?? s._id ?? String(s);
+        const name = s.name ?? s.displayName ?? s.label ?? String(s);
+        stopsMap[id] = name;
+        return { id, name };
+      });
+
+      setTimekeepers(
+        normalized.map((t) => ({
+          ...t,
+          assign_stand_name: stopsMap[t.assign_stand] ?? t.assign_stand,
+        }))
+      );
 
       // Calculate statistics
       setStats({
@@ -124,7 +143,10 @@ export default function TimekeepersPage() {
 
       // Derive filter options
       const provinces = [...new Set(normalized.map((t) => t.province).filter(Boolean))];
-      const stands = [...new Set(normalized.map((t) => t.assign_stand).filter(Boolean))];
+
+      // use stopsList (from DB) as the stand filter options (id + friendly name)
+      const stands = stopsList;
+
       setFilterOptions((prev) => ({ ...prev, provinces, stands }));
     } catch (err) {
       console.error('Error loading timekeepers:', err);
@@ -317,4 +339,4 @@ export default function TimekeepersPage() {
       </div>
     </Layout>
   );
-}  
+}
