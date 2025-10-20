@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Layout } from '@/components/shared/layout';
 import { TimekeeperControllerService } from '@/lib/api-client/user-management/services/TimekeeperControllerService';
+import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
 import {
   Loader2,
   ArrowLeft,
@@ -13,31 +14,34 @@ import {
   IdCard,
   MapPin,
   Building,
-  Clock,
   CheckCircle,
   XCircle,
 } from 'lucide-react';
 
+// ---------------- Types ----------------
 interface TimekeeperDetails {
   id: string;
   fullname: string;
   phonenumber: string;
   email: string;
-  assign_stand: string;
+  assign_stand: string; // store stop ID
   nic: string;
   province: string;
   status?: string;
   createdAt?: string;
 }
 
+// ---------------- Page Component ----------------
 export default function TimekeeperDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
 
   const [timekeeper, setTimekeeper] = useState<TimekeeperDetails | null>(null);
+  const [standName, setStandName] = useState<string>(''); // resolved stand name
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ---------------- Fetch Data ----------------
   useEffect(() => {
     if (!id) return;
 
@@ -46,8 +50,9 @@ export default function TimekeeperDetailsPage() {
         setLoading(true);
         setError(null);
 
+        // Fetch timekeeper details
         const response = await TimekeeperControllerService.getTimekeeperById(id as string);
-        if (!response) throw new Error('Timekeeper not found.');
+        if (!response) throw new Error('Timekeeper not found');
 
         const normalized: TimekeeperDetails = {
           id: response.id ?? response.timekeeperId ?? response.userId ?? '',
@@ -58,12 +63,22 @@ export default function TimekeeperDetailsPage() {
           nic: response.nic ?? '',
           province: response.province ?? '',
           status: response.status ?? 'active',
-          createdAt: response.createdAt ?? response.created_at ?? '',
         };
 
         setTimekeeper(normalized);
+
+        // Fetch assigned stand name
+        if (normalized.assign_stand) {
+          try {
+            const stop = await BusStopManagementService.getStopById(normalized.assign_stand);
+            setStandName(stop.name || 'Unknown Stand');
+          } catch (stopErr) {
+            console.warn('Could not fetch stand name:', stopErr);
+            setStandName('Unknown Stand');
+          }
+        }
       } catch (err) {
-        console.error('❌ Error fetching timekeeper:', err);
+        console.error('Error fetching timekeeper:', err);
         setError('Failed to load timekeeper details.');
       } finally {
         setLoading(false);
@@ -73,7 +88,7 @@ export default function TimekeeperDetailsPage() {
     fetchTimekeeper();
   }, [id]);
 
-  // Loading UI
+  // ---------------- Loading State ----------------
   if (loading) {
     return (
       <Layout activeItem="timekeepers" pageTitle="Loading...">
@@ -85,7 +100,7 @@ export default function TimekeeperDetailsPage() {
     );
   }
 
-  // Error or Not Found UI
+  // ---------------- Error State ----------------
   if (error || !timekeeper) {
     return (
       <Layout activeItem="timekeepers" pageTitle="Error">
@@ -103,7 +118,7 @@ export default function TimekeeperDetailsPage() {
     );
   }
 
-  // Main UI
+  // ---------------- Main UI ----------------
   return (
     <Layout
       activeItem="timekeepers"
@@ -120,7 +135,7 @@ export default function TimekeeperDetailsPage() {
           <ArrowLeft className="w-4 h-4 mr-1" /> Back to Timekeepers
         </button>
 
-        {/* Profile Section */}
+        {/* Profile Header */}
         <div className="flex flex-col sm:flex-row items-center gap-6 border-b pb-6">
           <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold">
             {timekeeper.fullname.charAt(0).toUpperCase()}
@@ -153,8 +168,7 @@ export default function TimekeeperDetailsPage() {
           <Info label="Email" icon={<Mail />} value={timekeeper.email} />
           <Info label="NIC" icon={<IdCard />} value={timekeeper.nic} />
           <Info label="Province" icon={<MapPin />} value={timekeeper.province} />
-          <Info label="Assigned Stand" icon={<Building />} value={timekeeper.assign_stand} />
-          
+          <Info label="Assigned Stand" icon={<Building />} value={standName || 'Unknown'} />
         </div>
 
         {/* Action Buttons */}
@@ -171,7 +185,7 @@ export default function TimekeeperDetailsPage() {
   );
 }
 
-// 🧱 Reusable info block
+// ---------------- Reusable Info Component ----------------
 function Info({
   label,
   value,
