@@ -96,6 +96,11 @@ export default function TimeKeeperTripsPage() {
   );
   const [userId, setUserId] = useState<string>('');
 
+  // Cache for route data to avoid repeated API calls
+  const [routeCache, setRouteCache] = useState<Map<string, RouteResponse>>(
+    new Map()
+  );
+
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all');
   const [routeFilter, setRouteFilter] = useState('all');
@@ -155,13 +160,69 @@ export default function TimeKeeperTripsPage() {
   const [tripForBusReassignment, setTripForBusReassignment] =
     useState<TripResponse | null>(null);
 
+  // Helper function to batch load routes and cache them
+  const loadRoutesInBatch = useCallback(
+    async (routeIds: string[]): Promise<Map<string, RouteResponse>> => {
+      const uniqueRouteIds = [...new Set(routeIds)].filter(
+        (id) => id && !routeCache.has(id)
+      );
+
+      if (uniqueRouteIds.length === 0) {
+        return routeCache;
+      }
+
+      console.log(`Loading ${uniqueRouteIds.length} unique routes...`);
+
+      // Load routes in parallel batches to avoid overwhelming the server
+      const BATCH_SIZE = 10;
+      const newRoutes = new Map<string, RouteResponse>(routeCache);
+
+      for (let i = 0; i < uniqueRouteIds.length; i += BATCH_SIZE) {
+        const batch = uniqueRouteIds.slice(i, i + BATCH_SIZE);
+        const routePromises = batch.map(async (routeId) => {
+          try {
+            const route = await RouteManagementService.getRouteById(routeId);
+            return { routeId, route };
+          } catch (err) {
+            console.error(`Failed to load route ${routeId}:`, err);
+            return null;
+          }
+        });
+
+        const results = await Promise.all(routePromises);
+        results.forEach((result) => {
+          if (result) {
+            newRoutes.set(result.routeId, result.route);
+          }
+        });
+      }
+
+      setRouteCache(newRoutes);
+      return newRoutes;
+    },
+    [routeCache]
+  );
+
+  // Helper function to check if a route passes through assigned bus stop
+  const routePassesThroughStop = useCallback(
+    (route: RouteResponse, busStopId: string): boolean => {
+      return (
+        route.startStopId === busStopId ||
+        route.endStopId === busStopId ||
+        route.routeStops?.some((stop) => stop.stopId === busStopId) ||
+        false
+      );
+    },
+    []
+  );
+
   // Helper function to check if a trip starts at the assigned bus stop
   const tripStartsAtAssignedStop = useCallback(
     (trip: TripResponse): boolean => {
       // Check the pre-computed set
       return tripsStartingAtStop.has(trip.id || '');
     },
-    [assignedBusStopId]
+    [tripsStartingAtStop]
   );
 
   // Load timekeeper's assigned bus stop
@@ -270,7 +331,7 @@ export default function TimeKeeperTripsPage() {
         return;
       }
 
-      // Get all trips and filter by assigned bus stop
+      // Get all trips
       const allTripsResponse = await TripManagementService.getAllTrips(
         0,
         1000, // Get a large number to calculate accurate statistics
@@ -280,32 +341,24 @@ export default function TimeKeeperTripsPage() {
 
       const allTrips = allTripsResponse.content || [];
 
+      // Extract unique route IDs
+      const routeIds = allTrips
+        .map((trip) => trip.routeId)
+        .filter((id): id is string => !!id);
+
+      // Batch load all routes at once
+      const routes = await loadRoutesInBatch(routeIds);
+
       // Filter trips that pass through the assigned bus stop
-      const filteredTripsPromises = allTrips.map(async (trip) => {
-        try {
-          if (!trip.routeId) {
-            return null;
-          }
-
-          const route = await RouteManagementService.getRouteById(trip.routeId);
-
-          const hasStop =
-            route.startStopId === assignedBusStopId ||
-            route.endStopId === assignedBusStopId ||
-            route.routeStops?.some((stop) => stop.stopId === assignedBusStopId);
-           
-          return hasStop ? trip : null;
-        } catch (err) {
-          console.error('Failed to check route for trip:', trip.id, err);
-          return null;
-        }
+      const validTrips = allTrips.filter((trip) => {
+        if (!trip.routeId) return false;
+        const route = routes.get(trip.routeId);
+        return route ? routePassesThroughStop(route, assignedBusStopId) : false;
       });
 
-      const resolvedTrips = await Promise.all(filteredTripsPromises);
-      const validTrips = resolvedTrips.filter(
-        (trip): trip is TripResponse => trip !== null
+      console.log(
+        `Statistics: ${validTrips.length} trips pass through ${assignedBusStopName}`
       );
-      console.log(validTrips);
 
       // Calculate statistics from filtered trips
       const totalTrips = validTrips.length;
@@ -345,12 +398,18 @@ export default function TimeKeeperTripsPage() {
     } catch (err) {
       console.error('Failed to load statistics:', err);
     }
-  }, [assignedBusStopId]);
+  }, [
+    assignedBusStopId,
+    assignedBusStopName,
+    loadRoutesInBatch,
+    routePassesThroughStop,
+  ]);
 
   // Load trips from API (filtered by bus stop)
   const loadTrips = useCallback(async () => {
     try {
       setError(null);
+      setIsLoading(true);
 
       // If no assigned bus stop yet, don't load trips
       if (!assignedBusStopId) {
@@ -358,7 +417,10 @@ export default function TimeKeeperTripsPage() {
         return;
       }
 
+      console.time('Load Trips Total');
+
       // Get all trips with the current filters
+      console.time('Fetch Trips API');
       const response: PageTripResponse =
         await TripManagementService.getAllTrips(
           0, // Get from first page
@@ -379,56 +441,45 @@ export default function TimeKeeperTripsPage() {
           queryParams.hasDriver,
           queryParams.hasConductor
         );
+      console.timeEnd('Fetch Trips API');
 
       const allTrips = response.content || [];
 
+      // Extract unique route IDs and batch load all routes
+      console.time('Load Routes Batch');
+      const routeIds = allTrips
+        .map((trip) => trip.routeId)
+        .filter((id): id is string => !!id);
+
+      const routes = await loadRoutesInBatch(routeIds);
+      console.timeEnd('Load Routes Batch');
+
       // Filter trips that pass through the assigned bus stop
-      const filteredTripsPromises = allTrips.map(async (trip) => {
-        try {
-          if (!trip.routeId) {
-            return null;
-          }
-
-          const route = await RouteManagementService.getRouteById(trip.routeId);
-
-          const hasStop =
-            route.startStopId === assignedBusStopId ||
-            route.endStopId === assignedBusStopId ||
-            route.routeStops?.some((stop) => stop.stopId === assignedBusStopId);
-
-          return hasStop ? trip : null;
-        } catch (err) {
-          console.error('Failed to check route for trip:', trip.id, err);
-          return null;
-        }
+      console.time('Filter Trips');
+      const validTrips = allTrips.filter((trip) => {
+        if (!trip.routeId) return false;
+        const route = routes.get(trip.routeId);
+        return route ? routePassesThroughStop(route, assignedBusStopId) : false;
       });
+      console.timeEnd('Filter Trips');
 
-      const resolvedTrips = await Promise.all(filteredTripsPromises);
-      const validTrips = resolvedTrips.filter(
-        (trip): trip is TripResponse => trip !== null
+      console.log(
+        `Loaded ${validTrips.length} trips passing through ${assignedBusStopName}`
       );
 
       // Determine which trips start at the assigned stop (for bus management)
+      console.time('Identify Starting Trips');
       const tripsStartingSet = new Set<string>();
-      for (const trip of validTrips) {
-        try {
-          if (trip.routeId) {
-            const route = await RouteManagementService.getRouteById(
-              trip.routeId
-            );
-            if (route.startStopId === assignedBusStopId) {
-              tripsStartingSet.add(trip.id || '');
-            }
+      validTrips.forEach((trip) => {
+        if (trip.routeId) {
+          const route = routes.get(trip.routeId);
+          if (route && route.startStopId === assignedBusStopId) {
+            tripsStartingSet.add(trip.id || '');
           }
-        } catch (err) {
-          console.error(
-            'Failed to check if trip starts at stop:',
-            trip.id,
-            err
-          );
         }
-      }
+      });
       setTripsStartingAtStop(tripsStartingSet);
+      console.timeEnd('Identify Starting Trips');
 
       // Apply client-side pagination
       const startIndex = queryParams.page * queryParams.size;
@@ -442,13 +493,21 @@ export default function TimeKeeperTripsPage() {
         totalElements: validTrips.length,
         pageSize: queryParams.size,
       });
+
+      console.timeEnd('Load Trips Total');
     } catch (err: any) {
       setError(err?.message || 'Failed to load trips');
       console.error('Failed to load trips:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [queryParams, assignedBusStopId]);
+  }, [
+    queryParams,
+    assignedBusStopId,
+    assignedBusStopName,
+    loadRoutesInBatch,
+    routePassesThroughStop,
+  ]);
 
   useEffect(() => {
     loadFilterOptions();
