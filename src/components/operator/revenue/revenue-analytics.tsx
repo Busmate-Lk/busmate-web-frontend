@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Filter, Download, Calendar, Bus, TrendingUp, DollarSign, Users } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Filter, Download, Calendar, Bus, TrendingUp, DollarSign, Users, RefreshCw } from "lucide-react"
 import { MetricCard } from "@/components/operator/metric-card"
 import { RevenueChart } from "./revenue-chart"
+import { RevenueService, type BusRevenueData } from "@/lib/services/revenueService"
+import { useAuth } from "@/context/AuthContext"
 
 interface RevenueData {
   id: string
@@ -19,14 +21,61 @@ interface RevenueData {
   averageTicketPrice: number
 }
 
+// Mock operator ID - in production, get this from auth context
+const MOCK_OPERATOR_ID = "a3d63f60-91b7-4a18-9a42-5b44e80f8d9e";
+
 export function RevenueAnalytics() {
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedBus, setSelectedBus] = useState("all")
   const [dateRange, setDateRange] = useState("today")
   const [viewType, setViewType] = useState("bus") // bus, day, trip
+  const [loading, setLoading] = useState(true)
+  const [busRevenueData, setBusRevenueData] = useState<BusRevenueData[]>([])
+  const [paymentStatusData, setPaymentStatusData] = useState({ paid: 0, pending: 0, failed: 0 })
 
-  // Sample revenue data
-  const revenueData: RevenueData[] = [
+  // Fetch revenue data from backend
+  useEffect(() => {
+    loadRevenueData()
+  }, [user])
+
+  const loadRevenueData = async () => {
+    try {
+      setLoading(true)
+      // Use mock operator ID for now since user object doesn't have operatorId
+      const operatorId = MOCK_OPERATOR_ID
+
+      // Fetch bus revenue data
+      const busRevenue = await RevenueService.getOperatorBusRevenue(operatorId)
+      setBusRevenueData(busRevenue)
+
+      // Fetch payment status data
+      const paymentData = await RevenueService.getRevenueByPaymentStatus(operatorId)
+      setPaymentStatusData(paymentData)
+    } catch (error) {
+      console.error('Error loading revenue data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Convert backend data to display format
+  const revenueData: RevenueData[] = busRevenueData.map((bus) => ({
+    id: bus.busId,
+    busNumber: bus.busNumber,
+    busName: bus.busName || 'N/A',
+    route: bus.route || 'N/A',
+    driver: 'N/A', // Not available from ticketing API
+    conductor: 'N/A', // Not available from ticketing API
+    date: new Date().toISOString().split('T')[0],
+    totalTrips: bus.totalTrips,
+    ticketsIssued: bus.ticketsIssued,
+    revenue: bus.revenue,
+    averageTicketPrice: bus.averageTicketPrice
+  }))
+
+  // Sample revenue data (fallback for testing)
+  const sampleRevenueData: RevenueData[] = [
     {
       id: "1",
       busNumber: "ND 4536",
@@ -94,10 +143,13 @@ export function RevenueAnalytics() {
     }
   ]
 
-  const filteredData = revenueData.filter(item => {
+  // Use real data if available, fallback to sample data
+  const displayData = busRevenueData.length > 0 ? revenueData : sampleRevenueData
+
+  const filteredData = displayData.filter(item => {
     const matchesSearch = item.busNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.busName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.route.toLowerCase().includes(searchQuery.toLowerCase())
+      item.busName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.route.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesBus = selectedBus === "all" || item.busNumber === selectedBus
     return matchesSearch && matchesBus
   })
@@ -107,10 +159,20 @@ export function RevenueAnalytics() {
   const totalTrips = filteredData.reduce((sum, item) => sum + item.totalTrips, 0)
   const averageRevenue = filteredData.length > 0 ? totalRevenue / filteredData.length : 0
 
-  const uniqueBuses = Array.from(new Set(revenueData.map(item => item.busNumber)))
+  const uniqueBuses = Array.from(new Set(displayData.map(item => item.busNumber)))
 
   return (
     <div className="space-y-6">
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+            <span className="text-blue-800">Loading revenue data...</span>
+          </div>
+        </div>
+      )}
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
@@ -174,7 +236,7 @@ export function RevenueAnalytics() {
               />
             </div>
           </div>
-          
+
           <div className="flex gap-4">
             <select
               value={selectedBus}
@@ -209,6 +271,15 @@ export function RevenueAnalytics() {
               <option value="trip">Trip Wise</option>
             </select>
 
+            <button
+              onClick={loadRevenueData}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+
             <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
               <Download className="w-4 h-4" />
               Export
@@ -228,20 +299,24 @@ export function RevenueAnalytics() {
           }))}
         />
         <RevenueChart
-          title="Revenue by Route"
-          data={filteredData.reduce((acc, item) => {
-            const existingRoute = acc.find(r => r.label === item.route);
-            if (existingRoute) {
-              existingRoute.value += item.revenue;
-            } else {
-              acc.push({
-                label: item.route,
-                value: item.revenue,
-                color: "#10B981"
-              });
+          title="Revenue by Payment Status"
+          data={[
+            {
+              label: "Paid",
+              value: paymentStatusData.paid,
+              color: "#10B981" // green
+            },
+            {
+              label: "Pending",
+              value: paymentStatusData.pending,
+              color: "#F59E0B" // orange
+            },
+            {
+              label: "Failed",
+              value: paymentStatusData.failed,
+              color: "#EF4444" // red
             }
-            return acc;
-          }, [] as Array<{ label: string; value: number; color: string }>)}
+          ].filter(item => item.value > 0)}
         />
       </div>
 
@@ -251,7 +326,7 @@ export function RevenueAnalytics() {
           <h3 className="text-lg font-semibold text-gray-900">Revenue Details - {viewType.charAt(0).toUpperCase() + viewType.slice(1)} View</h3>
           <span className="text-sm text-gray-500">Showing {filteredData.length} {filteredData.length === 1 ? 'result' : 'results'}</span>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
