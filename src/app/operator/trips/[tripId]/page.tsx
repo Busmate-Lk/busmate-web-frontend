@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Header } from '@/components/operator/header';
 import { TripManagementService } from '@/lib/api-client/route-management/services/TripManagementService';
 import { RouteManagementService } from '@/lib/api-client/route-management/services/RouteManagementService';
@@ -238,15 +239,20 @@ export default function OperatorTripDetailsPage() {
 
             <div className="container mx-auto px-4 py-6">
                 <div className="space-y-6">
-                    {/* Header with back button */}
-                    <div className="flex items-center justify-between">
-                        <button
-                            onClick={handleBack}
-                            className="flex items-center text-gray-600 hover:text-gray-900"
+                    {/* Back Button */}
+                    <div className="mb-4">
+                        <Link
+                            href="/operator/trips"
+                            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
                         >
-                            <ArrowLeft className="h-5 w-5 mr-2" />
+                            <ArrowLeft className="w-4 h-4 mr-2" />
                             Back to Trips
-                        </button>
+                        </Link>
+                    </div>
+
+                    {/* Header with refresh button */}
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-gray-900">Trip Details</h2>
                         <button
                             onClick={handleRefresh}
                             className="flex items-center px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"

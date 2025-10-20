@@ -3,9 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/operator/ui/card";
 import { Badge } from "@/components/operator/ui/badge";
 import { Button } from "@/components/operator/ui/button";
-import { 
-  AlertTriangle, 
-  Info, 
+import {
+  AlertTriangle,
+  Info,
   CheckCircle,
   X,
   ExternalLink,
@@ -65,7 +65,7 @@ export function LiveAlerts({ alerts, onResolveAlert }: LiveAlertsProps) {
     const now = new Date();
     const alertTime = new Date(timestamp);
     const diffInMinutes = Math.floor((now.getTime() - alertTime.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     const diffInHours = Math.floor(diffInMinutes / 60);
@@ -75,7 +75,7 @@ export function LiveAlerts({ alerts, onResolveAlert }: LiveAlertsProps) {
   };
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card className="bg-white shadow-sm border-gray-200">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-xl font-semibold text-gray-900 flex items-center">
@@ -89,7 +89,7 @@ export function LiveAlerts({ alerts, onResolveAlert }: LiveAlertsProps) {
           </CardTitle>
           <p className="text-sm text-gray-600 mt-1">Real-time system alerts and notifications</p>
         </div>
-        <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
+        <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-700 border-gray-300">
           View All
         </Button>
       </CardHeader>
@@ -113,7 +113,7 @@ export function LiveAlerts({ alerts, onResolveAlert }: LiveAlertsProps) {
                     const config = alertTypeConfig[alert.type];
                     const AlertIcon = config.icon;
                     const priorityClass = priorityConfig[alert.priority];
-                    
+
                     return (
                       <div
                         key={alert.id}
@@ -147,24 +147,24 @@ export function LiveAlerts({ alerts, onResolveAlert }: LiveAlertsProps) {
                                 )}
                               </div>
                             </div>
-                            
+
                             <p className="text-sm text-gray-700 mb-3">
                               {alert.message}
                             </p>
-                            
+
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3 text-xs text-gray-500">
                                 {alert.busId && (
-                                  <span className="bg-white px-2 py-1 rounded border">
+                                  <span className="bg-white px-2 py-1 rounded border border-gray-300">
                                     Bus: {alert.busId}
                                   </span>
                                 )}
                                 <span>{formatTimeAgo(alert.timestamp)}</span>
                               </div>
-                              
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="text-blue-600 hover:text-blue-700 p-2"
                               >
                                 <ExternalLink className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function LiveAlerts({ alerts, onResolveAlert }: LiveAlertsProps) {
                   {resolvedAlerts.slice(0, 3).map((alert) => {
                     const config = alertTypeConfig[alert.type];
                     const AlertIcon = config.icon;
-                    
+
                     return (
                       <div
                         key={alert.id}

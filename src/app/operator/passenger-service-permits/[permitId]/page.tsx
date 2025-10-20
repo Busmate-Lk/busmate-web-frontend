@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import {
     ArrowLeft,
     ChevronRight,
@@ -207,12 +208,23 @@ export default function OperatorPermitDetailsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-                    <Header
-                        pageTitle="Permit Details"
-                        pageDescription="View detailed information about your passenger service permit, including route coverage, fleet assignment, and compliance status"
-                    />
+            <Header
+                pageTitle="Permit Details"
+                pageDescription="View detailed information about your passenger service permit, including route coverage, fleet assignment, and compliance status"
+            />
             <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div className="space-y-6">
+                    {/* Back Button */}
+                    <div className="mb-4">
+                        <Link
+                            href="/operator/passenger-service-permits"
+                            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+                        >
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back to Service Permits
+                        </Link>
+                    </div>
+
                     {/* Error Alert */}
                     {error && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -257,13 +269,6 @@ export default function OperatorPermitDetailsPage() {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-3 flex-wrap">
-                            <button
-                                onClick={handleBack}
-                                className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                                Back
-                            </button>
                             <button
                                 onClick={handleRefresh}
                                 className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"

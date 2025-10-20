@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, RotateCcw, Trash2, User, X } from "lucide-react"
+import { Eye, Trash2, User, X, Phone, CreditCard, MapPin, CheckCircle, Clock } from "lucide-react"
 
 interface StaffMember {
   id: string
@@ -30,15 +30,23 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
   const [showModal, setShowModal] = useState(false)
 
   const getRoleColor = (role: string) => {
-    return role === "Driver" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+    return role === "Driver" ? "bg-green-100 text-green-800 border-green-200" : "bg-blue-100 text-blue-800 border-blue-200"
   }
 
   const getProfileIconColor = (role: string) => {
-    return role === "Driver" ? "bg-green-100 text-green-600" : "bg-purple-100 text-purple-600"
+    return role === "Driver" ? "bg-green-100" : "bg-purple-100"
+  }
+
+  const getProfileIconTextColor = (role: string) => {
+    return role === "Driver" ? "text-green-600" : "text-purple-600"
+  }
+
+  const getStatusIcon = (status: string) => {
+    return status === "Assigned" ? <Clock className="w-4 h-4 text-yellow-600" /> : <CheckCircle className="w-4 h-4 text-green-600" />
   }
 
   const getStatusColor = (status: string) => {
-    return status === "Assigned" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"
+    return status === "Assigned" ? "bg-yellow-100 text-yellow-800 border-yellow-200" : "bg-green-100 text-green-800 border-green-200"
   }
 
   const handleViewStaff = (staff: StaffMember) => {
@@ -57,67 +65,96 @@ export function StaffTable({ staff, currentPage, totalStaff, onPageChange, onEdi
 
   return (
     <div>
-      <div className="relative w-full overflow-auto">
-        <table className="w-full caption-bottom text-sm">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">Staff</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">Role</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">NIC</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">Phone</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">Address</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">Assigned Bus</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">Status</th>
-              <th className="h-12 px-4 text-left align-middle font-medium text-gray-700">Actions</th>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Staff Member
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Role
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Contact Info
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Assignment
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-white divide-y divide-gray-200">
             {staff.map((member) => (
-              <tr key={member.id} className="transition-colors hover:bg-gray-50">
-                <td className="p-4 align-middle">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getProfileIconColor(member.role)}`}>
-                      <User className="w-5 h-5" />
+              <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 h-8 w-8">
+                      <div className={`h-8 w-8 rounded-lg ${getProfileIconColor(member.role)} flex items-center justify-center`}>
+                        <User className={`h-4 w-4 ${getProfileIconTextColor(member.role)}`} />
+                      </div>
                     </div>
-                    <span className="font-medium text-gray-900">{member.name}</span>
+                    <div className="ml-3">
+                      <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                      <div className="text-sm text-gray-500 flex items-center">
+                        <CreditCard className="h-3 w-3 mr-1" />
+                        {member.nic}
+                      </div>
+                    </div>
                   </div>
                 </td>
-                <td className="p-4 align-middle">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getRoleColor(member.role)}`}
-                  >
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(member.role)}`}>
                     {member.role}
                   </span>
                 </td>
-                <td className="p-4 align-middle text-gray-900">{member.nic}</td>
-                <td className="p-4 align-middle text-gray-900">{member.phone}</td>
-                <td className="p-4 align-middle text-gray-900">{member.address}</td>
-                <td className="p-4 align-middle text-gray-900">{member.assignment}</td>
-                <td className="p-4 align-middle">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusColor(member.status)}`}
-                  >
-                    {member.status}
-                  </span>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    <div className="flex items-center mb-1">
+                      <Phone className="h-3 w-3 text-gray-400 mr-2" />
+                      {member.phone}
+                    </div>
+                    {member.address && (
+                      <div className="flex items-center text-gray-500">
+                        <MapPin className="h-3 w-3 text-gray-400 mr-2" />
+                        {member.address}
+                      </div>
+                    )}
+                  </div>
                 </td>
-                <td className="p-4 align-middle">
-                  <div className="flex items-center gap-2">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {member.assignment || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    {getStatusIcon(member.status)}
+                    <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(member.status)}`}>
+                      {member.status}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex items-center justify-end space-x-2">
                     <button
-                      className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
                       onClick={() => handleViewStaff(member)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                       title="View details"
                     >
-                      <Eye className="w-4 h-4 text-blue-600" />
+                      <Eye className="h-3 w-3" />
+                      View
                     </button>
-                    {/* <button className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors">
-                      <RotateCcw className="w-4 h-4 text-green-600" />
-                    </button> */}
                     <button
-                      className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
                       onClick={() => onDelete?.(member.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                       title={`Delete ${member.role.toLowerCase()}`}
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="h-3 w-3" />
+                      Delete
                     </button>
                   </div>
                 </td>

@@ -311,8 +311,10 @@ export default function StaffManagement() {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Staff Table */}
+          {/* Staff Table */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
             <StaffTable
               staff={filteredStaff}
               currentPage={currentPage}

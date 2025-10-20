@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/admin/ui/card"
 import { Badge } from "@/components/admin/ui/badge"
-import { Button } from "@/components/admin/ui/button"
-import { ArrowLeft, Bell, Calendar, Tag, Users, MapPin } from "lucide-react"
+import { ArrowLeft, Clock, AlertTriangle, Info, CheckCircle, Calendar } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { getNotificationDetails, type NotificationDetails } from "@/lib/services/notificationService"
 
@@ -16,173 +15,158 @@ export function NotificationDetail({ notificationId }: NotificationDetailProps) 
     const router = useRouter()
     const [notification, setNotification] = useState<NotificationDetails | null>(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        const fetchNotification = async () => {
-            try {
-                setLoading(true)
-                const data = await getNotificationDetails(notificationId)
-                setNotification(data)
-            } catch (error) {
-                console.error("Failed to fetch notification:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchNotification()
+        let mounted = true
+            ; (async () => {
+                try {
+                    setLoading(true)
+                    const data = await getNotificationDetails(notificationId)
+                    if (mounted) setNotification(data)
+                } catch (e: any) {
+                    if (mounted) setError(e?.message || 'Failed to load notification')
+                } finally {
+                    if (mounted) setLoading(false)
+                }
+            })()
+        return () => { mounted = false }
     }, [notificationId])
-
-    const getMessageTypeBadge = (type: string) => {
-        const typeMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-            info: { label: "Info", variant: "default" },
-            warning: { label: "Warning", variant: "secondary" },
-            critical: { label: "Critical", variant: "destructive" },
-            maintenance: { label: "Maintenance", variant: "outline" },
-        }
-        const config = typeMap[type?.toLowerCase()] || { label: type || "Unknown", variant: "outline" as const }
-        return <Badge variant={config.variant} className="text-sm">{config.label}</Badge>
-    }
-
-    const getTargetAudienceBadge = (audience: string) => {
-        const audienceMap: Record<string, string> = {
-            all: "All Users",
-            passengers: "Passengers",
-            conductors: "Conductors",
-            mot_officers: "MOT Officers",
-            fleet_operators: "Fleet Operators",
-        }
-        return <Badge variant="outline" className="text-sm">{audienceMap[audience?.toLowerCase()] || audience || "Unknown"}</Badge>
-    }
-
-    const formatDate = (dateString?: string) => {
-        if (!dateString) return "N/A"
-        return new Date(dateString).toLocaleString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        })
-    }
 
     if (loading) {
         return (
-            <div className="p-6 flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <div className="p-6 text-center py-12">Loading...</div>
         )
     }
 
-    if (!notification) {
+    if (error || !notification) {
         return (
-            <div className="p-6">
-                <div className="text-center py-12">
-                    <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">Notification not found</p>
-                    <Button
-                        onClick={() => router.push("/operator/notifications/received")}
-                        className="mt-4"
+            <div className="p-6 max-w-4xl mx-auto">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-2">Notification Not Found</h2>
+                    <p className="text-gray-600 mb-6">{error || "The notification you're looking for doesn't exist or has been removed."}</p>
+                    <Link
+                        href="/operator/notifications/received"
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Notifications
-                    </Button>
+                    </Link>
                 </div>
             </div>
         )
     }
 
-    const sentTime = formatDate(notification.createdAt)
+    const getNotificationIcon = (type: string) => {
+        switch (type) {
+            case "error":
+            case "critical":
+                return <AlertTriangle className="h-6 w-6 text-red-600" />
+            case "warning":
+                return <AlertTriangle className="h-6 w-6 text-yellow-600" />
+            case "success":
+                return <CheckCircle className="h-6 w-6 text-green-600" />
+            default:
+                return <Info className="h-6 w-6 text-blue-600" />
+        }
+    }
+
+    const getNotificationBadge = (type: string) => {
+        switch (type) {
+            case "error":
+            case "critical":
+                return "bg-red-100 text-red-800"
+            case "warning":
+                return "bg-yellow-100 text-yellow-800"
+            case "success":
+                return "bg-green-100 text-green-800"
+            case "info":
+                return "bg-blue-100 text-blue-800"
+            default:
+                return "bg-gray-100 text-gray-800"
+        }
+    }
+
+    const sentTime = notification?.createdAt || ''
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="ghost"
-                    onClick={() => router.push("/operator/notifications/received")}
-                    className="flex items-center gap-2"
+        <div className="p-6 max-w-4xl mx-auto">
+            {/* Back Button */}
+            <div className="mb-6">
+                <Link
+                    href="/operator/notifications/received"
+                    className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
                 >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
-                </Button>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Notifications
+                </Link>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <div className="flex items-start justify-between">
+            {/* Notification Detail Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="p-6">
+                    {/* Title and Icon */}
+                    <div className="flex items-start space-x-4 mb-6">
+                        <div className="flex-shrink-0 mt-1">
+                            {getNotificationIcon(notification.messageType)}
+                        </div>
                         <div className="flex-1">
-                            <CardTitle className="text-2xl mb-2">{notification.title}</CardTitle>
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                {getMessageTypeBadge(notification.messageType || '')}
-                                {getTargetAudienceBadge(notification.targetAudience || '')}
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{notification.title}</h1>
+                                    <div className="flex items-center space-x-3 mb-4">
+                                        <Badge className={getNotificationBadge(notification.messageType)}>
+                                            {notification.messageType.charAt(0).toUpperCase() + notification.messageType.slice(1)}
+                                        </Badge>
+                                        {notification.targetAudience && (
+                                            <Badge variant="outline" className="border-gray-300">
+                                                {notification.targetAudience}
+                                            </Badge>
+                                        )}
+                                        {notification.subject && (
+                                            <Badge variant="outline" className="border-gray-300">
+                                                {notification.subject}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {/* Message Subject */}
-                    {notification.subject && (
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                <Tag className="h-4 w-4" />
-                                Subject
-                            </h3>
-                            <p className="text-gray-900 font-medium">{notification.subject}</p>
-                        </div>
-                    )}
 
-                    {/* Message Body */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <Bell className="h-4 w-4" />
-                            Message
-                        </h3>
+                    {/* Message Content */}
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Message</h3>
                         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <p className="text-gray-800 whitespace-pre-wrap">{notification.body}</p>
+                            <p className="text-gray-700 leading-relaxed">
+                                {notification.body}
+                            </p>
                         </div>
                     </div>
 
-                    {/* Location Information */}
-                    {(notification.province || notification.city || notification.route) && (
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                Location Details
-                            </h3>
-                            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 space-y-2">
-                                {notification.province && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-gray-700">Province:</span>
-                                        <span className="text-sm text-gray-900">{notification.province}</span>
-                                    </div>
-                                )}
-                                {notification.city && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-gray-700">City:</span>
-                                        <span className="text-sm text-gray-900">{notification.city}</span>
-                                    </div>
-                                )}
-                                {notification.route && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-gray-700">Route:</span>
-                                        <span className="text-sm text-gray-900">{notification.route}</span>
-                                    </div>
-                                )}
+                    {/* Metadata */}
+                    <div className="border-t border-gray-200 pt-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <Calendar className="h-5 w-5 text-gray-500" />
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900">Date & Time</p>
+                                    <p className="text-sm text-gray-600">{sentTime}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <Clock className="h-5 w-5 text-gray-500" />
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900">Received</p>
+                                    <p className="text-sm text-gray-600">{sentTime}</p>
+                                </div>
                             </div>
                         </div>
-                    )}
-
-                    {/* Date and Time */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Received Date & Time
-                        </h3>
-                        <p className="text-gray-600">{sentTime}</p>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     )
 }

@@ -45,7 +45,7 @@ export function MetricCard({
   }
 
   return (
-    <div className={`bg-white rounded-lg border-l-4 ${borderColor} shadow-sm hover:shadow-md transition-shadow`}>
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="p-2 bg-gray-50 rounded-lg">{icon}</div>

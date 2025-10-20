@@ -48,7 +48,7 @@ export function DashboardCharts({
   fuelConsumptionData,
   onTimePerformanceData
 }: DashboardChartsProps) {
-  
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -116,7 +116,7 @@ export function DashboardCharts({
         bodyColor: 'white',
         cornerRadius: 8,
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
             const percentage = ((context.parsed / total) * 100).toFixed(1);
             return `${context.label}: ${context.parsed} (${percentage}%)`;
@@ -129,7 +129,7 @@ export function DashboardCharts({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       {/* Revenue Trends */}
-      <Card className="lg:col-span-2 bg-white shadow-sm">
+      <Card className="lg:col-span-2 bg-white shadow-sm border-gray-200">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-lg font-semibold text-gray-900">Revenue Trends</CardTitle>
@@ -152,7 +152,7 @@ export function DashboardCharts({
       </Card>
 
       {/* Fleet Utilization */}
-      <Card className="bg-white shadow-sm">
+      <Card className="bg-white shadow-sm border-gray-200">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-gray-900">Fleet Status</CardTitle>
           <p className="text-sm text-gray-600">Current fleet distribution</p>
@@ -165,7 +165,7 @@ export function DashboardCharts({
       </Card>
 
       {/* Trip Analytics */}
-      <Card className="bg-white shadow-sm">
+      <Card className="bg-white shadow-sm border-gray-200">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-gray-900">Trip Analytics</CardTitle>
           <p className="text-sm text-gray-600">Weekly trip completion vs cancellation</p>
@@ -178,7 +178,7 @@ export function DashboardCharts({
       </Card>
 
       {/* On-Time Performance */}
-      <Card className="bg-white shadow-sm">
+      <Card className="bg-white shadow-sm border-gray-200">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-gray-900">On-Time Performance</CardTitle>
           <p className="text-sm text-gray-600">Performance by route</p>
@@ -194,7 +194,7 @@ export function DashboardCharts({
                   max: 100,
                   ticks: {
                     ...chartOptions.scales.y.ticks,
-                    callback: function(value: any) {
+                    callback: function (value: any) {
                       return value + '%';
                     }
                   }
@@ -206,7 +206,7 @@ export function DashboardCharts({
       </Card>
 
       {/* Fuel Consumption */}
-      <Card className="bg-white shadow-sm">
+      <Card className="bg-white shadow-sm border-gray-200">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-gray-900">Fuel Efficiency</CardTitle>
           <p className="text-sm text-gray-600">Monthly fuel consumption trends</p>
@@ -221,7 +221,7 @@ export function DashboardCharts({
                   ...chartOptions.scales.y,
                   ticks: {
                     ...chartOptions.scales.y.ticks,
-                    callback: function(value: any) {
+                    callback: function (value: any) {
                       return value + ' L/100km';
                     }
                   }

@@ -3,9 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/operator/ui/card";
 import { Badge } from "@/components/operator/ui/badge";
 import { Button } from "@/components/operator/ui/button";
-import { 
-  AlertTriangle, 
-  Calendar, 
+import {
+  AlertTriangle,
+  Calendar,
   Clock,
   Wrench,
   CheckCircle,
@@ -49,7 +49,7 @@ export function MaintenanceAlerts({ alerts }: MaintenanceAlertsProps) {
   const scheduledAlerts = alerts.filter(alert => alert.type === 'scheduled');
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card className="bg-white shadow-sm border-gray-200">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-xl font-semibold text-gray-900">
@@ -62,7 +62,7 @@ export function MaintenanceAlerts({ alerts }: MaintenanceAlertsProps) {
           </CardTitle>
           <p className="text-sm text-gray-600 mt-1">Vehicle maintenance schedule and alerts</p>
         </div>
-        <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-700">
+        <Button variant="outline" size="sm" className="text-blue-600 hover:text-blue-700 border-gray-300">
           <Wrench className="h-4 w-4 mr-2" />
           Maintenance Log
         </Button>
@@ -79,20 +79,20 @@ export function MaintenanceAlerts({ alerts }: MaintenanceAlertsProps) {
               const config = alertTypeConfig[alert.type];
               const AlertIcon = config.icon;
               const priorityClass = priorityConfig[alert.priority];
-              
+
               // Calculate days until due
               const dueDate = new Date(alert.dueDate);
               const today = new Date();
               const diffTime = dueDate.getTime() - today.getTime();
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              
+
               const isOverdue = diffDays < 0;
               const isDueSoon = diffDays <= 7 && diffDays >= 0;
 
               return (
                 <div
                   key={alert.id}
-                  className={`p-4 rounded-lg border-l-4 ${config.color} bg-white hover:shadow-md transition-shadow`}
+                  className={`p-4 rounded-lg border ${config.color} bg-white hover:shadow-md transition-shadow`}
                 >
                   <div className="flex items-start space-x-4">
                     {/* Alert Icon */}
@@ -115,11 +115,11 @@ export function MaintenanceAlerts({ alerts }: MaintenanceAlertsProps) {
                           </Badge>
                         </div>
                       </div>
-                      
+
                       <p className="text-sm text-gray-700 mb-3">
                         {alert.message}
                       </p>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                           <div className="flex items-center space-x-1">
@@ -137,10 +137,10 @@ export function MaintenanceAlerts({ alerts }: MaintenanceAlertsProps) {
                             </Badge>
                           )}
                         </div>
-                        
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="text-blue-600 hover:text-blue-700 p-2"
                         >
                           <ExternalLink className="h-4 w-4" />

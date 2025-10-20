@@ -226,7 +226,7 @@ export function NotificationPanel() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="bg-green-500/20 text-green-600 hover:bg-green-500/30 shadow-md"
+                        className="shadow-md"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleNotificationClick(n.notificationId)

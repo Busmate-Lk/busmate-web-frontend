@@ -2,9 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/operator/ui/card";
 import { Badge } from "@/components/operator/ui/badge";
-import { 
-  DollarSign, 
-  TrendingUp, 
+import {
+  DollarSign,
+  TrendingUp,
   TrendingDown,
   Calendar,
   CreditCard,
@@ -66,7 +66,7 @@ export function RevenueOverview({ revenueMetrics }: RevenueOverviewProps) {
   ];
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card className="bg-white shadow-sm border-gray-200">
       <CardHeader>
         <CardTitle className="text-xl font-semibold text-gray-900">Revenue Overview</CardTitle>
         <p className="text-sm text-gray-600">Financial performance and earnings summary</p>
@@ -78,7 +78,7 @@ export function RevenueOverview({ revenueMetrics }: RevenueOverviewProps) {
             {revenueCards.map((card, index) => {
               const IconComponent = card.icon;
               const ChangeIcon = card.change.icon;
-              
+
               return (
                 <div key={index} className={`p-4 rounded-lg border ${card.color}`}>
                   <div className="flex items-center justify-between mb-3">
@@ -116,7 +116,7 @@ export function RevenueOverview({ revenueMetrics }: RevenueOverviewProps) {
                     </span>
                   </div>
                 </div>
-                <div className="bg-gray-100 p-3 rounded-lg">
+                <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Target per trip:</span>
                     <span className="font-medium">{formatCurrency(1500)}</span>
@@ -124,8 +124,8 @@ export function RevenueOverview({ revenueMetrics }: RevenueOverviewProps) {
                   <div className="flex justify-between text-sm mt-1">
                     <span className="text-gray-600">Performance:</span>
                     <Badge className={
-                      revenueMetrics.averagePerTrip >= 1500 
-                        ? "bg-green-100 text-green-800" 
+                      revenueMetrics.averagePerTrip >= 1500
+                        ? "bg-green-100 text-green-800"
                         : "bg-yellow-100 text-yellow-800"
                     }>
                       {revenueMetrics.averagePerTrip >= 1500 ? 'Above Target' : 'Below Target'}
@@ -145,7 +145,7 @@ export function RevenueOverview({ revenueMetrics }: RevenueOverviewProps) {
                     </span>
                   </div>
                 </div>
-                <div className="bg-gray-100 p-3 rounded-lg">
+                <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Daily target:</span>
                     <span className="font-medium">2,000 tickets</span>
@@ -170,26 +170,26 @@ export function RevenueOverview({ revenueMetrics }: RevenueOverviewProps) {
           {/* Quick Revenue Actions */}
           <div className="border-t pt-6">
             <div className="flex flex-wrap gap-2">
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-green-600 border-green-200 hover:bg-green-50 cursor-pointer"
               >
                 Revenue Report
               </Badge>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
               >
                 Ticket Analysis
               </Badge>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-purple-600 border-purple-200 hover:bg-purple-50 cursor-pointer"
               >
                 Route Profitability
               </Badge>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-orange-600 border-orange-200 hover:bg-orange-50 cursor-pointer"
               >
                 Expense Tracking

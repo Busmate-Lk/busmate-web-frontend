@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft, Edit, Wrench, AlertCircle, RefreshCw, ChevronRight, MapPin, Calendar } from 'lucide-react';
 import { Header } from '@/components/operator/header';
 import { OperatorBusSummary, OperatorBusTabsSection } from '@/components/operator/fleet';
-import { 
+import {
   BusOperatorOperationsService,
   BusResponse,
   TripResponse
@@ -194,18 +195,29 @@ export default function OperatorBusDetailsPage() {
       <Header />
       <div className="p-6">
         <div className="mx-auto space-y-6">
+          {/* Back Button */}
+          <div className="mb-4">
+            <Link
+              href="/operator/fleet-management"
+              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Fleet Management
+            </Link>
+          </div>
+
           {/* Header with Navigation and Actions */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             {/* Breadcrumbs */}
             <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <button 
+              <button
                 onClick={() => router.push('/operator/dashboard')}
                 className="hover:text-blue-600 transition-colors"
               >
                 Dashboard
               </button>
               <ChevronRight className="w-4 h-4" />
-              <button 
+              <button
                 onClick={() => router.push('/operator/fleet-management')}
                 className="hover:text-blue-600 transition-colors"
               >
@@ -269,8 +281,8 @@ export default function OperatorBusDetailsPage() {
           )}
 
           {/* Bus Summary */}
-          <OperatorBusSummary 
-            bus={bus} 
+          <OperatorBusSummary
+            bus={bus}
             onEdit={handleEdit}
             onScheduleMaintenance={handleScheduleMaintenance}
             onAssignDriver={handleAssignDriver}
@@ -278,8 +290,8 @@ export default function OperatorBusDetailsPage() {
           />
 
           {/* Tabs Section */}
-          <OperatorBusTabsSection 
-            bus={bus} 
+          <OperatorBusTabsSection
+            bus={bus}
             trips={trips}
             tripsLoading={tripsLoading}
             onRefresh={handleRefresh}

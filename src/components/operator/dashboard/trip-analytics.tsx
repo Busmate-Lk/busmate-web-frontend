@@ -2,10 +2,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/operator/ui/card";
 import { Badge } from "@/components/operator/ui/badge";
-import { 
-  CheckCircle, 
-  Circle, 
-  XCircle, 
+import {
+  CheckCircle,
+  Circle,
+  XCircle,
   Clock,
   TrendingUp,
   BarChart3
@@ -52,7 +52,7 @@ export function TripAnalytics({ tripSummary }: TripAnalyticsProps) {
   ];
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card className="bg-white shadow-sm border-gray-200">
       <CardHeader>
         <CardTitle className="text-xl font-semibold text-gray-900">Trip Analytics</CardTitle>
         <p className="text-sm text-gray-600">Today's trip performance overview</p>
@@ -64,7 +64,7 @@ export function TripAnalytics({ tripSummary }: TripAnalyticsProps) {
             {stats.map((stat, index) => {
               const IconComponent = stat.icon;
               return (
-                <div key={index} className="text-center">
+                <div key={index} className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full ${stat.color} mb-3`}>
                     <IconComponent className="h-6 w-6" />
                   </div>
@@ -120,23 +120,22 @@ export function TripAnalytics({ tripSummary }: TripAnalyticsProps) {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className={`h-3 rounded-full transition-all duration-500 ${
-                      tripSummary.averageDelay <= 5 
-                        ? 'bg-green-500' 
-                        : tripSummary.averageDelay <= 10 
-                          ? 'bg-yellow-500' 
+                    className={`h-3 rounded-full transition-all duration-500 ${tripSummary.averageDelay <= 5
+                        ? 'bg-green-500'
+                        : tripSummary.averageDelay <= 10
+                          ? 'bg-yellow-500'
                           : 'bg-red-500'
-                    }`}
+                      }`}
                     style={{ width: `${Math.min((tripSummary.averageDelay / 20) * 100, 100)}%` }}
                   ></div>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>Target: &lt; 5 min</span>
                   <span>
-                    {tripSummary.averageDelay <= 5 
-                      ? 'Within Target' 
-                      : tripSummary.averageDelay <= 10 
-                        ? 'Moderate' 
+                    {tripSummary.averageDelay <= 5
+                      ? 'Within Target'
+                      : tripSummary.averageDelay <= 10
+                        ? 'Moderate'
                         : 'High Delay'
                     }
                   </span>
@@ -148,20 +147,20 @@ export function TripAnalytics({ tripSummary }: TripAnalyticsProps) {
           {/* Quick Actions */}
           <div className="border-t pt-6">
             <div className="flex flex-wrap gap-2">
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-blue-600 border-blue-200 hover:bg-blue-50 cursor-pointer"
               >
                 View Trip Details
               </Badge>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-green-600 border-green-200 hover:bg-green-50 cursor-pointer"
               >
                 Schedule New Trip
               </Badge>
-              <Badge 
-                variant="outline" 
+              <Badge
+                variant="outline"
                 className="text-purple-600 border-purple-200 hover:bg-purple-50 cursor-pointer"
               >
                 Route Analysis
