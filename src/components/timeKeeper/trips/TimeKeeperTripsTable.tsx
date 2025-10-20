@@ -17,6 +17,8 @@ import {
   BusFront,
   ArrowRightLeft,
   ChevronRight,
+  RefreshCw,
+  UserPlus,
 } from 'lucide-react';
 import { TripResponse } from '@/lib/api-client/route-management';
 
@@ -25,6 +27,8 @@ interface TimeKeeperTripsTableProps {
   onView: (tripId: string) => void;
   onAddNotes: (tripId: string) => void;
   onRemoveBus?: (tripId: string) => void;
+  onChangeStatus?: (tripId: string) => void;
+  onChangePsp?: (tripId: string) => void;
   onSort: (sortBy: string, sortDir: 'asc' | 'desc') => void;
   activeFilters: Record<string, any>;
   loading: boolean;
@@ -38,6 +42,8 @@ export function TimeKeeperTripsTable({
   onView,
   onAddNotes,
   onRemoveBus,
+  onChangeStatus,
+  onChangePsp,
   onSort,
   activeFilters,
   loading,
@@ -320,32 +326,51 @@ export function TimeKeeperTripsTable({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => onView(trip.id!)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onAddNotes(trip.id!)}
-                          className="text-green-600 hover:text-green-900"
-                          title="Add/Edit notes"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </button>
-                        {onRemoveBus &&
-                          canManageBus &&
-                          canManageBus(trip) &&
-                          trip.busPlateNumber && (
-                            <button
-                              onClick={() => onRemoveBus(trip.id!)}
-                              className="text-orange-600 hover:text-orange-900"
-                              title="Remove/Reassign bus"
-                            >
-                              <ArrowRightLeft className="w-4 h-4" />
-                            </button>
-                          )}
+                        {/* Actions only available for trips that start at the assigned stop */}
+                        {canManageBus && canManageBus(trip) ? (
+                          <>
+                            {onAddNotes && (
+                              <button
+                                onClick={() => onAddNotes(trip.id!)}
+                                className="text-green-600 hover:text-green-900"
+                                title="Add/Edit notes"
+                              >
+                                <FileText className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {onChangeStatus && (
+                              <button
+                                onClick={() => onChangeStatus(trip.id!)}
+                                className="text-purple-600 hover:text-purple-900"
+                                title="Change status"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {onChangePsp && (
+                              <button
+                                onClick={() => onChangePsp(trip.id!)}
+                                className="text-indigo-600 hover:text-indigo-900"
+                                title="Manage PSP"
+                              >
+                                <UserPlus className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {onRemoveBus && trip.busPlateNumber && (
+                              <button
+                                onClick={() => onRemoveBus(trip.id!)}
+                                className="text-orange-600 hover:text-orange-900"
+                                title="Remove/Reassign bus"
+                              >
+                                <ArrowRightLeft className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        ) : // For non-starting trips, only allow viewing details (handled elsewhere)
+                        null}
                       </div>
                     </td>
                   </tr>

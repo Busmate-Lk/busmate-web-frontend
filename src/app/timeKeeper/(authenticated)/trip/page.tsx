@@ -12,6 +12,9 @@ import {
   StopResponse,
   RouteManagementService,
   RouteResponse,
+  PermitManagementService,
+  PassengerServicePermitResponse,
+  TripRequest,
 } from '@/lib/api-client/route-management';
 import { getUserFromToken } from '@/lib/utils/jwtHandler';
 import { getCookie } from '@/lib/utils/cookieUtils';
@@ -26,6 +29,9 @@ import { TimeKeeperTripsTable } from '@/components/timeKeeper/trips/TimeKeeperTr
 import Pagination from '@/components/shared/Pagination';
 import { Layout } from '@/components/shared/layout';
 import { BusReassignmentModal } from '@/components/timeKeeper/trips/BusReassignmentModal';
+import { TripStatusChangeModal } from '@/components/timeKeeper/trips/TripStatusChangeModal';
+import { TripNotesModal } from '@/components/timeKeeper/trips/TripNotesModal';
+import { TimeKeeperTripContextMenu } from '@/components/timeKeeper/trip-assignment-workspace/components/TimeKeeperTripContextMenu';
 import { useAuth } from '@/context/AuthContext';
 
 interface QueryParams {
@@ -159,6 +165,30 @@ export default function TimeKeeperTripsPage() {
     useState(false);
   const [tripForBusReassignment, setTripForBusReassignment] =
     useState<TripResponse | null>(null);
+
+  // Status change modal state
+  const [showStatusChangeModal, setShowStatusChangeModal] = useState(false);
+  const [tripForStatusChange, setTripForStatusChange] =
+    useState<TripResponse | null>(null);
+
+  // Notes modal state
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [tripForNotes, setTripForNotes] = useState<TripResponse | null>(null);
+
+  // PSP management modal state
+  const [showPspModal, setShowPspModal] = useState(false);
+  const [tripForPsp, setTripForPsp] = useState<TripResponse | null>(null);
+
+  // Available PSPs for assignment
+  const [availablePsps, setAvailablePsps] = useState<
+    Array<{
+      id: string;
+      permitNumber: string;
+      operatorName?: string;
+      status?: string;
+      maximumBusAssigned?: number;
+    }>
+  >([]);
 
   // Helper function to batch load routes and cache them
   const loadRoutesInBatch = useCallback(
@@ -320,6 +350,24 @@ export default function TimeKeeperTripsPage() {
       console.error('Failed to load filter options:', err);
     } finally {
       setFilterOptionsLoading(false);
+    }
+  }, []);
+
+  // Load available PSPs for assignment
+  const loadAvailablePsps = useCallback(async () => {
+    try {
+      const psps = await PermitManagementService.getAllPermits();
+      setAvailablePsps(
+        psps.map((psp) => ({
+          id: psp.id || '',
+          permitNumber: psp.permitNumber || '',
+          operatorName: psp.operatorName,
+          status: psp.status,
+          maximumBusAssigned: psp.maximumBusAssigned,
+        }))
+      );
+    } catch (err) {
+      console.error('Failed to load PSPs:', err);
     }
   }, []);
 
@@ -512,6 +560,7 @@ export default function TimeKeeperTripsPage() {
   useEffect(() => {
     loadFilterOptions();
     loadStatistics();
+    loadAvailablePsps();
   }, [loadFilterOptions, loadStatistics]);
 
   useEffect(() => {
@@ -685,7 +734,35 @@ export default function TimeKeeperTripsPage() {
   };
 
   const handleAddNotes = (tripId: string) => {
-    router.push(`/timeKeeper/trip/${tripId}/notes`);
+    const trip = trips.find((t) => t.id === tripId);
+    if (trip) {
+      setTripForNotes(trip);
+      setShowNotesModal(true);
+    }
+  };
+
+  const handleChangeStatus = (tripId: string) => {
+    const trip = trips.find((t) => t.id === tripId);
+    if (trip && tripStartsAtAssignedStop(trip)) {
+      setTripForStatusChange(trip);
+      setShowStatusChangeModal(true);
+    } else {
+      alert(
+        'You can only change status for trips that start at your assigned bus stop.'
+      );
+    }
+  };
+
+  const handleChangePsp = (tripId: string) => {
+    const trip = trips.find((t) => t.id === tripId);
+    if (trip && tripStartsAtAssignedStop(trip)) {
+      setTripForPsp(trip);
+      setShowPspModal(true);
+    } else {
+      alert(
+        'You can only manage PSP for trips that start at your assigned bus stop.'
+      );
+    }
   };
 
   const handleRemoveBus = (tripId: string) => {
@@ -700,16 +777,133 @@ export default function TimeKeeperTripsPage() {
     }
   };
 
+  const handleStatusChange = async (
+    tripId: string,
+    newStatus: string,
+    reason?: string
+  ) => {
+    try {
+      await TripManagementService.updateTripStatus(tripId, newStatus as any);
+
+      // Reload trips and stats
+      await loadTrips();
+      await loadStatistics();
+
+      setShowStatusChangeModal(false);
+      setTripForStatusChange(null);
+    } catch (err) {
+      console.error('Failed to change status:', err);
+      throw err;
+    }
+  };
+
+  const handleNotesUpdate = async (tripId: string, notes: string) => {
+    try {
+      // Get the current trip data
+      const trip = trips.find((t) => t.id === tripId);
+      if (!trip) {
+        throw new Error('Trip not found');
+      }
+
+      // Create update request with only the notes changed
+      const updateRequest: TripRequest = {
+        tripDate: trip.tripDate || '',
+        scheduledDepartureTime: trip.scheduledDepartureTime || '',
+        scheduledArrivalTime: trip.scheduledArrivalTime || '',
+        scheduleId: trip.scheduleId || '',
+        notes: notes,
+        // Include other required fields if they exist
+        ...(trip.busId && { busId: trip.busId }),
+        ...(trip.driverId && { driverId: trip.driverId }),
+        ...(trip.conductorId && { conductorId: trip.conductorId }),
+        ...(trip.passengerServicePermitId && {
+          passengerServicePermitId: trip.passengerServicePermitId,
+        }),
+      };
+
+      await TripManagementService.updateTrip(tripId, updateRequest);
+
+      // Reload trips
+      await loadTrips();
+
+      setShowNotesModal(false);
+      setTripForNotes(null);
+    } catch (err) {
+      console.error('Failed to update notes:', err);
+      throw err;
+    }
+  };
+
+  const handleAssignPsp = async (tripId: string, pspId: string) => {
+    try {
+      await TripManagementService.assignPassengerServicePermitToTrip(
+        tripId,
+        pspId
+      );
+
+      // Reload trips and stats
+      await loadTrips();
+      await loadStatistics();
+
+      setShowPspModal(false);
+      setTripForPsp(null);
+    } catch (err) {
+      console.error('Failed to assign PSP:', err);
+      alert('Failed to assign PSP. Please try again.');
+    }
+  };
+
+  const handleRemovePsp = async (tripId: string) => {
+    try {
+      await TripManagementService.removePassengerServicePermitFromTrip(tripId);
+
+      // Reload trips and stats
+      await loadTrips();
+      await loadStatistics();
+
+      setShowPspModal(false);
+      setTripForPsp(null);
+    } catch (err) {
+      console.error('Failed to remove PSP:', err);
+      alert('Failed to remove PSP. Please try again.');
+    }
+  };
+
   const handleBusReassignment = async (
     tripId: string,
     newBusId: string | null,
     reason: string
   ) => {
     try {
-      // TODO: Call API to update trip bus assignment
-      // await TripManagementService.updateTripBusAssignment(tripId, newBusId, reason);
+      // Get the current trip data
+      const trip = trips.find((t) => t.id === tripId);
+      if (!trip) {
+        throw new Error('Trip not found');
+      }
 
-      console.log('Bus reassignment:', { tripId, newBusId, reason });
+      // Create update request with the bus changed
+      const updateRequest: TripRequest = {
+        tripDate: trip.tripDate || '',
+        scheduledDepartureTime: trip.scheduledDepartureTime || '',
+        scheduledArrivalTime: trip.scheduledArrivalTime || '',
+        scheduleId: trip.scheduleId || '',
+        notes: trip.notes
+          ? `${trip.notes}\n\n[${new Date().toISOString()}] Bus ${
+              newBusId ? 'reassigned' : 'removed'
+            }: ${reason}`
+          : `[${new Date().toISOString()}] Bus ${
+              newBusId ? 'reassigned' : 'removed'
+            }: ${reason}`,
+        // Include other fields
+        ...(newBusId && { busId: newBusId }),
+        ...(trip.driverId && { driverId: trip.driverId }),
+        ...(trip.conductorId && { conductorId: trip.conductorId }),
+        ...(trip.passengerServicePermitId && {
+          passengerServicePermitId: trip.passengerServicePermitId,
+        }),
+      };
+
+      await TripManagementService.updateTrip(tripId, updateRequest);
 
       // Reload trips and stats
       await loadTrips();
@@ -816,9 +1010,14 @@ export default function TimeKeeperTripsPage() {
               <div className="mt-2 text-sm text-blue-700">
                 <p>
                   You can view all trips passing through this bus stop. For
-                  trips starting at this location, you have the ability to
-                  remove or reassign buses as needed.
+                  trips starting at this location, you have the ability to:
                 </p>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Change trip status</li>
+                  <li>Add or edit trip notes</li>
+                  <li>Assign or remove Passenger Service Permits (PSP)</li>
+                  <li>Remove or reassign buses</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -870,6 +1069,8 @@ export default function TimeKeeperTripsPage() {
             onView={handleView}
             onAddNotes={handleAddNotes}
             onRemoveBus={handleRemoveBus}
+            onChangeStatus={handleChangeStatus}
+            onChangePsp={handleChangePsp}
             onSort={handleSort}
             activeFilters={{}}
             loading={isLoading}
@@ -906,6 +1107,164 @@ export default function TimeKeeperTripsPage() {
             availableBuses={filterOptions.buses}
             onConfirm={handleBusReassignment}
           />
+        )}
+
+        {/* Status Change Modal */}
+        {showStatusChangeModal && tripForStatusChange && (
+          <TripStatusChangeModal
+            isOpen={showStatusChangeModal}
+            onClose={() => {
+              setShowStatusChangeModal(false);
+              setTripForStatusChange(null);
+            }}
+            trip={tripForStatusChange}
+            onConfirm={handleStatusChange}
+          />
+        )}
+
+        {/* Notes Modal */}
+        {showNotesModal && tripForNotes && (
+          <TripNotesModal
+            isOpen={showNotesModal}
+            onClose={() => {
+              setShowNotesModal(false);
+              setTripForNotes(null);
+            }}
+            trip={tripForNotes}
+            onConfirm={handleNotesUpdate}
+          />
+        )}
+
+        {/* PSP Management Modal - Using existing TimeKeeperTripContextMenu */}
+        {showPspModal && tripForPsp && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full shadow-xl">
+              <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Manage PSP Assignment
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowPspModal(false);
+                    setTripForPsp(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase mb-3">
+                    Trip Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Route:</span>
+                      <span className="ml-2 font-medium text-gray-900">
+                        {tripForPsp.routeName || 'N/A'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Bus:</span>
+                      <span className="ml-2 font-medium text-gray-900">
+                        {tripForPsp.busPlateNumber || 'Not assigned'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Current PSP:</span>
+                      <span className="ml-2 font-medium text-gray-900">
+                        {tripForPsp.passengerServicePermitNumber ||
+                          'Not assigned'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Status:</span>
+                      <span className="ml-2 font-medium text-gray-900 capitalize">
+                        {tripForPsp.status || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-700">
+                    {tripForPsp.passengerServicePermitId
+                      ? 'Change or Remove PSP'
+                      : 'Assign PSP'}
+                  </h4>
+
+                  {tripForPsp.passengerServicePermitId && (
+                    <button
+                      onClick={() => handleRemovePsp(tripForPsp.id!)}
+                      className="w-full px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100"
+                    >
+                      Remove Current PSP
+                    </button>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select PSP to Assign
+                    </label>
+                    <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg divide-y">
+                      {availablePsps
+                        .filter(
+                          (psp) =>
+                            psp.status === 'ACTIVE' &&
+                            (psp.maximumBusAssigned || 0) > 0
+                        )
+                        .map((psp) => (
+                          <button
+                            key={psp.id}
+                            onClick={() =>
+                              handleAssignPsp(tripForPsp.id!, psp.id)
+                            }
+                            className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
+                            disabled={
+                              tripForPsp.passengerServicePermitId === psp.id
+                            }
+                          >
+                            <div className="font-medium text-gray-900">
+                              {psp.permitNumber}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {psp.operatorName}
+                            </div>
+                            {tripForPsp.passengerServicePermitId === psp.id && (
+                              <div className="text-xs text-blue-600 mt-1">
+                                Currently Assigned
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      {availablePsps.filter(
+                        (psp) =>
+                          psp.status === 'ACTIVE' &&
+                          (psp.maximumBusAssigned || 0) > 0
+                      ).length === 0 && (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          No available PSPs found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </Layout>
