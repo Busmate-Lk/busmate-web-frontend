@@ -293,7 +293,7 @@ export default function TimeKeeperTripsPage() {
             route.startStopId === assignedBusStopId ||
             route.endStopId === assignedBusStopId ||
             route.routeStops?.some((stop) => stop.stopId === assignedBusStopId);
-          console.log(hasStop);
+           
           return hasStop ? trip : null;
         } catch (err) {
           console.error('Failed to check route for trip:', trip.id, err);
