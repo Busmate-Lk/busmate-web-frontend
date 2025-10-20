@@ -24,7 +24,7 @@ export function Sidebar({ activeItem = "dashboard", isCollapsed, setIsCollapsed 
     { icon: FileText, label: "Service Permits", active: activeItem === "passenger-service-permits", href: "/operator/passenger-service-permits" },
     { icon: Bus, label: "Fleet management", active: activeItem === "fleetmanagement", href: "/operator/fleet-management" },
     { icon: Navigation, label: "Trip Management", active: activeItem === "trips", href: "/operator/trips" },
-    { icon: MapPin, label: "Bus Tracking", active: activeItem === "busTracking", href: "/operator/busTracking" },
+    // { icon: MapPin, label: "Bus Tracking", active: activeItem === "busTracking", href: "/operator/busTracking" },
     { icon: Users, label: "Staff management", active: activeItem === "staff", href: "/operator/staffManagement" },
     { icon: UserCheck, label: "Staff Assignment", active: activeItem === "staff-assignment", href: "/operator/staff-assignment" },
     { icon: Bell, label: "Notifications", active: activeItem === "notifications", href: "/operator/notifications/received" },
