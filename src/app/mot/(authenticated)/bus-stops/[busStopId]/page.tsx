@@ -234,8 +234,26 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Get bus stop ID from params or search params
-  const busStopId = params.busStopId || searchParams.get('id') || '';
+  // State for resolved params
+  const [busStopId, setBusStopId] = useState<string>('');
+  
+  // Resolve params asynchronously
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      const id = resolvedParams.busStopId || searchParams.get('id') || '';
+      
+      // If the busStopId is 'add', redirect to the correct add page
+      if (id === 'add') {
+        router.replace('/mot/bus-stops/add-new');
+        return;
+      }
+      
+      setBusStopId(id);
+    };
+    
+    resolveParams();
+  }, [params, searchParams, router]);
   
   // State management
   const [busStop, setBusStop] = useState<StopResponse | null>(null);
@@ -255,7 +273,7 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
   // Load bus stop details
   const loadBusStopDetails = useCallback(async () => {
     if (!busStopId) {
-      setError('Bus stop ID is required');
+      // Don't show error immediately, busStopId might still be loading
       setLoading(false);
       return;
     }
@@ -338,10 +356,12 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
     });
   };
 
-  // Load data on mount
+  // Load data when busStopId is available
   useEffect(() => {
-    loadBusStopDetails();
-  }, [loadBusStopDetails]);
+    if (busStopId) {
+      loadBusStopDetails();
+    }
+  }, [busStopId, loadBusStopDetails]);
 
   // Loading state
   if (loading) {
