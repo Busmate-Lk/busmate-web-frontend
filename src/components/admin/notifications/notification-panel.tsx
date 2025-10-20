@@ -84,6 +84,37 @@ export function NotificationPanel() {
     }
   }
 
+  const getAudienceBadge = (audience?: string) => {
+    switch ((audience || 'all').toLowerCase()) {
+      case 'passengers':
+        return 'bg-blue-50 text-blue-700 border border-blue-200'
+      case 'conductors':
+        return 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+      case 'mot_officers':
+        return 'bg-green-50 text-green-700 border border-green-200'
+      case 'fleet_operators':
+        return 'bg-purple-50 text-purple-700 border border-purple-200'
+      default:
+        return 'bg-gray-50 text-gray-700 border border-gray-200'
+    }
+  }
+
+  const getCardBorderColor = (type?: string) => {
+    switch ((type || 'info').toLowerCase()) {
+      case 'error':
+      case 'critical':
+        return 'border-l-red-400'
+      case 'warning':
+        return 'border-l-yellow-400'
+      case 'success':
+        return 'border-l-green-400'
+      case 'maintenance':
+        return 'border-l-purple-400'
+      default:
+        return 'border-l-blue-400'
+    }
+  }
+
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "critical":
@@ -139,24 +170,24 @@ export function NotificationPanel() {
   return (
     <div>
       {/* Filters */}
-      <Card className="mb-6 shadow-lg">
-        <CardContent className="p-6 bg-gradient-to-r from-gray-50 to-white rounded-lg">
+      <Card className="mb-6 shadow-sm border border-gray-200">
+        <CardContent className="p-6 bg-white rounded-lg">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Input
                 placeholder="Search notifications..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 shadow-sm"
+                className="pl-10"
               />
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             </div>
             <div>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="shadow-sm">
+                <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
-                <SelectContent className="shadow-lg">
+                <SelectContent className="bg-white">
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="info">Information</SelectItem>
                   <SelectItem value="warning">Warning</SelectItem>
@@ -167,10 +198,10 @@ export function NotificationPanel() {
             </div>
             <div>
               <Select value={filterAudience} onValueChange={setFilterAudience}>
-                <SelectTrigger className="shadow-sm">
+                <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Filter by audience" />
                 </SelectTrigger>
-                <SelectContent className="shadow-lg">
+                <SelectContent className="bg-white">
                   <SelectItem value="all">All Audiences</SelectItem>
                   <SelectItem value="passengers">Passengers</SelectItem>
                   <SelectItem value="conductors">Conductors</SelectItem>
@@ -186,23 +217,36 @@ export function NotificationPanel() {
       {/* Notifications List */}
       <div className="space-y-4">
         {loading && (
-          <Card className="shadow-md"><CardContent className="p-6">Loading notifications...</CardContent></Card>
+          <Card className="shadow-sm border border-gray-200"><CardContent className="p-6">Loading notifications...</CardContent></Card>
         )}
         {error && (
-          <Card className="shadow-md"><CardContent className="p-6 text-red-600">{error}</CardContent></Card>
+          <Card className="shadow-sm border border-gray-200"><CardContent className="p-6 text-red-600">{error}</CardContent></Card>
         )}
         {!loading && !error && filtered.length === 0 && (
-          <Card className="shadow-md"><CardContent className="p-6">No notifications found.</CardContent></Card>
+          <Card className="shadow-sm border border-gray-200"><CardContent className="p-6">No notifications found.</CardContent></Card>
         )}
         {filtered.map((n) => (
           <Card
             key={n.notificationId}
-            className={`cursor-pointer hover:shadow-lg transition-all duration-200 shadow-md`}
+            className={`cursor-pointer hover:shadow-md transition-all duration-200 shadow-sm border border-gray-200 border-l-4 ${getCardBorderColor(n.messageType)}`}
             onClick={() => handleNotificationClick(n.notificationId)}
           >
             <CardContent className="p-6">
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 mt-1">{getNotificationIcon((n.messageType || 'info'))}</div>
+                <div className="flex-shrink-0 mt-1">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${(n.messageType || 'info').toLowerCase() === 'error' || (n.messageType || 'info').toLowerCase() === 'critical'
+                      ? 'bg-red-100 text-red-600'
+                      : (n.messageType || 'info').toLowerCase() === 'warning'
+                        ? 'bg-yellow-100 text-yellow-600'
+                        : (n.messageType || 'info').toLowerCase() === 'success'
+                          ? 'bg-green-100 text-green-600'
+                          : (n.messageType || 'info').toLowerCase() === 'maintenance'
+                            ? 'bg-purple-100 text-purple-600'
+                            : 'bg-blue-100 text-blue-600'
+                    }`}>
+                    {getNotificationIcon((n.messageType || 'info'))}
+                  </div>
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -216,6 +260,9 @@ export function NotificationPanel() {
                         <Badge className={getNotificationBadge((n.messageType || 'info'))}>
                           {(n.messageType || 'info').charAt(0).toUpperCase() + (n.messageType || 'info').slice(1)}
                         </Badge>
+                        <Badge className={getAudienceBadge(n.targetAudience)}>
+                          {(n.targetAudience || 'All').replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                        </Badge>
                         <div className="flex items-center space-x-1 text-sm text-gray-500">
                           <Clock className="h-4 w-4" />
                           <span>{toRelativeTime(n.createdAt)}</span>
@@ -226,7 +273,7 @@ export function NotificationPanel() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="shadow-md"
+                        className="hover:bg-gray-100"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleNotificationClick(n.notificationId)

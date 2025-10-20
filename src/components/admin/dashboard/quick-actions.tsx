@@ -57,7 +57,7 @@ const actions = [
 
 export function QuickActions() {
   return (
-    <Card className="shadow-sm border-0 bg-white border-l-4 border-l-blue-500">
+    <Card className="shadow-sm border border-gray-200 bg-white">
       <CardHeader className="pb-4">
         <CardTitle className="text-xl font-semibold text-gray-900">Quick Actions</CardTitle>
         <p className="text-sm text-gray-600">Frequently used administrative tasks</p>

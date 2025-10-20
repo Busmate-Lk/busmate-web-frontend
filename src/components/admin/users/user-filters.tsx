@@ -5,14 +5,14 @@ import { Download, FileText } from "lucide-react"
 
 export function UserFilters() {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <Input placeholder="Search users..." className="shadow-sm" />
         <Select>
           <SelectTrigger className="shadow-sm">
             <SelectValue placeholder="User Type" />
           </SelectTrigger>
-          <SelectContent className="shadow-lg">
+          <SelectContent className="bg-white">
             <SelectItem value="all">All Users</SelectItem>
             <SelectItem value="passenger">Passengers</SelectItem>
             <SelectItem value="conductor">Conductors</SelectItem>
@@ -24,7 +24,7 @@ export function UserFilters() {
           <SelectTrigger className="shadow-sm">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="shadow-lg">
+          <SelectContent className="bg-white">
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
@@ -35,7 +35,7 @@ export function UserFilters() {
           <SelectTrigger className="shadow-sm">
             <SelectValue placeholder="Registration" />
           </SelectTrigger>
-          <SelectContent className="shadow-lg">
+          <SelectContent className="bg-white">
             <SelectItem value="all">All Time</SelectItem>
             <SelectItem value="today">Today</SelectItem>
             <SelectItem value="week">This Week</SelectItem>
@@ -46,8 +46,8 @@ export function UserFilters() {
 
       <div className="flex justify-between items-center">
         <div className="flex space-x-2">
-          <Button variant="outline" className="bg-blue-500/20 text-blue-600 border-blue-200 hover:bg-blue-500/30 shadow-md">Apply Filters</Button>
-          <Button variant="ghost" className="bg-gray-500/20 text-gray-600 hover:bg-gray-500/30 shadow-md">Clear All</Button>
+          <Button variant="outline" className="bg-blue-500/20 text-blue-600 border-blue-200 hover:bg-blue-500/30">Apply Filters</Button>
+          <Button variant="ghost" className="bg-gray-500/20 text-gray-600 hover:bg-gray-500/30">Clear All</Button>
         </div>
 
         <div className="flex space-x-2">

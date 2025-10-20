@@ -13,6 +13,7 @@ import { Bold, Italic, Underline, Link, List, Calendar, Clock, Send, Save, Arrow
 import { usePathname, useRouter } from "next/navigation"
 import { sendNotification } from "@/lib/services/notificationService"
 import type { SendNotificationRequest } from "@/lib/services/notificationService"
+import { toast } from "@/hooks/use-toast"
 
 export function ComposeMessage() {
   const router = useRouter()
@@ -23,6 +24,16 @@ export function ComposeMessage() {
   const [subject, setSubject] = useState("")
   const [messageContent, setMessageContent] = useState("")
   const [isSending, setIsSending] = useState(false)
+  const [lastResponse, setLastResponse] = useState<null | {
+    notificationId: string,
+    stats: {
+      totalSent: number,
+      successful: number,
+      failed: number,
+      web: { successful: number, failed: number },
+      mobile: { successful: number, failed: number }
+    }
+  }>(null)
 
   // Target audience checkboxes
   const [targetPassengers, setTargetPassengers] = useState(false)
@@ -93,16 +104,12 @@ export function ComposeMessage() {
       request.route = route || 'all'
 
       const response = await sendNotification(request)
+      setLastResponse({ notificationId: response.notificationId, stats: response.stats })
 
-      alert(
-        `Message sent successfully!\n\n` +
-        `Notification ID: ${response.notificationId}\n` +
-        `Total Sent: ${response.stats.totalSent}\n` +
-        `Successful: ${response.stats.successful}\n` +
-        `Failed: ${response.stats.failed}\n\n` +
-        `Web: ${response.stats.web.successful} successful, ${response.stats.web.failed} failed\n` +
-        `Mobile: ${response.stats.mobile.successful} successful, ${response.stats.mobile.failed} failed`
-      )
+      toast({
+        title: "Message sent",
+        description: `Notification ${response.notificationId} sent to ${response.stats.totalSent} recipients (Success: ${response.stats.successful}, Failed: ${response.stats.failed})`,
+      })
 
       // Reset form
       setSubject("")
@@ -117,15 +124,15 @@ export function ComposeMessage() {
       setCity('all')
       setRoute('all')
 
-      // Navigate back after short delay
-      setTimeout(() => {
-        const base = pathname?.startsWith('/mot') ? '/mot' : '/admin'
-        router.push(`${base}/notifications/sent`)
-      }, 2000)
+      // Optionally navigate later; keep the success summary visible
 
     } catch (error: any) {
       console.error("Error sending notification:", error)
-      alert(`Failed to send message: ${error.message || 'Unknown error occurred'}`)
+      toast({
+        title: "Failed to send message",
+        description: error.message || 'Unknown error occurred',
+        variant: "destructive",
+      })
     } finally {
       setIsSending(false)
     }
@@ -435,6 +442,36 @@ export function ComposeMessage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {lastResponse && (
+            <Card className="rounded-xl border-2 bg-green-50 border-green-200">
+              <CardHeader>
+                <CardTitle className="text-green-800">Message Sent Successfully</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-gray-700 space-y-2">
+                <div className="flex justify-between"><span>Notification ID</span><span className="font-medium">{lastResponse.notificationId}</span></div>
+                <div className="flex justify-between"><span>Total Sent</span><span className="font-medium">{lastResponse.stats.totalSent}</span></div>
+                <div className="flex justify-between"><span>Successful</span><span className="font-medium text-green-700">{lastResponse.stats.successful}</span></div>
+                <div className="flex justify-between"><span>Failed</span><span className="font-medium text-red-700">{lastResponse.stats.failed}</span></div>
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <div className="rounded-lg bg-white border border-green-200 p-3">
+                    <div className="text-xs text-gray-500">Web</div>
+                    <div className="text-sm">{lastResponse.stats.web.successful} ok, {lastResponse.stats.web.failed} failed</div>
+                  </div>
+                  <div className="rounded-lg bg-white border border-green-200 p-3">
+                    <div className="text-xs text-gray-500">Mobile</div>
+                    <div className="text-sm">{lastResponse.stats.mobile.successful} ok, {lastResponse.stats.mobile.failed} failed</div>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-3">
+                  <Button size="sm" onClick={() => {
+                    const base = pathname?.startsWith('/mot') ? '/mot' : '/admin'
+                    router.push(`${base}/notifications/sent`)
+                  }}>View in Sent</Button>
+                  <Button size="sm" variant="outline" onClick={() => setLastResponse(null)}>Dismiss</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {/* Message Preview */}
           <Card>
             <CardHeader>

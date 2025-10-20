@@ -48,7 +48,7 @@ const activities = [
 
 export function ActivityFeed() {
   return (
-    <Card className="border-l-4 border-l-green-500">
+    <Card className="border border-gray-200 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Live Activity Feed</CardTitle>
         <Button variant="ghost" size="sm">
