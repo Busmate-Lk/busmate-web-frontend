@@ -150,7 +150,7 @@ export function BusDetails({ fleetId, busId }: BusDetailsProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button className="bg-gray-500/20 text-gray-600 hover:bg-gray-500/30 shadow-md" variant="ghost" size="sm" asChild>
+          <Button className="text-gray-600 hover:bg-transparent" variant="ghost" size="sm" asChild>
             <Link href={`/admin/users/fleet/${fleetId}`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Fleet
@@ -176,7 +176,7 @@ export function BusDetails({ fleetId, busId }: BusDetailsProps) {
       </div>
 
       {/* Bus Overview Card */}
-      <Card className="shadow-lg bg-gradient-to-br from-white to-gray-50">
+      <Card className="shadow-sm border border-gray-200 bg-white">
         <CardContent className="p-6">
           <div className="flex items-center space-x-6">
             <div className="w-24 h-24 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -223,7 +223,7 @@ export function BusDetails({ fleetId, busId }: BusDetailsProps) {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="bg-white rounded-lg shadow-lg px-6 py-4 bg-gradient-to-r from-gray-50 to-white mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4 mb-6">
           <div className="flex items-center space-x-4 overflow-x-auto">
             <button
               onClick={() => setActiveTab("overview")}
@@ -272,8 +272,8 @@ export function BusDetails({ fleetId, busId }: BusDetailsProps) {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Technical Specifications */}
-            <Card className="shadow-lg bg-gradient-to-br from-white to-gray-50">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-white rounded-t-lg">
+            <Card className="shadow-sm border border-gray-200 bg-white">
+              <CardHeader className="bg-white rounded-t-lg">
                 <CardTitle className="flex items-center">
                   <Wrench className="h-5 w-5 mr-2 text-blue-600" />
                   Technical Specs
@@ -304,8 +304,8 @@ export function BusDetails({ fleetId, busId }: BusDetailsProps) {
             </Card>
 
             {/* Route Information */}
-            <Card className="shadow-lg bg-gradient-to-br from-white to-gray-50">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-white rounded-t-lg">
+            <Card className="shadow-sm border border-gray-200 bg-white">
+              <CardHeader className="bg-white rounded-t-lg">
                 <CardTitle className="flex items-center">
                   <Route className="h-5 w-5 mr-2 text-green-600" />
                   Route Details

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   TripManagementService,
@@ -41,14 +41,14 @@ interface QueryParams {
   sortDir: 'asc' | 'desc';
   search: string;
   status?:
-    | 'pending'
-    | 'active'
-    | 'completed'
-    | 'cancelled'
-    | 'delayed'
-    | 'in_transit'
-    | 'boarding'
-    | 'departed';
+  | 'pending'
+  | 'active'
+  | 'completed'
+  | 'cancelled'
+  | 'delayed'
+  | 'in_transit'
+  | 'boarding'
+  | 'departed';
   routeId?: string;
   operatorId?: string;
   scheduleId?: string;
@@ -80,7 +80,7 @@ interface FilterOptions {
   passengerServicePermits: Array<{ id: string; permitNumber: string }>;
 }
 
-export default function TimeKeeperTripsPage() {
+function TimeKeeperTripsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [trips, setTrips] = useState<TripResponse[]>([]);
@@ -902,12 +902,10 @@ export default function TimeKeeperTripsPage() {
         scheduledArrivalTime: trip.scheduledArrivalTime || '',
         scheduleId: trip.scheduleId || '',
         notes: trip.notes
-          ? `${trip.notes}\n\n[${new Date().toISOString()}] Bus ${
-              newBusId ? 'reassigned' : 'removed'
-            }: ${reason}`
-          : `[${new Date().toISOString()}] Bus ${
-              newBusId ? 'reassigned' : 'removed'
-            }: ${reason}`,
+          ? `${trip.notes}\n\n[${new Date().toISOString()}] Bus ${newBusId ? 'reassigned' : 'removed'
+          }: ${reason}`
+          : `[${new Date().toISOString()}] Bus ${newBusId ? 'reassigned' : 'removed'
+          }: ${reason}`,
         // Include other fields
         ...(newBusId && { busId: newBusId }),
         ...(trip.driverId && { driverId: trip.driverId }),
@@ -1329,10 +1327,10 @@ export default function TimeKeeperTripsPage() {
                           psp.status === 'ACTIVE' &&
                           (psp.maximumBusAssigned || 0) > 0
                       ).length === 0 && (
-                        <div className="px-4 py-3 text-sm text-gray-500">
-                          No available PSPs found
-                        </div>
-                      )}
+                          <div className="px-4 py-3 text-sm text-gray-500">
+                            No available PSPs found
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -1342,5 +1340,13 @@ export default function TimeKeeperTripsPage() {
         )}
       </div>
     </Layout>
+  );
+}
+
+export default function TimeKeeperTripsPage() {
+  return (
+    <Suspense fallback={<div className="p-6">Loading...</div>}>
+      <TimeKeeperTripsContent />
+    </Suspense>
   );
 }

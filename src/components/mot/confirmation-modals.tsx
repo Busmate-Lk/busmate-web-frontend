@@ -21,8 +21,8 @@ export function DeleteConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-100/30 via-white/20 to-gray-200/30 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/90 backdrop-blur-lg rounded-xl max-w-md w-full shadow-2xl border border-white/50 ring-1 ring-gray-200/50">
+    <div className="fixed inset-0 bg-black/5 flex items-center justify-center p-4 z-50">
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-gray-200">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-red-100 to-red-50 rounded-full flex items-center justify-center shadow-sm">
@@ -85,8 +85,8 @@ export function SendConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-emerald-50/40 via-white/30 to-green-100/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/90 backdrop-blur-lg rounded-xl max-w-md w-full shadow-2xl border border-white/50 ring-1 ring-gray-200/50">
+    <div className="fixed inset-0 bg-black/5 flex items-center justify-center p-4 z-50">
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-gray-200">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-emerald-50 rounded-full flex items-center justify-center shadow-sm">
@@ -149,8 +149,8 @@ export function DeactivationConfirmationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-amber-50/40 via-white/30 to-yellow-100/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white/90 backdrop-blur-lg rounded-xl max-w-md w-full shadow-2xl border border-white/50 ring-1 ring-gray-200/50">
+    <div className="fixed inset-0 bg-black/5 flex items-center justify-center p-4 z-50">
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl max-w-md w-full shadow-2xl border border-gray-200">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-yellow-100 to-amber-50 rounded-full flex items-center justify-center shadow-sm">

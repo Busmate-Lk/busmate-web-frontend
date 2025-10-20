@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { 
-  Bus, 
-  Users, 
-  Route, 
-  Shield, 
-  Calendar, 
+import {
+  Bus,
+  Users,
+  Route,
+  Shield,
+  Calendar,
   Activity,
   TrendingUp,
   TrendingDown,
@@ -33,37 +33,43 @@ const colorMap = {
     bg: 'bg-blue-50',
     icon: 'bg-blue-100 text-blue-600',
     text: 'text-blue-600',
-    border: 'border-blue-200'
+    border: 'border-blue-200',
+    borderLeft: 'border-l-blue-500'
   },
   green: {
     bg: 'bg-green-50',
     icon: 'bg-green-100 text-green-600',
     text: 'text-green-600',
-    border: 'border-green-200'
+    border: 'border-green-200',
+    borderLeft: 'border-l-green-500'
   },
   purple: {
     bg: 'bg-purple-50',
     icon: 'bg-purple-100 text-purple-600',
     text: 'text-purple-600',
-    border: 'border-purple-200'
+    border: 'border-purple-200',
+    borderLeft: 'border-l-purple-500'
   },
   orange: {
     bg: 'bg-orange-50',
     icon: 'bg-orange-100 text-orange-600',
     text: 'text-orange-600',
-    border: 'border-orange-200'
+    border: 'border-orange-200',
+    borderLeft: 'border-l-orange-500'
   },
   teal: {
     bg: 'bg-teal-50',
     icon: 'bg-teal-100 text-teal-600',
     text: 'text-teal-600',
-    border: 'border-teal-200'
+    border: 'border-teal-200',
+    borderLeft: 'border-l-teal-500'
   },
   indigo: {
     bg: 'bg-indigo-50',
     icon: 'bg-indigo-100 text-indigo-600',
     text: 'text-indigo-600',
-    border: 'border-indigo-200'
+    border: 'border-indigo-200',
+    borderLeft: 'border-l-indigo-500'
   }
 };
 
@@ -115,11 +121,11 @@ export function KPICards({ kpiData, loading = false }: KPICardsProps) {
       {kpiData.map((kpi, index) => {
         const IconComponent = iconMap[kpi.icon as keyof typeof iconMap];
         const colors = colorMap[kpi.color as keyof typeof colorMap];
-        
+
         return (
           <div
             key={index}
-            className={`${colors.bg} ${colors.border} rounded-xl shadow-sm border-2 p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}
+            className={`rounded-xl border-2 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ${colors.bg} ${colors.border}`}
           >
             <div className="flex items-center">
               <div className={`${colors.icon} w-12 h-12 rounded-lg flex items-center justify-center`}>

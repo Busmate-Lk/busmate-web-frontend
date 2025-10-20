@@ -85,7 +85,7 @@ export function SentNotificationDetail({ notificationId }: SentNotificationDetai
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4">
-                    <Button variant="ghost" size="sm" asChild className="bg-gray-500/20 text-gray-600 hover:bg-gray-500/30 shadow-md">
+                    <Button variant="ghost" size="sm" asChild className="text-gray-600 hover:bg-transparent">
                         <Link href={`${pathname?.startsWith('/mot') ? '/mot' : '/admin'}/notifications/sent`}>
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to Sent Notifications

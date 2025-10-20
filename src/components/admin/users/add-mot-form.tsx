@@ -67,8 +67,8 @@ export function AddMotForm() {
           {/* Main Form */}
           <div className="xl:col-span-3 space-y-8">
             {/* Personal Information */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-white rounded-t-lg">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="bg-white rounded-t-lg">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <User className="h-5 w-5 text-blue-600" />
@@ -166,8 +166,8 @@ export function AddMotForm() {
             </Card>
 
             {/* Ministry Details */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-white rounded-t-lg">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="bg-white rounded-t-lg">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-green-100 rounded-lg">
                     <Building className="h-5 w-5 text-green-600" />
@@ -356,8 +356,8 @@ export function AddMotForm() {
             </Card> */}
 
             {/* Account Setup */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-white rounded-t-lg">
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="bg-white rounded-t-lg">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-orange-100 rounded-lg">
                     <Key className="h-5 w-5 text-orange-600" />
@@ -438,13 +438,13 @@ export function AddMotForm() {
           {/* User Preview Sidebar */}
           <div className="xl:col-span-1">
             <div className="sticky top-6">
-              <Card className="shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
+              <Card className="shadow-sm border border-gray-200">
+                <CardHeader className="bg-white rounded-t-lg">
                   <CardTitle className="text-lg text-center">User Preview</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 text-center space-y-6">
-                  <Avatar className="w-20 h-20 mx-auto border-4 border-white shadow-lg">
-                    <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-100 to-indigo-100">
+                  <Avatar className="w-20 h-20 mx-auto border-4 border-white shadow-sm">
+                    <AvatarFallback className="text-2xl bg-blue-100">
                       <User className="h-8 w-8 text-blue-600" />
                     </AvatarFallback>
                   </Avatar>
@@ -508,10 +508,10 @@ export function AddMotForm() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center mt-8 pt-6 bg-gradient-to-r from-gray-50 to-white rounded-lg p-6 shadow-sm">
+        <div className="flex justify-between items-center mt-8 pt-6 bg-white rounded-lg p-6 shadow-sm border border-gray-200">
           <Button
             variant="outline"
-            className="bg-red-500/20 text-red-600 border-red-200 hover:bg-red-500/30 shadow-md"
+            className="bg-red-500/20 text-red-600 border-red-200 hover:bg-red-500/30"
             asChild
           >
             <Link href="/admin/users">

@@ -1,6 +1,7 @@
 import { TimeKeeperTripAssignment } from '@/components/timeKeeper/trip-assignment-workspace';
 import { Metadata } from 'next';
 import { Layout } from '@/components/shared/layout';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Trip Assignment | BusMate',
@@ -17,7 +18,9 @@ export default function TimeKeeperTripAssignmentPage() {
       role="timeKeeper"
       padding={0}
     >
-      <TimeKeeperTripAssignment />
+      <Suspense fallback={<div className="p-6">Loading...</div>}>
+        <TimeKeeperTripAssignment />
+      </Suspense>
     </Layout>
   );
 }

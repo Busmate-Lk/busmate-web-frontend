@@ -83,8 +83,8 @@ export function UserTable() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg">
-      <div className="p-6 bg-gradient-to-r from-gray-50 to-white rounded-t-lg">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="p-6 bg-white rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Checkbox />
@@ -92,10 +92,10 @@ export function UserTable() {
           </div>
 
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="bg-yellow-500/20 text-yellow-600 border-yellow-200 hover:bg-yellow-500/30 shadow-md">
+            <Button variant="outline" size="sm" className="bg-yellow-500/20 text-yellow-600 border-yellow-200 hover:bg-yellow-500/30">
               Suspend
             </Button>
-            <Button variant="outline" size="sm" className="bg-green-500/20 text-green-600 border-green-200 hover:bg-green-500/30 shadow-md">
+            <Button variant="outline" size="sm" className="bg-green-500/20 text-green-600 border-green-200 hover:bg-green-500/30">
               Activate
             </Button>
             <Button variant="outline" size="sm" className="bg-blue-500/20 text-blue-600 border-blue-200 hover:bg-blue-500/30 shadow-md">

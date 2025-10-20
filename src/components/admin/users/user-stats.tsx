@@ -50,16 +50,7 @@ export function UserStats() {
       {stats.map((stat) => (
         <Card
           key={stat.title}
-          className={`shadow-sm border-l-4 ${stat.color === "blue"
-            ? "border-blue-500"
-            : stat.color === "green"
-              ? "border-green-500"
-              : stat.color === "yellow"
-                ? "border-yellow-500"
-                : stat.color === "purple"
-                  ? "border-purple-500"
-                  : "border-teal-500"
-            } bg-white`}
+          className="shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow"
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
