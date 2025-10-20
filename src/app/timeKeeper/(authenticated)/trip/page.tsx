@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   TripManagementService,
   TripResponse,
@@ -82,6 +82,7 @@ interface FilterOptions {
 
 export default function TimeKeeperTripsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [trips, setTrips] = useState<TripResponse[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +108,7 @@ export default function TimeKeeperTripsPage() {
     new Map()
   );
 
-  // Filter states
+  // Filter states - Initialize from URL params
   const [statusFilter, setStatusFilter] = useState('all');
   const [routeFilter, setRouteFilter] = useState('all');
   const [operatorFilter, setOperatorFilter] = useState('all');
@@ -254,6 +255,19 @@ export default function TimeKeeperTripsPage() {
     },
     [tripsStartingAtStop]
   );
+
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    const urlFromDate = searchParams.get('fromDate');
+    const urlToDate = searchParams.get('toDate');
+
+    if (urlFromDate) {
+      setFromDate(urlFromDate);
+    }
+    if (urlToDate) {
+      setToDate(urlToDate);
+    }
+  }, [searchParams]);
 
   // Load timekeeper's assigned bus stop
   useEffect(() => {
@@ -987,6 +1001,66 @@ export default function TimeKeeperTripsPage() {
       role="timeKeeper"
     >
       <div className="space-y-6">
+        {/* Date Filter Notice - Show when filtering by specific date from calendar */}
+        {fromDate && toDate && fromDate === toDate && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-green-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3 flex-1">
+                  <h3 className="text-sm font-medium text-green-800">
+                    Showing trips for{' '}
+                    {new Date(fromDate).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </h3>
+                  <p className="mt-1 text-sm text-green-700">
+                    Trips are filtered by the date selected from the calendar.
+                    Clear the date filter to see all trips.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setFromDate('');
+                  setToDate('');
+                  router.push('/timeKeeper/trip');
+                }}
+                className="ml-3 flex-shrink-0 text-green-700 hover:text-green-900"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Info Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">

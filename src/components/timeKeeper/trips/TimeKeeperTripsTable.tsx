@@ -375,7 +375,7 @@ export function TimeKeeperTripsTable({
                               </button>
                             )} */}
 
-                            {onRemoveBus && trip.busPlateNumber && (
+                            {/* {onRemoveBus && trip.busPlateNumber && (
                               <button
                                 onClick={() => onRemoveBus(trip.id!)}
                                 className="text-orange-600 hover:text-orange-900"
@@ -383,7 +383,7 @@ export function TimeKeeperTripsTable({
                               >
                                 <ArrowRightLeft className="w-4 h-4" />
                               </button>
-                            )}
+                            )} */}
                           </>
                         ) : // For non-starting trips, only allow viewing details (handled elsewhere)
                         null}

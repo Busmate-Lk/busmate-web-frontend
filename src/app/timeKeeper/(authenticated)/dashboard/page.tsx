@@ -8,11 +8,17 @@ import { RealTimeClock } from '@/components/timeKeeper/dashboard/real-time-clock
 import { CalendarNavigator } from '@/components/timeKeeper/dashboard/calendar-navigator';
 import { TodaysBusesTable } from '@/components/timeKeeper/dashboard/todays-buses-table';
 import { TripManagementService } from '@/lib/api-client/route-management/services/TripManagementService';
+import { BusStopManagementService } from '@/lib/api-client/route-management/services/BusStopManagementService';
 import { TripResponse } from '@/lib/api-client/route-management';
+import { getUserFromToken } from '@/lib/utils/jwtHandler';
+import { getCookie } from '@/lib/utils/cookieUtils';
+import { userManagementClient } from '@/lib/api/client';
 
 export default function TimeKeeperDashboard() {
   const [todaysTrips, setTodaysTrips] = useState<TripResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [assignedBusStopName, setAssignedBusStopName] =
+    useState<string>('Loading...');
 
   const stats = {
     activeSchedules: 156,
@@ -20,6 +26,53 @@ export default function TimeKeeperDashboard() {
     routesCovered: 42,
     busesAssigned: 89,
   };
+
+  // Load assigned bus stop
+  useEffect(() => {
+    const fetchAssignedBusStop = async () => {
+      try {
+        // Step 1: Get access token from cookies
+        const accessToken = getCookie('access_token');
+
+        if (!accessToken) {
+          throw new Error('No access token found. Please log in again.');
+        }
+
+        // Step 2: Extract user ID from JWT token
+        const userFromToken = getUserFromToken(accessToken);
+
+        if (!userFromToken?.id) {
+          throw new Error('Invalid access token. Please log in again.');
+        }
+
+        const extractedUserId = userFromToken.id;
+
+        // Step 3: Fetch timekeeper profile to get assigned_stand
+        const timekeeperResponse = await userManagementClient.get(
+          `/api/timekeeper/profile/${extractedUserId}`
+        );
+
+        const timekeeperData = timekeeperResponse.data;
+
+        // Extract assigned_stand from the response
+        const assignedStandId = timekeeperData.assign_stand;
+        if (!assignedStandId) {
+          throw new Error('No bus stop assigned to this timekeeper');
+        }
+
+        // Step 4: Fetch bus stop details using the BusStopManagementService
+        const busStop = await BusStopManagementService.getStopById(
+          assignedStandId
+        );
+        setAssignedBusStopName(busStop.name || 'Unknown Stop');
+      } catch (err: any) {
+        console.error('Failed to load assigned bus stop:', err);
+        setAssignedBusStopName('Unknown Stop');
+      }
+    };
+
+    fetchAssignedBusStop();
+  }, []);
 
   // Load today's trips
   const loadTodaysTrips = useCallback(async () => {
@@ -68,7 +121,7 @@ export default function TimeKeeperDashboard() {
     <Layout
       activeItem="dashboard"
       pageTitle="Dashboard"
-      pageDescription="Overview of schedule management activities"
+      pageDescription={`Assigned Bus Stop: ${assignedBusStopName}`}
       role="timeKeeper"
     >
       <div className="space-y-6">

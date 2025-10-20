@@ -57,17 +57,25 @@ export function CalendarNavigator({ onDateSelect }: CalendarNavigatorProps) {
     return days;
   };
 
-  const navigateToSchedule = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    router.push(`/timeKeeper/schedule?date=${dateString}`);
+  const navigateToTrips = (date: Date) => {
+    // Format date as YYYY-MM-DD without timezone conversion
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    router.push(`/timeKeeper/trip?fromDate=${dateString}&toDate=${dateString}`);
   };
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
     if (onDateSelect) {
-      onDateSelect(date.toISOString().split('T')[0]);
+      // Format date as YYYY-MM-DD without timezone conversion
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      onDateSelect(`${year}-${month}-${day}`);
     } else {
-      navigateToSchedule(date);
+      navigateToTrips(date);
     }
   };
 
@@ -196,7 +204,7 @@ export function CalendarNavigator({ onDateSelect }: CalendarNavigatorProps) {
 
       <div className="mt-3 space-y-1.5">
         <div className="text-[10px] text-slate-500 text-center font-medium">
-          Click on any date to view schedule details
+          Click on any date to view trips for that day
         </div>
         <div className="flex items-center justify-center gap-3 text-[10px] bg-white/60 rounded-lg py-1.5">
           <div className="flex items-center gap-1">

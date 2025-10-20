@@ -118,7 +118,7 @@ export function TimeKeeperAssignmentPanel({
   return (
     <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-indigo-100 rounded-lg">
             <Settings className="h-5 w-5 text-indigo-600" />
@@ -127,7 +127,7 @@ export function TimeKeeperAssignmentPanel({
             <h2 className="text-lg font-semibold text-gray-900">
               PSP Assignment
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs text-gray-600">
               Assign permits to selected trips
             </p>
           </div>
@@ -135,27 +135,27 @@ export function TimeKeeperAssignmentPanel({
       </div>
 
       {/* Assignment Status */}
-      <div className="p-6 border-b border-gray-200 bg-indigo-50">
+      <div className="p-4 border-b border-gray-200 bg-indigo-50">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-indigo-600">
+            <div className="text-xl font-bold text-indigo-600">
               {workspace.selectedTrips.length}
             </div>
-            <div className="text-sm text-gray-600">Selected Trips</div>
+            <div className="text-xs text-gray-600">Selected Trips</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-xl font-bold text-green-600">
               {selectedPsps.length}
             </div>
-            <div className="text-sm text-gray-600">Selected PSPs</div>
+            <div className="text-xs text-gray-600">Selected PSPs</div>
           </div>
         </div>
       </div>
 
       {/* Info Banner */}
-      <div className="p-4 bg-yellow-50 border-b border-yellow-200">
+      <div className="p-3 bg-yellow-50 border-b border-yellow-200">
         <div className="flex items-start space-x-2">
-          <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+          <AlertCircle className="h-3.5 w-3.5 text-yellow-600 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-yellow-800">
             <strong>TimeKeeper Note:</strong> You can only reassign PSPs for
             trips starting from <strong>{workspace.assignedBusStopName}</strong>
@@ -165,8 +165,8 @@ export function TimeKeeperAssignmentPanel({
       </div>
 
       {/* Assignment Mode */}
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-md font-medium text-gray-900 mb-3">
+      <div className="p-4 border-b border-gray-200">
+        <h3 className="text-sm font-medium text-gray-900 mb-2.5">
           Assignment Mode
         </h3>
         <div className="space-y-2">
@@ -179,13 +179,13 @@ export function TimeKeeperAssignmentPanel({
               onChange={(e) =>
                 setAssignmentMode(e.target.value as 'auto' | 'manual')
               }
-              className="w-4 h-4 text-indigo-600"
+              className="w-3.5 h-3.5 text-indigo-600"
             />
             <span className="text-sm font-medium text-gray-900">
               Auto Distribution
             </span>
           </label>
-          <p className="ml-6 text-xs text-gray-600">
+          <p className="ml-5 text-xs text-gray-600">
             Distribute selected PSPs evenly across selected trips
           </p>
 
@@ -198,130 +198,129 @@ export function TimeKeeperAssignmentPanel({
               onChange={(e) =>
                 setAssignmentMode(e.target.value as 'auto' | 'manual')
               }
-              className="w-4 h-4 text-indigo-600"
+              className="w-3.5 h-3.5 text-indigo-600"
             />
             <span className="text-sm font-medium text-gray-900">
               Manual Assignment
             </span>
           </label>
-          <p className="ml-6 text-xs text-gray-600">
+          <p className="ml-5 text-xs text-gray-600">
             Assign all selected PSPs to all selected trips
           </p>
         </div>
       </div>
 
       {/* Available PSPs */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6">
-          <h3 className="text-md font-medium text-gray-900 mb-4">
-            Available PSPs
-          </h3>
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-md font-medium text-gray-900 mb-4">
+          Available PSPs
+        </h3>
 
-          {workspace.isLoadingPermits ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mx-auto mb-2"></div>
-              <div className="text-sm text-gray-600">Loading permits...</div>
-            </div>
-          ) : workspace.permitsError ? (
-            <div className="text-center py-8">
-              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-              <div className="text-sm text-red-600">
-                {workspace.permitsError}
-              </div>
-            </div>
-          ) : availablePsps.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">
-                No available PSPs for this route group
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {availablePsps.map((psp) => {
-                const utilization = getPspUtilization(psp);
-                const isSelected = selectedPsps.includes(psp.id || '');
+        {workspace.isLoadingPermits ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent mx-auto mb-2"></div>
+            <div className="text-sm text-gray-600">Loading permits...</div>
+          </div>
+        ) : workspace.permitsError ? (
+          <div className="text-center py-8">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+            <div className="text-sm text-red-600">{workspace.permitsError}</div>
+          </div>
+        ) : availablePsps.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-600">
+              No available PSPs for this route group
+            </p>
+          </div>
+        ) : (
+          <div
+            className="space-y-3 overflow-y-auto"
+            style={{ maxHeight: availablePsps.length > 3 ? '400px' : 'auto' }}
+          >
+            {availablePsps.map((psp) => {
+              const utilization = getPspUtilization(psp);
+              const isSelected = selectedPsps.includes(psp.id || '');
 
-                return (
-                  <div
-                    key={psp.id}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                    onClick={() => psp.id && handlePspSelect(psp.id)}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        {isSelected ? (
-                          <CheckSquare className="h-4 w-4 text-indigo-600" />
-                        ) : (
-                          <Square className="h-4 w-4 text-gray-400" />
-                        )}
-                        <div>
-                          <h4 className="font-medium text-gray-900">
-                            {psp.permitNumber}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {psp.operatorName}
-                          </p>
-                        </div>
+              return (
+                <div
+                  key={psp.id}
+                  className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                  onClick={() => psp.id && handlePspSelect(psp.id)}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      {isSelected ? (
+                        <CheckSquare className="h-4 w-4 text-indigo-600" />
+                      ) : (
+                        <Square className="h-4 w-4 text-gray-400" />
+                      )}
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-900">
+                          {psp.permitNumber}
+                        </h4>
+                        <p className="text-xs text-gray-600">
+                          {psp.operatorName}
+                        </p>
                       </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          psp.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {psp.status}
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        psp.status === 'ACTIVE'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {psp.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Current Load</span>
+                      <span className="font-medium">
+                        {getAssignedTripsCount(psp.id || '')} /{' '}
+                        {psp.maximumBusAssigned} trips
                       </span>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Current Load</span>
-                        <span className="font-medium">
-                          {getAssignedTripsCount(psp.id || '')} /{' '}
-                          {psp.maximumBusAssigned} trips
-                        </span>
-                      </div>
-
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            utilization >= 90
-                              ? 'bg-red-500'
-                              : utilization >= 70
-                              ? 'bg-yellow-500'
-                              : 'bg-green-500'
-                          }`}
-                          style={{ width: `${Math.min(utilization, 100)}%` }}
-                        ></div>
-                      </div>
-
-                      {utilization >= 90 && (
-                        <div className="flex items-center space-x-1 text-xs text-red-600">
-                          <AlertCircle className="h-3 w-3" />
-                          <span>Near capacity</span>
-                        </div>
-                      )}
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full transition-all ${
+                          utilization >= 90
+                            ? 'bg-red-500'
+                            : utilization >= 70
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                        }`}
+                        style={{ width: `${Math.min(utilization, 100)}%` }}
+                      ></div>
                     </div>
+
+                    {utilization >= 90 && (
+                      <div className="flex items-center space-x-1 text-xs text-red-600">
+                        <AlertCircle className="h-3 w-3" />
+                        <span>Near capacity</span>
+                      </div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Assignment Action */}
-      <div className="p-6 border-t border-gray-200 bg-gray-50">
-        <div className="space-y-4">
+      <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className="space-y-3">
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">
               Assignment Notes (Optional)
             </label>
             <textarea
@@ -335,10 +334,10 @@ export function TimeKeeperAssignmentPanel({
 
           {/* Error Display */}
           {workspace.assignmentError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-2 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex items-center space-x-2">
                 <AlertCircle className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-red-600">
+                <span className="text-xs text-red-600">
                   {workspace.assignmentError}
                 </span>
               </div>
@@ -353,7 +352,7 @@ export function TimeKeeperAssignmentPanel({
               selectedPsps.length === 0 ||
               workspace.isAssigningPsps
             }
-            className="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+            className="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
           >
             {workspace.isAssigningPsps ? (
               <>
