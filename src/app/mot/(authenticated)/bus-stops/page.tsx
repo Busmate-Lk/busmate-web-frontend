@@ -232,7 +232,7 @@ export default function BusStopsPage() {
 
   // Bus stop action handlers
   const handleAddBusStop = () => {
-    router.push('/mot/bus-stops/add');
+    router.push('/mot/bus-stops/add-new');
   };
 
   const handleImportBusStops = () => {
