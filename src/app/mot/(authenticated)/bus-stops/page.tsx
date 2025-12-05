@@ -84,14 +84,11 @@ export default function BusStopsPage() {
   const loadFilterOptions = useCallback(async () => {
     try {
       setFilterOptionsLoading(true);
-      const [states, accessibilityStatuses] = await Promise.all([
-        BusStopManagementService.getDistinctStates(),
-        BusStopManagementService.getDistinctAccessibilityStatuses()
-      ]);
+      const response = await BusStopManagementService.getFilterOptions1();
 
       setFilterOptions({
-        states: states || [],
-        accessibilityStatuses: accessibilityStatuses || []
+        states: response.states || [],
+        accessibilityStatuses: response.accessibilityStatuses || []
       });
     } catch (error) {
       console.error('Failed to load filter options:', error);
@@ -116,29 +113,60 @@ export default function BusStopsPage() {
     }
   }, []);
 
-  // Load bus stops from API (only search is server-side, other filters are client-side)
+  // Load bus stops from API - handle both server-side and client-side filtering appropriately
   const loadBusStops = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // For search, we use server-side filtering. For state/accessibility, we use client-side filtering.
-      const response: PageStopResponse = await BusStopManagementService.getAllStops(
-        0, // Always get first page
-        1000, // Get a large number to get all results
-        queryParams.sortBy,
-        queryParams.sortDir,
-        queryParams.search
-      );
-
-      setAllBusStops(response.content || []);
+      // If we have search, state, or accessibility filters, we need to get all data for client-side filtering
+      // Otherwise, we can use server-side pagination for better performance
+      const needsClientSideFiltering = queryParams.search || stateFilter !== 'all' || accessibilityFilter !== 'all';
+      
+      if (needsClientSideFiltering) {
+        // Get all results for client-side filtering
+        let allResults: StopResponse[] = [];
+        let page = 0;
+        let hasMore = true;
+        const pageSize = 500; // Use reasonable page size for batch fetching
+        
+        while (hasMore) {
+          const response: PageStopResponse = await BusStopManagementService.getAllStops(
+            page,
+            pageSize,
+            queryParams.sortBy,
+            queryParams.sortDir,
+            queryParams.search
+          );
+          
+          if (response.content && response.content.length > 0) {
+            allResults = [...allResults, ...response.content];
+            page++;
+            hasMore = !response.last && response.content.length === pageSize;
+          } else {
+            hasMore = false;
+          }
+        }
+        
+        setAllBusStops(allResults);
+      } else {
+        // Use server-side pagination when no filters are applied
+        const response: PageStopResponse = await BusStopManagementService.getAllStops(
+          queryParams.page,
+          queryParams.size,
+          queryParams.sortBy,
+          queryParams.sortDir
+        );
+        
+        setAllBusStops(response.content || []);
+      }
     } catch (error) {
       console.error('Failed to load bus stops:', error);
       setError('Failed to load bus stops. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [queryParams.search, queryParams.sortBy, queryParams.sortDir]);
+  }, [queryParams.search, queryParams.sortBy, queryParams.sortDir, queryParams.page, queryParams.size, stateFilter, accessibilityFilter]);
 
   useEffect(() => {
     loadFilterOptions();
@@ -181,8 +209,8 @@ export default function BusStopsPage() {
 
   const handleSearch = (searchTerm: string) => {
     setSearchTerm(searchTerm);
-    // Update query params for table view
-    updateQueryParams({ search: searchTerm });
+    // Reset to first page when search changes
+    updateQueryParams({ search: searchTerm, page: 0 });
   };
 
   const handleSearchTermUpdate = (searchTerm: string) => {
@@ -198,7 +226,7 @@ export default function BusStopsPage() {
   };
 
   const handlePageSizeChange = (size: number) => {
-    updateQueryParams({ size });
+    updateQueryParams({ size, page: 0 });
   };
 
   const handleViewChange = (view: ViewType) => {
@@ -207,14 +235,14 @@ export default function BusStopsPage() {
 
   const handleStateFilterChange = (value: string) => {
     setStateFilter(value);
-    // Update query params for table view
-    updateQueryParams({});
+    // Reset to first page when filter changes
+    setQueryParams(prev => ({ ...prev, page: 0 }));
   };
 
   const handleAccessibilityFilterChange = (value: string) => {
     setAccessibilityFilter(value);
-    // Update query params for table view
-    updateQueryParams({});
+    // Reset to first page when filter changes
+    setQueryParams(prev => ({ ...prev, page: 0 }));
   };
 
   const handleClearAllFilters = useCallback(() => {
@@ -341,9 +369,21 @@ export default function BusStopsPage() {
   const filteredTableData = useMemo(() => {
     if (currentView !== 'table') return { data: [], totalElements: 0, totalPages: 0 };
     
+    const needsClientSideFiltering = queryParams.search || stateFilter !== 'all' || accessibilityFilter !== 'all';
+    
+    if (!needsClientSideFiltering) {
+      // When using server-side pagination, return the data as-is
+      return {
+        data: allBusStops,
+        totalElements: stats.totalStops.count, // Use total from statistics
+        totalPages: Math.ceil(stats.totalStops.count / queryParams.size)
+      };
+    }
+    
+    // Client-side filtering when filters are applied
     let filtered = allBusStops;
 
-    // Apply search filter
+    // Apply search filter (note: search is also handled server-side but we keep this for consistency)
     if (searchTerm) {
       filtered = filtered.filter(stop =>
         stop.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -364,42 +404,44 @@ export default function BusStopsPage() {
       filtered = filtered.filter(stop => stop.isAccessible === isAccessible);
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      const field = queryParams.sortBy;
-      const direction = queryParams.sortDir === 'asc' ? 1 : -1;
-      
-      let aVal = '';
-      let bVal = '';
-      
-      switch (field) {
-        case 'name':
-          aVal = a.name || '';
-          bVal = b.name || '';
-          break;
-        case 'createdAt':
-          aVal = a.createdAt || '';
-          bVal = b.createdAt || '';
-          break;
-        case 'updatedAt':
-          aVal = a.updatedAt || '';
-          bVal = b.updatedAt || '';
-          break;
-        case 'city':
-          aVal = a.location?.city || '';
-          bVal = b.location?.city || '';
-          break;
-        case 'state':
-          aVal = a.location?.state || '';
-          bVal = b.location?.state || '';
-          break;
-        default:
-          aVal = a.name || '';
-          bVal = b.name || '';
-      }
-      
-      return aVal.localeCompare(bVal) * direction;
-    });
+    // Apply sorting (only for client-side filtering, server-side is already sorted)
+    if (needsClientSideFiltering) {
+      filtered.sort((a, b) => {
+        const field = queryParams.sortBy;
+        const direction = queryParams.sortDir === 'asc' ? 1 : -1;
+        
+        let aVal = '';
+        let bVal = '';
+        
+        switch (field) {
+          case 'name':
+            aVal = a.name || '';
+            bVal = b.name || '';
+            break;
+          case 'createdAt':
+            aVal = a.createdAt || '';
+            bVal = b.createdAt || '';
+            break;
+          case 'updatedAt':
+            aVal = a.updatedAt || '';
+            bVal = b.updatedAt || '';
+            break;
+          case 'city':
+            aVal = a.location?.city || '';
+            bVal = b.location?.city || '';
+            break;
+          case 'state':
+            aVal = a.location?.state || '';
+            bVal = b.location?.state || '';
+            break;
+          default:
+            aVal = a.name || '';
+            bVal = b.name || '';
+        }
+        
+        return aVal.localeCompare(bVal) * direction;
+      });
+    }
 
     const totalElements = filtered.length;
     const totalPages = Math.ceil(totalElements / queryParams.size);
@@ -412,7 +454,7 @@ export default function BusStopsPage() {
       totalElements,
       totalPages
     };
-  }, [currentView, allBusStops, searchTerm, stateFilter, accessibilityFilter, queryParams]);
+  }, [currentView, allBusStops, searchTerm, stateFilter, accessibilityFilter, queryParams, stats.totalStops.count]);
 
   // Update busStops and pagination based on current view
   const busStops = currentView === 'table' ? filteredTableData.data : [];
