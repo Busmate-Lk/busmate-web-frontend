@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Plus, Upload, Download, FileText, CheckSquare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Upload, Download, FileText, CheckSquare, Settings } from 'lucide-react';
 
 interface BusStopActionButtonsProps {
   onAddBusStop: () => void;
@@ -20,6 +21,7 @@ export function BusStopActionButtons({
   isLoading = false,
   selectedCount = 0
 }: BusStopActionButtonsProps) {
+  const router = useRouter();
   return (
     <div className="flex flex-col sm:flex-row gap-3">
       {/* Primary Actions */}
@@ -46,15 +48,27 @@ export function BusStopActionButtons({
 
       {/* Secondary Actions */}
       <div className="flex gap-3">
-        <button
-          onClick={onExportAll}
-          disabled={isLoading}
-          className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-        >
-          <Download className="h-4 w-4" />
-          <span className="hidden sm:inline">Export All</span>
-          <span className="sm:hidden">Export</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onExportAll}
+            disabled={isLoading}
+            className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Quick Export</span>
+            <span className="sm:hidden">Quick</span>
+          </button>
+
+          <button
+            onClick={() => router.push('/mot/bus-stops/export')}
+            disabled={isLoading}
+            className="flex items-center gap-2 border border-blue-300 text-blue-700 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Advanced Export</span>
+            <span className="sm:hidden">Advanced</span>
+          </button>
+        </div>
 
         {/* Bulk Operations - Only show when items are selected */}
         {selectedCount > 0 && onBulkOperations && (
