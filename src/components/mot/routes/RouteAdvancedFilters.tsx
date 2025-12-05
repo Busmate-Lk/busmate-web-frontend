@@ -17,6 +17,7 @@ import {
 interface FilterOptions {
   routeGroups: Array<{ id: string; name: string }>;
   directions: Array<'OUTBOUND' | 'INBOUND'>;
+  roadTypes: Array<'NORMALWAY' | 'EXPRESSWAY'>;
   distanceRange: { min: number; max: number };
   durationRange: { min: number; max: number };
 }

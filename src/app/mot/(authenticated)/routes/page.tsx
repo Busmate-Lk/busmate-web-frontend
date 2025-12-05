@@ -10,7 +10,7 @@ import { RouteActionButtons } from '@/components/mot/routes/RouteActionButtons';
 import Pagination from '@/components/shared/Pagination';
 import DeleteRouteConfirmation from '@/components/mot/routes/DeleteRouteConfirmation';
 import { RouteManagementService } from '@/lib/api-client/route-management';
-import type { RouteResponse, PageRouteResponse, RouteStatisticsResponse } from '@/lib/api-client/route-management';
+import type { RouteResponse, PageRouteResponse, RouteStatisticsResponse, RouteFilterOptionsResponse } from '@/lib/api-client/route-management';
 
 interface QueryParams {
   page: number;
@@ -29,6 +29,7 @@ interface QueryParams {
 interface FilterOptions {
   routeGroups: Array<{ id: string; name: string }>;
   directions: Array<'OUTBOUND' | 'INBOUND'>;
+  roadTypes: Array<'NORMALWAY' | 'EXPRESSWAY'>;
   distanceRange: { min: number; max: number };
   durationRange: { min: number; max: number };
 }
@@ -52,6 +53,7 @@ export default function RoutesPage() {
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     routeGroups: [],
     directions: [],
+    roadTypes: [],
     distanceRange: { min: 0, max: 100 },
     durationRange: { min: 0, max: 300 }
   });
@@ -92,18 +94,23 @@ export default function RoutesPage() {
   const loadFilterOptions = useCallback(async () => {
     try {
       setFilterOptionsLoading(true);
-      const [routeGroups, directions, distanceRange, durationRange] = await Promise.all([
-        RouteManagementService.getDistinctRouteGroups(),
-        RouteManagementService.getDistinctDirections(),
-        RouteManagementService.getDistanceRange(),
-        RouteManagementService.getDurationRange(),
-      ]);
+      const response = await RouteManagementService.getRouteFilterOptions();
 
       setFilterOptions({
-        routeGroups: routeGroups.map((rg: any) => ({ id: rg.id, name: rg.name })),
-        directions,
-        distanceRange: { min: distanceRange.min || 0, max: distanceRange.max || 100 },
-        durationRange: { min: durationRange.min || 0, max: durationRange.max || 300 }
+        routeGroups: response.routeGroups?.map((rg: any) => ({ 
+          id: rg.id, 
+          name: rg.name 
+        })) || [],
+        directions: response.directions || [],
+        roadTypes: response.roadTypes || [],
+        distanceRange: {
+          min: response.distanceRange?.min || 0,
+          max: response.distanceRange?.max || 100
+        },
+        durationRange: {
+          min: response.durationRange?.min || 0,
+          max: response.durationRange?.max || 300
+        }
       });
     } catch (err) {
       console.error('Error loading filter options:', err);
@@ -162,6 +169,7 @@ export default function RoutesPage() {
         queryParams.search || undefined,
         queryParams.routeGroupId,
         queryParams.direction,
+        undefined, // roadType - not currently used in UI
         queryParams.minDistance,
         queryParams.maxDistance,
         queryParams.minDuration,
