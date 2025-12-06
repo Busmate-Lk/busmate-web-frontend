@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Layout } from '@/components/shared/layout';
@@ -14,8 +15,19 @@ export default function EditBusStopPage({ params }: EditBusStopPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Get bus stop ID from params or search params
-  const busStopId = params.busStopId || searchParams.get('id') || '';
+  // State for resolved params
+  const [busStopId, setBusStopId] = useState<string>('');
+  
+  // Resolve params asynchronously
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      const id = resolvedParams.busStopId || searchParams.get('id') || '';
+      setBusStopId(id);
+    };
+    
+    resolveParams();
+  }, [params, searchParams]);
 
   const handleSuccess = (busStop: StopResponse) => {
     // Redirect to the bus stop details page

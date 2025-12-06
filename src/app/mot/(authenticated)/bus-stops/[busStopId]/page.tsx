@@ -21,8 +21,8 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Layout } from '@/components/shared/layout';
-import useBusStops from '@/hooks/use-bus-stops';
-import { StopResponse } from '@/lib/api-client/route-management';
+import { StopResponse, BusStopManagementService } from '@/lib/api-client/route-management';
+import { useToast } from '@/hooks/use-toast';
 import DeleteBusStopModal from '@/components/mot/bus-stops/DeleteBusStopModal';
 
 interface BusStopDetailsPageProps {
@@ -263,12 +263,8 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Hook usage
-  const {
-    loadBusStopById,
-    deleteBusStop,
-    clearError: clearHookError,
-  } = useBusStops();
+  // Toast for notifications
+  const { toast } = useToast();
 
   // Load bus stop details
   const loadBusStopDetails = useCallback(async () => {
@@ -282,7 +278,7 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
     setError(null);
 
     try {
-      const data = await loadBusStopById(busStopId);
+      const data = await BusStopManagementService.getStopById(busStopId);
       if (data) {
         setBusStop(data);
       } else {
@@ -293,7 +289,7 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
     } finally {
       setLoading(false);
     }
-  }, [busStopId, loadBusStopById]);
+  }, [busStopId]);
 
   // Copy to clipboard functionality
   const copyToClipboard = useCallback(async (text: string, field: string) => {
@@ -320,21 +316,30 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
 
     setIsDeleting(true);
     try {
-      const success = await deleteBusStop(busStop.id);
-      if (success) {
-        setShowDeleteModal(false);
-        // Add a small delay to show the modal closing animation
-        setTimeout(() => {
-          router.push('/mot/bus-stops');
-        }, 300);
-      }
+      await BusStopManagementService.deleteStop(busStop.id);
+      toast({
+        title: "Bus Stop Deleted",
+        description: `${busStop.name} has been deleted successfully.`,
+      });
+      setShowDeleteModal(false);
+      // Add a small delay to show the modal closing animation
+      setTimeout(() => {
+        router.push('/mot/bus-stops');
+      }, 300);
     } catch (err) {
       console.error('Failed to delete bus stop:', err);
+      const errorMessage = 'Failed to delete bus stop';
+      setError(errorMessage);
+      toast({
+        title: "Delete Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
       // Keep the modal open on error so user can see what happened
     } finally {
       setIsDeleting(false);
     }
-  }, [busStop, deleteBusStop, router]);
+  }, [busStop, router, toast]);
 
   // Open in Google Maps
   const openInMaps = useCallback(() => {

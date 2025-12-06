@@ -14,8 +14,8 @@ import {
   RotateCcw,
   Maximize2,
 } from 'lucide-react';
-import { StopRequest, StopResponse, LocationDto } from '@/lib/api-client/route-management';
-import useBusStops from '@/hooks/use-bus-stops';
+import { StopRequest, StopResponse, LocationDto, BusStopManagementService } from '@/lib/api-client/route-management';
+import { useToast } from '@/hooks/use-toast';
 
 interface BusStopFormProps {
   busStopId?: string;
@@ -25,6 +25,8 @@ interface BusStopFormProps {
 
 interface FormData {
   name: string;
+  nameSinhala?: string;
+  nameTamil?: string;
   description: string;
   location: {
     address: string;
@@ -330,11 +332,13 @@ const AddressPicker = ({
 
 export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopFormProps) {
   const router = useRouter();
-  const { addBusStop, updateBusStop, loadBusStopById } = useBusStops();
+  const { toast } = useToast();
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
     name: '',
+    nameSinhala: undefined,
+    nameTamil: undefined,
     description: '',
     location: {
       address: '',
@@ -367,10 +371,12 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
 
     setInitialLoading(true);
     try {
-      const busStop = await loadBusStopById(busStopId);
+      const busStop = await BusStopManagementService.getStopById(busStopId);
       if (busStop) {
         setFormData({
           name: busStop.name || '',
+          nameSinhala: busStop.nameSinhala,
+          nameTamil: busStop.nameTamil,
           description: busStop.description || '',
           location: {
             address: busStop.location?.address || '',
@@ -490,6 +496,8 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
     try {
       const stopData: StopRequest = {
         name: formData.name.trim(),
+        nameSinhala: formData.nameSinhala,
+        nameTamil: formData.nameTamil,
         description: formData.description.trim() || undefined,
         location: {
           address: formData.location.address.trim(),
@@ -506,12 +514,16 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
       let result: StopResponse | undefined;
 
       if (isEditMode && busStopId) {
-        result = await updateBusStop(busStopId, stopData);
+        result = await BusStopManagementService.updateStop(busStopId, stopData);
       } else {
-        result = await addBusStop(stopData);
+        result = await BusStopManagementService.createStop(stopData);
       }
 
       if (result) {
+        toast({
+          title: isEditMode ? "Bus Stop Updated" : "Bus Stop Created",
+          description: `${result.name} has been ${isEditMode ? 'updated' : 'created'} successfully.`,
+        });
         if (onSuccess) {
           onSuccess(result);
         } else {
@@ -521,8 +533,12 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
         setErrors({ general: `Failed to ${isEditMode ? 'update' : 'create'} bus stop` });
       }
     } catch (error: any) {
-      setErrors({ 
-        general: error?.message || `Failed to ${isEditMode ? 'update' : 'create'} bus stop` 
+      const errorMessage = error?.message || `Failed to ${isEditMode ? 'update' : 'create'} bus stop`;
+      setErrors({ general: errorMessage });
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
