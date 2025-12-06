@@ -146,6 +146,200 @@ export const BUS_STOP_VALIDATION_RULES: ValidationRule[] = [
   }
 ];
 
+// Route specific validation rules
+export const ROUTE_VALIDATION_RULES: ValidationRule[] = [
+  // Route Group fields
+  {
+    column: 'route_group_name',
+    required: true,
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'route_group_name_sinhala',
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'route_group_name_tamil',
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'route_group_description',
+    type: 'string',
+    maxLength: 500
+  },
+  
+  // Route fields
+  {
+    column: 'route_name',
+    required: true,
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'route_name_sinhala',
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'route_name_tamil',
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'route_number',
+    type: 'string',
+    maxLength: 20,
+    customValidator: (value: any, row: CSVRow, rowIndex: number) => {
+      if (value && typeof value === 'string') {
+        // Route number should be alphanumeric
+        if (!/^[A-Z0-9\-\/]+$/i.test(value.trim())) {
+          return 'Route number should contain only letters, numbers, hyphens, and forward slashes';
+        }
+      }
+      return null;
+    }
+  },
+  {
+    column: 'route_description',
+    type: 'string',
+    maxLength: 500
+  },
+  {
+    column: 'road_type',
+    type: 'string',
+    customValidator: (value: any, row: CSVRow, rowIndex: number) => {
+      if (value && typeof value === 'string') {
+        const validRoadTypes = ['NORMALWAY', 'EXPRESSWAY'];
+        if (!validRoadTypes.includes(value.toUpperCase())) {
+          return 'Road type must be either NORMALWAY or EXPRESSWAY';
+        }
+      }
+      return null;
+    }
+  },
+  {
+    column: 'route_through',
+    type: 'string',
+    maxLength: 255
+  },
+  {
+    column: 'route_through_sinhala',
+    type: 'string',
+    maxLength: 255
+  },
+  {
+    column: 'route_through_tamil',
+    type: 'string',
+    maxLength: 255
+  },
+  {
+    column: 'direction',
+    type: 'string',
+    customValidator: (value: any, row: CSVRow, rowIndex: number) => {
+      if (value && typeof value === 'string') {
+        const validDirections = ['OUTBOUND', 'INBOUND'];
+        if (!validDirections.includes(value.toUpperCase())) {
+          return 'Direction must be either OUTBOUND or INBOUND';
+        }
+      }
+      return null;
+    }
+  },
+  {
+    column: 'distance_km',
+    type: 'number',
+    min: 0.1,
+    max: 1000
+  },
+  {
+    column: 'estimated_duration_minutes',
+    type: 'number',
+    min: 1,
+    max: 1440 // 24 hours max
+  },
+
+  // Start/End stop references  
+  {
+    column: 'start_stop_id',
+    type: 'string',
+    customValidator: (value: any, row: CSVRow, rowIndex: number) => {
+      if (value && typeof value === 'string') {
+        // Basic UUID format validation
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(value.trim())) {
+          return 'Start stop ID should be a valid UUID format';
+        }
+      }
+      return null;
+    }
+  },
+  {
+    column: 'end_stop_id',
+    type: 'string',
+    customValidator: (value: any, row: CSVRow, rowIndex: number) => {
+      if (value && typeof value === 'string') {
+        // Basic UUID format validation
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(value.trim())) {
+          return 'End stop ID should be a valid UUID format';
+        }
+      }
+      return null;
+    }
+  },
+
+  // Route stops fields
+  {
+    column: 'stop_order',
+    required: true,
+    type: 'number',
+    min: 0,
+    max: 999
+  },
+  {
+    column: 'stop_id',
+    type: 'string',
+    customValidator: (value: any, row: CSVRow, rowIndex: number) => {
+      if (value && typeof value === 'string') {
+        // Basic UUID format validation
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(value.trim())) {
+          return 'Stop ID should be a valid UUID format';
+        }
+      }
+      return null;
+    }
+  },
+  {
+    column: 'stop_name_english',
+    required: true,
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'stop_name_sinhala',
+    type: 'string',
+    minLength: 2,
+    maxLength: 100
+  },
+  {
+    column: 'distance_from_start_km',
+    type: 'number',
+    min: 0,
+    max: 1000
+  }
+];
+
 export function validateCSVData(data: CSVData, rules: ValidationRule[] = BUS_STOP_VALIDATION_RULES): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
@@ -344,47 +538,115 @@ function validateType(value: any, expectedType: string): string | null {
 function validateRowIntegrity(row: CSVRow, rowIndex: number, rules: ValidationRule[]): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // Check for coordinate consistency
-  const hasLatitude = row.latitude !== undefined && row.latitude !== '';
-  const hasLongitude = row.longitude !== undefined && row.longitude !== '';
-  
-  if (hasLatitude && !hasLongitude) {
-    errors.push({
-      row: rowIndex,
-      column: 'longitude',
-      message: 'Longitude is required when latitude is provided',
-      severity: 'error'
-    });
-  }
-  
-  if (hasLongitude && !hasLatitude) {
-    errors.push({
-      row: rowIndex,
-      column: 'latitude',
-      message: 'Latitude is required when longitude is provided',
-      severity: 'error'
-    });
-  }
+  // Determine the validation context based on rules
+  const ruleColumns = rules.map(rule => rule.column);
+  const isBusStopValidation = ruleColumns.includes('name') || ruleColumns.includes('latitude');
+  const isRouteValidation = ruleColumns.includes('route_group_name') || ruleColumns.includes('route_name');
 
-  // Check for name requirement (at least one name field)
-  const hasAnyName = row.name || row.name_sinhala || row.name_tamil;
-  if (!hasAnyName) {
-    errors.push({
-      row: rowIndex,
-      column: 'name',
-      message: 'At least one name field (name, name_sinhala, or name_tamil) is required',
-      severity: 'error'
-    });
-  }
+  if (isBusStopValidation) {
+    // Bus stop specific validations
+    
+    // Check for coordinate consistency
+    const hasLatitude = row.latitude !== undefined && row.latitude !== '';
+    const hasLongitude = row.longitude !== undefined && row.longitude !== '';
+    
+    if (hasLatitude && !hasLongitude) {
+      errors.push({
+        row: rowIndex,
+        column: 'longitude',
+        message: 'Longitude is required when latitude is provided',
+        severity: 'error'
+      });
+    }
+    
+    if (hasLongitude && !hasLatitude) {
+      errors.push({
+        row: rowIndex,
+        column: 'latitude',
+        message: 'Latitude is required when longitude is provided',
+        severity: 'error'
+      });
+    }
 
-  // Warn about missing location information
-  if (!hasLatitude && !hasLongitude && !row.address && !row.city) {
-    errors.push({
-      row: rowIndex,
-      column: 'address',
-      message: 'Consider providing either coordinates (lat/lng) or address information for better location accuracy',
-      severity: 'warning'
-    });
+    // Check for name requirement (at least one name field)
+    const hasAnyName = row.name || row.name_sinhala || row.name_tamil;
+    if (!hasAnyName) {
+      errors.push({
+        row: rowIndex,
+        column: 'name',
+        message: 'At least one name field (name, name_sinhala, or name_tamil) is required',
+        severity: 'error'
+      });
+    }
+
+    // Warn about missing location information
+    if (!hasLatitude && !hasLongitude && !row.address && !row.city) {
+      errors.push({
+        row: rowIndex,
+        column: 'address',
+        message: 'Consider providing either coordinates (lat/lng) or address information for better location accuracy',
+        severity: 'warning'
+      });
+    }
+  } else if (isRouteValidation) {
+    // Route specific validations
+    
+    // Validate that route data has required route fields
+    if (!row.route_group_name) {
+      errors.push({
+        row: rowIndex,
+        column: 'route_group_name',
+        message: 'Route group name is required for route import',
+        severity: 'error'
+      });
+    }
+    
+    if (!row.route_name) {
+      errors.push({
+        row: rowIndex,
+        column: 'route_name',
+        message: 'Route name is required for route import',
+        severity: 'error'
+      });
+    }
+    
+    if (!row.stop_name_english) {
+      errors.push({
+        row: rowIndex,
+        column: 'stop_name_english',
+        message: 'Stop name (English) is required for route import',
+        severity: 'error'
+      });
+    }
+    
+    // Check for logical consistency in route data
+    if (row.stop_order !== undefined && typeof row.stop_order === 'number' && row.stop_order < 0) {
+      errors.push({
+        row: rowIndex,
+        column: 'stop_order',
+        message: 'Stop order cannot be negative',
+        severity: 'error'
+      });
+    }
+    
+    if (row.distance_from_start_km !== undefined && typeof row.distance_from_start_km === 'number' && row.distance_from_start_km < 0) {
+      errors.push({
+        row: rowIndex,
+        column: 'distance_from_start_km',
+        message: 'Distance from start cannot be negative',
+        severity: 'error'
+      });
+    }
+    
+    // Warn about missing optional route information
+    if (!row.route_description && !row.route_through) {
+      errors.push({
+        row: rowIndex,
+        column: 'route_description',
+        message: 'Consider providing route description or route through information for better route details',
+        severity: 'warning'
+      });
+    }
   }
 
   return errors;

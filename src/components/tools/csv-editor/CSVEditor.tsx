@@ -1,27 +1,39 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Upload, FileText, Download } from 'lucide-react';
+import { AlertCircle, CheckCircle, Upload, FileText, Download, AlertTriangle } from 'lucide-react';
 import { CSVUploader } from './CSVUploader';
 import { CSVDataTable } from './CSVDataTable';
-import { validateCSVData, getValidationSummary, BUS_STOP_VALIDATION_RULES } from './CSVValidator';
-import { CSVData, ValidationResult, ImportProgress, CSVEditorProps } from './types';
-import { BusStopManagementService } from '@/lib/api-client/route-management';
+import { validateCSVData, getValidationSummary } from './CSVValidator';
+import { CSVData, ValidationResult, ImportProgress, ValidationRule } from './types';
 
-const DEFAULT_CSV_EDITOR_PROPS: Partial<CSVEditorProps> = {
-  maxRows: 1000,
-  maxFileSize: 5 * 1024 * 1024, // 5MB
-  validationRules: BUS_STOP_VALIDATION_RULES,
-  requiredColumns: ['name'], // At least one name field through custom validation
-  isLoading: false,
-  disabled: false
-};
-
-interface CSVEditorForBusStopsProps extends Omit<CSVEditorProps, 'onImport'> {
-  onImport?: (data: CSVData) => Promise<void>;
+interface CSVEditorProps {
+  // Data handling
+  onDataChange?: (data: CSVData) => void;
+  onValidationChange?: (result: ValidationResult) => void;
+  initialData?: CSVData;
+  
+  // Import handling
+  onImport?: (data: CSVData, options?: any) => Promise<any>;
   onImportComplete?: (result: any) => void;
   onImportError?: (error: string) => void;
-  defaultCountry?: string;
+  importOptions?: any;
+  
+  // Template handling
+  templateDownloadFn?: (format: string) => Promise<void>;
+  
+  // Validation
+  validationRules?: ValidationRule[];
+  
+  // Configuration
+  maxRows?: number;
+  maxFileSize?: number;
+  isLoading?: boolean;
+  disabled?: boolean;
+  
+  // UI customization
+  title?: string;
+  description?: string;
 }
 
 export function CSVEditor({
@@ -31,13 +43,16 @@ export function CSVEditor({
   onImportComplete,
   onImportError,
   initialData,
-  maxRows = DEFAULT_CSV_EDITOR_PROPS.maxRows,
-  maxFileSize = DEFAULT_CSV_EDITOR_PROPS.maxFileSize,
-  validationRules = DEFAULT_CSV_EDITOR_PROPS.validationRules,
+  maxRows = 1000,
+  maxFileSize = 5 * 1024 * 1024, // 5MB
+  validationRules = [],
   isLoading = false,
   disabled = false,
-  defaultCountry = 'Sri Lanka'
-}: CSVEditorForBusStopsProps) {
+  importOptions,
+  templateDownloadFn,
+  title = "Upload CSV Data",
+  description = "Upload your CSV file or paste CSV data directly"
+}: CSVEditorProps) {
   const [csvData, setCsvData] = useState<CSVData | null>(initialData || null);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
@@ -70,24 +85,16 @@ export function CSVEditor({
 
   const handleDownloadTemplate = useCallback(async (format: string) => {
     try {
-      const templateContent = await BusStopManagementService.downloadStopImportTemplate(format);
-      
-      // Create and download the file
-      const blob = new Blob([templateContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `bus-stops-template-${format}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      if (templateDownloadFn) {
+        await templateDownloadFn(format);
+      } else {
+        throw new Error('No template download function provided');
+      }
     } catch (error) {
       handleError('Failed to download template');
       console.error('Template download error:', error);
     }
-  }, [handleError]);
+  }, [templateDownloadFn, handleError]);
 
   const handleImport = useCallback(async () => {
     if (!csvData || !validationResult) {
@@ -128,26 +135,27 @@ export function CSVEditor({
       
       if (onImport) {
         // Use custom import handler
-        await onImport(csvData);
+        const result = await onImport(csvData, importOptions);
+
+        if (result) {
+          setImportProgress({
+            total: csvData.rows.length,
+            processed: result.totalRecords || csvData.rows.length,
+            successful: result.successfulImports || 0,
+            failed: result.failedImports || 0,
+            isImporting: false,
+            errors: result.errors?.map((error: any, index: number) => ({
+              row: index,
+              message: error.message || 'Unknown error'
+            }))
+          });
+
+          onImportComplete?.(result);
+        } else {
+          throw new Error('Import returned no result');
+        }
       } else {
-        // Use default BusStopManagementService
-        const result = await BusStopManagementService.importStops(defaultCountry, {
-          file: blob
-        });
-
-        setImportProgress({
-          total: csvData.rows.length,
-          processed: result.totalRecords || csvData.rows.length,
-          successful: result.successfulImports || 0,
-          failed: result.failedImports || 0,
-          isImporting: false,
-          errors: result.errors?.map((error, index) => ({
-            row: index,
-            message: (error as any).message || 'Unknown error'
-          }))
-        });
-
-        onImportComplete?.(result);
+        throw new Error('No import handler provided');
       }
 
     } catch (error) {
@@ -163,7 +171,7 @@ export function CSVEditor({
       handleError(errorMsg);
       onImportError?.(errorMsg);
     }
-  }, [csvData, validationResult, onImport, onImportComplete, onImportError, defaultCountry, handleError]);
+  }, [csvData, validationResult, onImport, onImportComplete, onImportError, importOptions, handleError]);
 
   const canImport = csvData && validationResult?.isValid && !importProgress?.isImporting && !isLoading && !disabled;
 
@@ -173,8 +181,11 @@ export function CSVEditor({
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center gap-2 mb-4">
           <Upload className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-medium text-gray-900">Upload CSV Data</h3>
+          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
         </div>
+        {description && (
+          <p className="text-sm text-gray-600 mb-4">{description}</p>
+        )}
         <CSVUploader
           onDataParsed={handleDataParsed}
           onError={handleError}
@@ -202,30 +213,81 @@ export function CSVEditor({
         <div className={`rounded-lg border p-4 ${
           validationResult.isValid 
             ? 'bg-green-50 border-green-200' 
-            : 'bg-yellow-50 border-yellow-200'
+            : 'bg-red-50 border-red-200'
         }`}>
           <div className="flex items-start gap-2">
             {validationResult.isValid ? (
               <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
             )}
             <div className="flex-1">
               <h4 className={`font-medium ${
-                validationResult.isValid ? 'text-green-900' : 'text-yellow-900'
+                validationResult.isValid ? 'text-green-900' : 'text-red-900'
               }`}>
                 Validation {validationResult.isValid ? 'Passed' : 'Issues Found'}
               </h4>
               <p className={`mt-1 ${
-                validationResult.isValid ? 'text-green-700' : 'text-yellow-700'
+                validationResult.isValid ? 'text-green-700' : 'text-red-700'
               }`}>
                 {getValidationSummary(validationResult)}
               </p>
               
               {!validationResult.isValid && (
-                <p className="text-sm text-yellow-600 mt-2">
-                  Review the highlighted cells in the table below and fix the errors before importing.
-                </p>
+                <>
+                  <p className="text-sm text-red-600 mt-2 font-medium">
+                    Review the highlighted cells in the table below and fix the errors before importing.
+                  </p>
+                  
+                  {/* Detailed Error List */}
+                  <div className="mt-4 space-y-3">
+                    {validationResult.errors.length > 0 && (
+                      <div>
+                        <h5 className="font-medium text-red-800 mb-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          Errors ({validationResult.errors.length})
+                        </h5>
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {validationResult.errors.slice(0, 10).map((error, idx) => (
+                            <div key={idx} className="text-xs p-2 bg-red-100 border border-red-200 rounded flex justify-between items-start">
+                              <span className="text-red-800">
+                                <strong>Row {error.row + 1}, {error.column}:</strong> {error.message}
+                              </span>
+                            </div>
+                          ))}
+                          {validationResult.errors.length > 10 && (
+                            <div className="text-xs text-red-600 italic">
+                              ... and {validationResult.errors.length - 10} more errors
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {validationResult.warnings.length > 0 && (
+                      <div>
+                        <h5 className="font-medium text-yellow-800 mb-2 flex items-center gap-1">
+                          <AlertTriangle className="w-4 h-4" />
+                          Warnings ({validationResult.warnings.length})
+                        </h5>
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {validationResult.warnings.slice(0, 10).map((warning, idx) => (
+                            <div key={idx} className="text-xs p-2 bg-yellow-100 border border-yellow-200 rounded flex justify-between items-start">
+                              <span className="text-yellow-800">
+                                <strong>Row {warning.row + 1}, {warning.column}:</strong> {warning.message}
+                              </span>
+                            </div>
+                          ))}
+                          {validationResult.warnings.length > 10 && (
+                            <div className="text-xs text-yellow-600 italic">
+                              ... and {validationResult.warnings.length - 10} more warnings
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
             

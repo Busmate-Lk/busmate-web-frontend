@@ -36,6 +36,11 @@ export function CSVUploader({
         header: true,
         skipEmptyLines: true,
         transform: (value: string, field: string) => {
+          // Handle empty values
+          if (!value || value.trim() === '') {
+            return '';
+          }
+          
           // Transform boolean strings
           if (field === 'isAccessible') {
             if (value.toLowerCase() === 'true' || value === '1' || value.toLowerCase() === 'yes') {
@@ -45,8 +50,13 @@ export function CSVUploader({
             }
           }
           
-          // Transform numeric fields
-          if (field === 'latitude' || field === 'longitude') {
+          // Transform numeric fields - both bus stop and route fields
+          const numericFields = [
+            'latitude', 'longitude', // Bus stop fields
+            'distance_km', 'estimated_duration_minutes', 'stop_order', 'distance_from_start_km' // Route fields
+          ];
+          
+          if (numericFields.includes(field)) {
             const num = parseFloat(value);
             return !isNaN(num) ? num : value;
           }

@@ -362,6 +362,10 @@ export default function RoutesPage() {
     router.push('/mot/routes/add-new');
   };
 
+  const handleImport = () => {
+    router.push('/mot/routes/import');
+  };
+
   const handleView = (routeId: string) => {
     // Navigate to route group page since routes are managed within route groups
     const route = routes.find(r => r.id === routeId);
@@ -462,6 +466,7 @@ export default function RoutesPage() {
         {/* Action Buttons */}
         <RouteActionButtons
           onAddRoute={handleAddNewRoute}
+          onImport={handleImport}
           onExportAll={handleExportAll}
           isLoading={isLoading}
         />

@@ -160,12 +160,12 @@ export function CSVDataTable({
 
   const getCellClassName = useCallback((rowIndex: number, column: string) => {
     const severity = getCellErrorSeverity(rowIndex, column);
-    const baseClasses = 'px-3 py-2 text-sm border-r border-gray-200 last:border-r-0';
+    const baseClasses = 'px-3 py-2 text-sm border-r border-gray-200 last:border-r-0 relative';
     
     if (severity === 'error') {
-      return `${baseClasses} bg-red-50 border-red-200`;
+      return `${baseClasses} bg-red-50 border-red-300 border-2 text-red-900`;
     } else if (severity === 'warning') {
-      return `${baseClasses} bg-yellow-50 border-yellow-200`;
+      return `${baseClasses} bg-yellow-50 border-yellow-300 border-2 text-yellow-900`;
     }
     
     return `${baseClasses} hover:bg-gray-50`;
@@ -293,7 +293,7 @@ export function CSVDataTable({
                       ) : (
                         <div className="group relative">
                           <div
-                            className={`cursor-text min-h-5 ${!readOnly ? 'hover:bg-gray-100 rounded px-1 py-1' : ''}`}
+                            className={`cursor-text min-h-5 ${!readOnly ? 'hover:bg-gray-100 rounded px-1 py-1' : ''} ${cellErrors.length > 0 ? 'pr-6' : ''}`}
                             onClick={() => startEditing(rowIndex, header, cellValue)}
                           >
                             <span className="truncate block">
@@ -302,14 +302,42 @@ export function CSVDataTable({
                           </div>
                           
                           {cellErrors.length > 0 && (
-                            <div className="absolute right-1 top-1 group">
-                              <AlertTriangle className={`w-3 h-3 ${cellErrors.some(e => e.severity === 'error') ? 'text-red-500' : 'text-yellow-500'}`} />
-                              <div className="absolute right-0 top-5 bg-gray-900 text-white text-xs p-2 rounded shadow-lg z-20 w-48 hidden group-hover:block">
-                                {cellErrors.map((error, idx) => (
-                                  <div key={idx} className="mb-1 last:mb-0">
-                                    {error.message}
+                            <div className="absolute right-1 top-0 bottom-0 flex items-center group/tooltip">
+                              <div className="flex items-center gap-1">
+                                <AlertTriangle className={`w-4 h-4 ${cellErrors.some(e => e.severity === 'error') ? 'text-red-600' : 'text-yellow-600'}`} />
+                                <span className={`text-xs font-bold ${cellErrors.some(e => e.severity === 'error') ? 'text-red-600' : 'text-yellow-600'}`}>
+                                  {cellErrors.length}
+                                </span>
+                              </div>
+                              <div className="absolute right-0 top-0 bg-white border-2 border-gray-300 shadow-lg text-xs p-3 rounded-lg z-30 w-80 max-w-80 hidden group-hover/tooltip:block">
+                                <div className="space-y-2">
+                                  <div className="font-semibold text-gray-900 border-b border-gray-200 pb-1">
+                                    Cell Issues ({cellErrors.length})
                                   </div>
-                                ))}
+                                  {cellErrors.map((error, idx) => (
+                                    <div key={idx} className={`p-2 rounded border-l-4 ${
+                                      error.severity === 'error' 
+                                        ? 'bg-red-50 border-red-400 text-red-800' 
+                                        : 'bg-yellow-50 border-yellow-400 text-yellow-800'
+                                    }`}>
+                                      <div className="flex items-start gap-2">
+                                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                          error.severity === 'error'
+                                            ? 'bg-red-200 text-red-800'
+                                            : 'bg-yellow-200 text-yellow-800'
+                                        }`}>
+                                          {error.severity.toUpperCase()}
+                                        </span>
+                                        <span className="text-sm leading-tight">
+                                          {error.message}
+                                        </span>
+                                      </div>
+                                      <div className="text-xs opacity-75 mt-1">
+                                        Row {error.row + 1}, Column: {error.column}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             </div>
                           )}
