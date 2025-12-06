@@ -661,6 +661,130 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                 )}
               </div>
             </div>
+
+            {/* Sinhala Location Information */}
+            {(busStop.location?.addressSinhala || busStop.location?.citySinhala || busStop.location?.stateSinhala || busStop.location?.countrySinhala) && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">සිංහල ස්ථාන තොරතුරු (Sinhala Location Information)</h2>
+                <div className="space-y-4">
+                  {busStop.location?.addressSinhala && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        ලිපිනය (Address)
+                      </label>
+                      <CopyableField 
+                        value={busStop.location.addressSinhala} 
+                        field="addressSinhala"
+                        className="text-gray-900"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {busStop.location?.citySinhala && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          නගරය (City)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.citySinhala} 
+                          field="citySinhala"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+
+                    {busStop.location?.stateSinhala && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          පළාත (State/Province)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.stateSinhala} 
+                          field="stateSinhala"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {busStop.location?.countrySinhala && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        රට (Country)
+                      </label>
+                      <CopyableField 
+                        value={busStop.location.countrySinhala} 
+                        field="countrySinhala"
+                        className="text-gray-900"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tamil Location Information */}
+            {(busStop.location?.addressTamil || busStop.location?.cityTamil || busStop.location?.stateTamil || busStop.location?.countryTamil) && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">தமிழ் இடம் தகவல் (Tamil Location Information)</h2>
+                <div className="space-y-4">
+                  {busStop.location?.addressTamil && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        முகவரி (Address)
+                      </label>
+                      <CopyableField 
+                        value={busStop.location.addressTamil} 
+                        field="addressTamil"
+                        className="text-gray-900"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {busStop.location?.cityTamil && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          நகரம் (City)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.cityTamil} 
+                          field="cityTamil"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+
+                    {busStop.location?.stateTamil && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          மாநிலம் (State/Province)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.stateTamil} 
+                          field="stateTamil"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {busStop.location?.countryTamil && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        நாடு (Country)
+                      </label>
+                      <CopyableField 
+                        value={busStop.location.countryTamil} 
+                        field="countryTamil"
+                        className="text-gray-900"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Map and Metadata */}

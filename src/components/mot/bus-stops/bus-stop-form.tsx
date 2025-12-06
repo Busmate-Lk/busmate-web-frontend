@@ -36,6 +36,14 @@ interface FormData {
     country: string;
     latitude: number | null;
     longitude: number | null;
+    addressSinhala?: string;
+    citySinhala?: string;
+    stateSinhala?: string;
+    countrySinhala?: string;
+    addressTamil?: string;
+    cityTamil?: string;
+    stateTamil?: string;
+    countryTamil?: string;
   };
   isAccessible: boolean;
 }
@@ -348,6 +356,14 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
       country: 'Sri Lanka',
       latitude: null,
       longitude: null,
+      addressSinhala: undefined,
+      citySinhala: undefined,
+      stateSinhala: undefined,
+      countrySinhala: undefined,
+      addressTamil: undefined,
+      cityTamil: undefined,
+      stateTamil: undefined,
+      countryTamil: undefined,
     },
     isAccessible: false,
   });
@@ -386,6 +402,14 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
             country: busStop.location?.country || 'Sri Lanka',
             latitude: busStop.location?.latitude || null,
             longitude: busStop.location?.longitude || null,
+            addressSinhala: busStop.location?.addressSinhala,
+            citySinhala: busStop.location?.citySinhala,
+            stateSinhala: busStop.location?.stateSinhala,
+            countrySinhala: busStop.location?.countrySinhala,
+            addressTamil: busStop.location?.addressTamil,
+            cityTamil: busStop.location?.cityTamil,
+            stateTamil: busStop.location?.stateTamil,
+            countryTamil: busStop.location?.countryTamil,
           },
           isAccessible: busStop.isAccessible || false,
         });
@@ -507,6 +531,14 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
           country: formData.location.country.trim(),
           latitude: formData.location.latitude!,
           longitude: formData.location.longitude!,
+          addressSinhala: formData.location.addressSinhala?.trim() || undefined,
+          citySinhala: formData.location.citySinhala?.trim() || undefined,
+          stateSinhala: formData.location.stateSinhala?.trim() || undefined,
+          countrySinhala: formData.location.countrySinhala?.trim() || undefined,
+          addressTamil: formData.location.addressTamil?.trim() || undefined,
+          cityTamil: formData.location.cityTamil?.trim() || undefined,
+          stateTamil: formData.location.stateTamil?.trim() || undefined,
+          countryTamil: formData.location.countryTamil?.trim() || undefined,
         },
         isAccessible: formData.isAccessible,
       };
@@ -758,6 +790,126 @@ export default function BusStopForm({ busStopId, onSuccess, onCancel }: BusStopF
             </div>
           </div>
         )}
+      </div>
+
+      {/* Multi-Language Location Information - Sinhala */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">සිංහල ස්ථාන තොරතුරු (Sinhala Location Information)</h3>
+        <p className="text-sm text-gray-600 mb-4">Optional: Provide location information in Sinhala</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              ලිපිනය (Address in Sinhala)
+            </label>
+            <input
+              type="text"
+              value={formData.location.addressSinhala || ''}
+              onChange={(e) => handleInputChange('location.addressSinhala', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="සිංහලෙන් ලිපිනය ඇතුළත් කරන්න"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              නගරය (City in Sinhala)
+            </label>
+            <input
+              type="text"
+              value={formData.location.citySinhala || ''}
+              onChange={(e) => handleInputChange('location.citySinhala', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="සිංහලෙන් නගරය ඇතුළත් කරන්න"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              පළාත (State/Province in Sinhala)
+            </label>
+            <input
+              type="text"
+              value={formData.location.stateSinhala || ''}
+              onChange={(e) => handleInputChange('location.stateSinhala', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="සිංහලෙන් පළාත ඇතුළත් කරන්න"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              රට (Country in Sinhala)
+            </label>
+            <input
+              type="text"
+              value={formData.location.countrySinhala || ''}
+              onChange={(e) => handleInputChange('location.countrySinhala', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="සිංහලෙන් රට ඇතුළත් කරන්න"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Multi-Language Location Information - Tamil */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">தமிழ் இடம் தகவல் (Tamil Location Information)</h3>
+        <p className="text-sm text-gray-600 mb-4">Optional: Provide location information in Tamil</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              முகவரி (Address in Tamil)
+            </label>
+            <input
+              type="text"
+              value={formData.location.addressTamil || ''}
+              onChange={(e) => handleInputChange('location.addressTamil', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="தமிழில் முகவரியை உள்ளிடவும்"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              நகரம் (City in Tamil)
+            </label>
+            <input
+              type="text"
+              value={formData.location.cityTamil || ''}
+              onChange={(e) => handleInputChange('location.cityTamil', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="தமிழில் நகரத்தை உள்ளிடவும்"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              மாநிலம் (State/Province in Tamil)
+            </label>
+            <input
+              type="text"
+              value={formData.location.stateTamil || ''}
+              onChange={(e) => handleInputChange('location.stateTamil', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="தமிழில் மாநிலத்தை உள்ளிடவும்"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              நாடு (Country in Tamil)
+            </label>
+            <input
+              type="text"
+              value={formData.location.countryTamil || ''}
+              onChange={(e) => handleInputChange('location.countryTamil', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="தமிழில் நாட்டை உள்ளிடவும்"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Form Actions */}
