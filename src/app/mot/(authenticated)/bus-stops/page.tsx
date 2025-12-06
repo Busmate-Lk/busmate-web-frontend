@@ -267,24 +267,6 @@ export default function BusStopsPage() {
     router.push('/mot/bus-stops/import');
   };
 
-  const handleExportAll = async () => {
-    try {
-      toast({
-        title: "Export Started",
-        description: "Your export will begin shortly...",
-      });
-      
-      // TODO: Implement export functionality
-      console.log('Exporting all bus stops...');
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to export bus stops. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleView = (stopId: string) => {
     router.push(`/mot/bus-stops/${stopId}`);
   };
@@ -513,7 +495,6 @@ export default function BusStopsPage() {
         <BusStopActionButtons
           onAddBusStop={handleAddBusStop}
           onImportBusStops={handleImportBusStops}
-          onExportAll={handleExportAll}
           isLoading={isLoading}
         />
       </div>
