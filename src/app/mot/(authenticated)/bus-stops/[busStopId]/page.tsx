@@ -34,12 +34,14 @@ const BusStopMiniMap = ({
   latitude, 
   longitude, 
   name, 
-  address 
+  address,
+  onCopyCoordinates 
 }: { 
   latitude: number; 
   longitude: number; 
   name: string; 
-  address?: string; 
+  address?: string;
+  onCopyCoordinates: (text: string, field: string) => void;
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<google.maps.Map | null>(null);
@@ -220,12 +222,7 @@ const BusStopMiniMap = ({
         </div>
       )}
 
-      {/* Coordinates overlay */}
-      {isMapLoaded && (
-        <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-          {latitude.toFixed(6)}, {longitude.toFixed(6)}
-        </div>
-      )}
+      {/* Coordinates overlay - removed from map, will be shown below */}
     </div>
   );
 };
@@ -262,6 +259,7 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
   const [isDeleting, setIsDeleting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [activeLanguageTab, setActiveLanguageTab] = useState<'english' | 'sinhala' | 'tamil'>('english');
 
   // Toast for notifications
   const { toast } = useToast();
@@ -559,115 +557,125 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
               </div>
             </div>
 
-            {/* Location Information */}
+            {/* Location Information with Language Tabs */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <MapPin className="w-5 h-5 mr-2" />
                 Location Details
               </h2>
-              <div className="space-y-4">
-                {busStop.location?.address && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Address
-                    </label>
-                    <CopyableField 
-                      value={busStop.location.address} 
-                      field="address"
-                      className="text-gray-900"
-                    />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {busStop.location?.city && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        City
-                      </label>
-                      <CopyableField 
-                        value={busStop.location.city} 
-                        field="city"
-                        className="text-gray-900"
-                      />
-                    </div>
-                  )}
-
-                  {busStop.location?.state && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        State/Province
-                      </label>
-                      <CopyableField 
-                        value={busStop.location.state} 
-                        field="state"
-                        className="text-gray-900"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {busStop.location?.zipCode && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ZIP/Postal Code
-                      </label>
-                      <CopyableField 
-                        value={busStop.location.zipCode} 
-                        field="zipCode"
-                        className="text-gray-900"
-                      />
-                    </div>
-                  )}
-
-                  {busStop.location?.country && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Country
-                      </label>
-                      <CopyableField 
-                        value={busStop.location.country} 
-                        field="country"
-                        className="text-gray-900"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {hasCoordinates && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Coordinates
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <CopyableField 
-                        value={`${busStop.location!.latitude}, ${busStop.location!.longitude}`} 
-                        field="coordinates"
-                        className="font-mono text-gray-900"
-                      />
-                      <button
-                        onClick={openInMaps}
-                        className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        Open in Maps
-                      </button>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Lat: {busStop.location!.latitude!.toFixed(6)}, Lng: {busStop.location!.longitude!.toFixed(6)}
-                    </div>
-                  </div>
-                )}
+              
+              {/* Language Tabs */}
+              <div className="flex gap-1 mb-6 border-b border-gray-200">
+                <button
+                  onClick={() => setActiveLanguageTab('english')}
+                  className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
+                    activeLanguageTab === 'english'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  onClick={() => setActiveLanguageTab('sinhala')}
+                  className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
+                    activeLanguageTab === 'sinhala'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                  }`}
+                >
+                  සිංහල
+                </button>
+                <button
+                  onClick={() => setActiveLanguageTab('tamil')}
+                  className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
+                    activeLanguageTab === 'tamil'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                  }`}
+                >
+                  தமிழ்
+                </button>
               </div>
-            </div>
 
-            {/* Sinhala Location Information */}
-            {(busStop.location?.addressSinhala || busStop.location?.citySinhala || busStop.location?.stateSinhala || busStop.location?.countrySinhala) && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">සිංහල ස්ථාන තොරතුරු (Sinhala Location Information)</h2>
+              {/* English Tab Content */}
+              {activeLanguageTab === 'english' && (
                 <div className="space-y-4">
-                  {busStop.location?.addressSinhala && (
+                  {busStop.location?.address && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Address
+                      </label>
+                      <CopyableField 
+                        value={busStop.location.address} 
+                        field="address"
+                        className="text-gray-900"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {busStop.location?.city && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          City
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.city} 
+                          field="city"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+
+                    {busStop.location?.state && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          State/Province
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.state} 
+                          field="state"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {busStop.location?.zipCode && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          ZIP/Postal Code
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.zipCode} 
+                          field="zipCode"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+
+                    {busStop.location?.country && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Country
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.country} 
+                          field="country"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sinhala Tab Content */}
+              {activeLanguageTab === 'sinhala' && (
+                <div className="space-y-4">
+                  {busStop.location?.addressSinhala ? (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         ලිපිනය (Address)
@@ -678,10 +686,12 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                         className="text-gray-900"
                       />
                     </div>
+                  ) : (
+                    <div className="text-gray-500 italic">No Sinhala address available</div>
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {busStop.location?.citySinhala && (
+                    {busStop.location?.citySinhala ? (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           නගරය (City)
@@ -692,9 +702,11 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                           className="text-gray-900"
                         />
                       </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-sm">No city available</div>
                     )}
 
-                    {busStop.location?.stateSinhala && (
+                    {busStop.location?.stateSinhala ? (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           පළාත (State/Province)
@@ -705,31 +717,47 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                           className="text-gray-900"
                         />
                       </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-sm">No state available</div>
                     )}
                   </div>
 
-                  {busStop.location?.countrySinhala && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        රට (Country)
-                      </label>
-                      <CopyableField 
-                        value={busStop.location.countrySinhala} 
-                        field="countrySinhala"
-                        className="text-gray-900"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {busStop.location?.zipCode && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          තැපැල් කේතය (ZIP/Postal Code)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.zipCode} 
+                          field="zipCode-sinhala"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
 
-            {/* Tamil Location Information */}
-            {(busStop.location?.addressTamil || busStop.location?.cityTamil || busStop.location?.stateTamil || busStop.location?.countryTamil) && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">தமிழ் இடம் தகவல் (Tamil Location Information)</h2>
+                    {busStop.location?.countrySinhala ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          රට (Country)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.countrySinhala} 
+                          field="countrySinhala"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-sm">No country available</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Tamil Tab Content */}
+              {activeLanguageTab === 'tamil' && (
                 <div className="space-y-4">
-                  {busStop.location?.addressTamil && (
+                  {busStop.location?.addressTamil ? (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         முகவரி (Address)
@@ -740,10 +768,12 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                         className="text-gray-900"
                       />
                     </div>
+                  ) : (
+                    <div className="text-gray-500 italic">No Tamil address available</div>
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {busStop.location?.cityTamil && (
+                    {busStop.location?.cityTamil ? (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           நகரம் (City)
@@ -754,9 +784,11 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                           className="text-gray-900"
                         />
                       </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-sm">No city available</div>
                     )}
 
-                    {busStop.location?.stateTamil && (
+                    {busStop.location?.stateTamil ? (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           மாநிலம் (State/Province)
@@ -767,24 +799,43 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                           className="text-gray-900"
                         />
                       </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-sm">No state available</div>
                     )}
                   </div>
 
-                  {busStop.location?.countryTamil && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        நாடு (Country)
-                      </label>
-                      <CopyableField 
-                        value={busStop.location.countryTamil} 
-                        field="countryTamil"
-                        className="text-gray-900"
-                      />
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {busStop.location?.zipCode && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          அஞ்சல் குறியீடு (ZIP/Postal Code)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.zipCode} 
+                          field="zipCode-tamil"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    )}
+
+                    {busStop.location?.countryTamil ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          நாடு (Country)
+                        </label>
+                        <CopyableField 
+                          value={busStop.location.countryTamil} 
+                          field="countryTamil"
+                          className="text-gray-900"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-gray-500 italic text-sm">No country available</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Right Column - Map and Metadata */}
@@ -801,14 +852,31 @@ export default function BusStopDetailsPage({ params }: BusStopDetailsPageProps) 
                   longitude={busStop.location!.longitude!}
                   name={busStop.name || 'Bus Stop'}
                   address={busStop.location?.address}
+                  onCopyCoordinates={copyToClipboard}
                 />
-                <div className="mt-3 text-center">
-                  <button
-                    onClick={openInMaps}
-                    className="text-sm text-blue-600 hover:text-blue-700 transition-colors underline"
-                  >
-                    View larger map
-                  </button>
+                
+                {/* Coordinates Display */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-gray-700">
+                      Coordinates
+                    </label>
+                    <button
+                      onClick={openInMaps}
+                      className="flex items-center text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Open in Maps
+                    </button>
+                  </div>
+                  <CopyableField 
+                    value={`${busStop.location!.latitude!.toFixed(6)}, ${busStop.location!.longitude!.toFixed(6)}`} 
+                    field="map-coordinates"
+                    className="text-xs font-mono text-gray-900 bg-gray-50 p-2 rounded"
+                  />
+                  <div className="text-xs text-gray-500">
+                    Lat: {busStop.location!.latitude!.toFixed(6)} · Lng: {busStop.location!.longitude!.toFixed(6)}
+                  </div>
                 </div>
               </div>
             )}
