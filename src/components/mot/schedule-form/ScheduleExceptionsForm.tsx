@@ -13,13 +13,7 @@ interface ScheduleExceptionsFormProps {
 interface ScheduleException {
   id?: string;
   exceptionDate: string;
-  exceptionType: 'NO_SERVICE' | 'ADDITIONAL_SERVICE' | 'MODIFIED_SERVICE';
-  description: string;
-  alternativeSchedule?: {
-    departureTime?: string;
-    arrivalTime?: string;
-    frequency?: number;
-  };
+  exceptionType: 'ADDED' | 'REMOVED';
 }
 
 export function ScheduleExceptionsForm({
@@ -31,46 +25,28 @@ export function ScheduleExceptionsForm({
   const [editingException, setEditingException] = useState<ScheduleException | null>(null);
   const [newException, setNewException] = useState<ScheduleException>({
     exceptionDate: '',
-    exceptionType: 'NO_SERVICE',
-    description: '',
-    alternativeSchedule: {
-      departureTime: '',
-      arrivalTime: '',
-      frequency: 0
-    }
+    exceptionType: 'REMOVED'
   });
 
   const exceptionTypes = [
     {
-      value: 'NO_SERVICE',
-      label: 'No Service',
+      value: 'REMOVED',
+      label: 'Service Removed',
       description: 'No buses will operate on this date',
       color: 'text-red-600 bg-red-50 border-red-200'
     },
     {
-      value: 'ADDITIONAL_SERVICE',
-      label: 'Additional Service',
-      description: 'Extra buses or extended hours',
+      value: 'ADDED',
+      label: 'Service Added',
+      description: 'Additional service on this date',
       color: 'text-green-600 bg-green-50 border-green-200'
-    },
-    {
-      value: 'MODIFIED_SERVICE',
-      label: 'Modified Service',
-      description: 'Different timing or limited service',
-      color: 'text-yellow-600 bg-yellow-50 border-yellow-200'
     }
-  ];
+  ] as const;
 
   const handleAddException = () => {
     setNewException({
       exceptionDate: '',
-      exceptionType: 'NO_SERVICE',
-      description: '',
-      alternativeSchedule: {
-        departureTime: '',
-        arrivalTime: '',
-        frequency: 0
-      }
+      exceptionType: 'REMOVED'
     });
     setEditingException(null);
     setShowAddModal(true);
@@ -83,7 +59,7 @@ export function ScheduleExceptionsForm({
   };
 
   const handleSaveException = () => {
-    if (!newException.exceptionDate || !newException.description) {
+    if (!newException.exceptionDate) {
       return;
     }
 
@@ -112,13 +88,7 @@ export function ScheduleExceptionsForm({
     setShowAddModal(false);
     setNewException({
       exceptionDate: '',
-      exceptionType: 'NO_SERVICE',
-      description: '',
-      alternativeSchedule: {
-        departureTime: '',
-        arrivalTime: '',
-        frequency: 0
-      }
+      exceptionType: 'REMOVED'
     });
     setEditingException(null);
   };
@@ -138,13 +108,7 @@ export function ScheduleExceptionsForm({
     setEditingException(null);
     setNewException({
       exceptionDate: '',
-      exceptionType: 'NO_SERVICE',
-      description: '',
-      alternativeSchedule: {
-        departureTime: '',
-        arrivalTime: '',
-        frequency: 0
-      }
+      exceptionType: 'REMOVED'
     });
   };
 
@@ -243,36 +207,6 @@ export function ScheduleExceptionsForm({
                         {typeConfig.label}
                       </span>
                     </div>
-                    
-                    <p className="text-sm text-gray-600 mb-3">
-                      {exception.description}
-                    </p>
-                    
-                    {exception.exceptionType === 'MODIFIED_SERVICE' && exception.alternativeSchedule && (
-                      <div className="bg-gray-50 rounded-md p-3">
-                        <h5 className="text-sm font-medium text-gray-900 mb-2">Alternative Schedule</h5>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                          {exception.alternativeSchedule.departureTime && (
-                            <div>
-                              <span className="text-gray-600">Departure:</span>
-                              <span className="ml-1 font-medium">{exception.alternativeSchedule.departureTime}</span>
-                            </div>
-                          )}
-                          {exception.alternativeSchedule.arrivalTime && (
-                            <div>
-                              <span className="text-gray-600">Arrival:</span>
-                              <span className="ml-1 font-medium">{exception.alternativeSchedule.arrivalTime}</span>
-                            </div>
-                          )}
-                          {exception.alternativeSchedule.frequency && (
-                            <div>
-                              <span className="text-gray-600">Frequency:</span>
-                              <span className="ml-1 font-medium">{exception.alternativeSchedule.frequency} min</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                   
                   <div className="flex space-x-2 ml-4">
@@ -307,9 +241,8 @@ export function ScheduleExceptionsForm({
           Schedule Exception Guidelines
         </h4>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• <strong>No Service:</strong> Completely suspend bus operations on specified dates</li>
-          <li>• <strong>Additional Service:</strong> Add extra trips or extend operating hours</li>
-          <li>• <strong>Modified Service:</strong> Change regular timing or provide limited service</li>
+          <li>• <strong>Service Removed:</strong> Completely suspend bus operations on specified dates (e.g., holidays)</li>
+          <li>• <strong>Service Added:</strong> Add extra service on dates that normally don't have service</li>
           <li>• Schedule exceptions override regular calendar rules for specific dates</li>
         </ul>
       </div>
@@ -366,84 +299,6 @@ export function ScheduleExceptionsForm({
                   ))}
                 </select>
               </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description *
-                </label>
-                <textarea
-                  value={newException.description}
-                  onChange={(e) => setNewException({ ...newException, description: e.target.value })}
-                  rows={3}
-                  placeholder="Describe the reason for this exception (e.g., Public Holiday, Special Event, etc.)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Alternative Schedule (for Modified Service) */}
-              {newException.exceptionType === 'MODIFIED_SERVICE' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Alternative Schedule Details
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-md">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Departure Time
-                      </label>
-                      <input
-                        type="time"
-                        value={newException.alternativeSchedule?.departureTime || ''}
-                        onChange={(e) => setNewException({
-                          ...newException,
-                          alternativeSchedule: {
-                            ...newException.alternativeSchedule,
-                            departureTime: e.target.value
-                          }
-                        })}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Arrival Time
-                      </label>
-                      <input
-                        type="time"
-                        value={newException.alternativeSchedule?.arrivalTime || ''}
-                        onChange={(e) => setNewException({
-                          ...newException,
-                          alternativeSchedule: {
-                            ...newException.alternativeSchedule,
-                            arrivalTime: e.target.value
-                          }
-                        })}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Frequency (min)
-                      </label>
-                      <input
-                        type="number"
-                        value={newException.alternativeSchedule?.frequency || ''}
-                        onChange={(e) => setNewException({
-                          ...newException,
-                          alternativeSchedule: {
-                            ...newException.alternativeSchedule,
-                            frequency: parseInt(e.target.value) || 0
-                          }
-                        })}
-                        min="0"
-                        max="1440"
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
@@ -457,7 +312,7 @@ export function ScheduleExceptionsForm({
               <button
                 type="button"
                 onClick={handleSaveException}
-                disabled={!newException.exceptionDate || !newException.description}
+                disabled={!newException.exceptionDate}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {editingException ? 'Update Exception' : 'Add Exception'}

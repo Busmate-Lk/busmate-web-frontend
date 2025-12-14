@@ -53,13 +53,7 @@ export interface ScheduleFormData {
   scheduleExceptions: Array<{
     id?: string;
     exceptionDate: string;
-    exceptionType: 'NO_SERVICE' | 'ADDITIONAL_SERVICE' | 'MODIFIED_SERVICE';
-    description: string;
-    alternativeSchedule?: {
-      departureTime?: string;
-      arrivalTime?: string;
-      frequency?: number;
-    };
+    exceptionType: 'ADDED' | 'REMOVED';
   }>;
 }
 
@@ -147,9 +141,7 @@ export function ScheduleForm({
         scheduleExceptions: initialData.scheduleExceptions?.map((exception) => ({
           id: exception.id,
           exceptionDate: exception.exceptionDate || '',
-          exceptionType: (exception.exceptionType as 'NO_SERVICE' | 'ADDITIONAL_SERVICE' | 'MODIFIED_SERVICE') || 'NO_SERVICE',
-          description: '', // Not available in API response, will be empty for editing
-          alternativeSchedule: undefined // Not available in API response
+          exceptionType: (exception.exceptionType as 'ADDED' | 'REMOVED') || 'REMOVED'
         })) || []
       });
     }
@@ -276,17 +268,10 @@ export function ScheduleForm({
             if (!stop.arrivalTime) {
               errors[`stop_${scheduleStopIndex}_arrival`] = 'Arrival time is required for destination stop';
             }
-          } else {
-            // Intermediate stops: both times required
-            if (!stop.arrivalTime) {
-              errors[`stop_${scheduleStopIndex}_arrival`] = 'Arrival time is required for intermediate stop';
-            }
-            if (!stop.departureTime) {
-              errors[`stop_${scheduleStopIndex}_departure`] = 'Departure time is required for intermediate stop';
-            }
           }
+          // Intermediate stops: timings are optional
           
-          // Validate departure after arrival for stops that have both
+          // Validate departure after arrival for stops that have both times
           if (stop.arrivalTime && stop.departureTime) {
             const arrival = new Date(`1970-01-01T${stop.arrivalTime}`);
             const departure = new Date(`1970-01-01T${stop.departureTime}`);
@@ -456,7 +441,10 @@ export function ScheduleForm({
             <div className="text-sm text-gray-500">
               {Object.keys(validationErrors).length > 0 && (
                 <span className="text-red-600">
-                  Please fix {Object.keys(validationErrors).length} error(s) before saving
+                  {(() => {
+                  console.log('Validation errors:', validationErrors);
+                  return `Please fix ${Object.keys(validationErrors).length} error(s) before saving`;
+                  })()}
                 </span>
               )}
             </div>

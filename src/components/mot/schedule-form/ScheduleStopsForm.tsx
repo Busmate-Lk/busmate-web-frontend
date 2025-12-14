@@ -168,8 +168,8 @@ export function ScheduleStopsForm({
           Route Stops & Timing
         </h3>
         <p className="text-sm text-gray-500 mb-4">
-          Configure timing for route stops: First stop needs departure time only, 
-          intermediate stops need both arrival and departure times, last stop needs arrival time only.
+          Configure timing for route stops: First stop needs departure time only, last stop needs arrival time only.
+          Intermediate stops are optional - provide timings only when needed.
         </p>
       </div>
 
@@ -441,10 +441,10 @@ export function ScheduleStopsForm({
               Schedule Timing Guidelines
             </h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• <span className="font-medium">Origin stop (green):</span> Only departure time required - buses start here</li>
-              <li>• <span className="font-medium">Intermediate stops (blue):</span> Both arrival and departure times required</li>
-              <li>• <span className="font-medium">Destination stop (red):</span> Only arrival time required - buses end here</li>
-              <li>• Departure time must be equal to or later than arrival time for intermediate stops</li>
+              <li>• <span className="font-medium">Origin stop (green):</span> Departure time is required - buses start here</li>
+              <li>• <span className="font-medium">Intermediate stops (blue):</span> Timings are optional - add when needed for planning</li>
+              <li>• <span className="font-medium">Destination stop (red):</span> Arrival time is required - buses end here</li>
+              <li>• When providing both times, departure must be equal to or later than arrival</li>
               <li>• Times should be realistic for passenger boarding/alighting</li>
             </ul>
           </div>
