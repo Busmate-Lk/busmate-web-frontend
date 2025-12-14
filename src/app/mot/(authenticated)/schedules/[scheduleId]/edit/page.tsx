@@ -46,7 +46,7 @@ export default function EditSchedulePage() {
             console.log('Schedule updated successfully:', response);
 
             // Redirect to schedule management page
-            router.push('/mot/schedules');
+            router.push(`/mot/schedules/${scheduleId}`);
         } catch (error) {
             console.error('Error updating schedule:', error);
             // Show error message
