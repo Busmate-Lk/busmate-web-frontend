@@ -6,11 +6,11 @@ import {
   Clock, 
   ArrowRight, 
   Plus, 
-  Edit, 
-  Trash2,
-  MoreVertical
+  Edit,
+  Eye
 } from 'lucide-react';
 import { ScheduleResponse, RouteResponse } from '@/lib/api-client/route-management';
+import { useRouter } from 'next/navigation';
 
 interface ScheduleStopsTabProps {
   schedule: ScheduleResponse;
@@ -18,6 +18,7 @@ interface ScheduleStopsTabProps {
 }
 
 export function ScheduleStopsTab({ schedule, route }: ScheduleStopsTabProps) {
+  const router = useRouter();
   const scheduleStops = schedule.scheduleStops || [];
 
   // Helper function to format time
@@ -85,110 +86,72 @@ export function ScheduleStopsTab({ schedule, route }: ScheduleStopsTabProps) {
         </button>
       </div>
 
-      {/* Stops Timeline */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <div className="relative">
+      {/* Stops List */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="divide-y divide-gray-200">
           {scheduleStops
             .sort((a, b) => (a.stopOrder || 0) - (b.stopOrder || 0))
             .map((stop, index) => {
+              const isFirst = index === 0;
               const isLast = index === scheduleStops.length - 1;
-              const duration = index > 0 ? calculateDuration(
-                scheduleStops[index - 1]?.departureTime, 
-                stop.arrivalTime
-              ) : null;
 
               return (
-                <div key={stop.id || index} className="relative">
-                  {/* Timeline Line */}
-                  {!isLast && (
-                    <div className="absolute left-6 top-12 w-0.5 h-full bg-blue-300"></div>
-                  )}
+                <div 
+                  key={stop.id || index} 
+                  className="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors"
+                >
+                  {/* Stop Number Badge */}
+                  <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-medium text-sm">
+                    {stop.stopOrder || index + 1}
+                  </div>
 
-                  {/* Stop Card */}
-                  <div className="relative flex items-start space-x-4 pb-8">
-                    {/* Stop Number */}
-                    <div className="flex-shrink-0 relative w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-medium">
-                      {stop.stopOrder || index + 1}
+                  {/* Stop Name */}
+                  <div className="flex-1 min-w-0 ml-4">
+                    <h4 className="text-sm font-medium text-gray-900 truncate">
+                      {stop.stopName || `Stop ${stop.stopOrder || index + 1}`}
+                    </h4>
+                  </div>
+
+                  {/* Arrival Time */}
+                  <div className="flex-shrink-0 ml-4 text-center min-w-[80px]">
+                    <div className="text-xs text-gray-500 mb-1">Arrival</div>
+                    <div className="text-sm font-mono text-gray-900">
+                      {formatTime(stop.arrivalTime)}
                     </div>
+                  </div>
 
-                    {/* Stop Details */}
-                    <div className="flex-1 min-w-0 bg-white rounded-lg border border-gray-200 p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="text-base font-medium text-gray-900">
-                              {stop.stopName || `Stop ${stop.stopOrder || index + 1}`}
-                            </h4>
-                            {stop.stopId && (
-                              <span className="text-xs text-gray-500">
-                                ID: {stop.stopId}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            {/* Arrival Time */}
-                            <div>
-                              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                Arrival
-                              </dt>
-                              <dd className="mt-1 text-sm font-mono text-gray-900">
-                                {formatTime(stop.arrivalTime)}
-                              </dd>
-                            </div>
-
-                            {/* Departure Time */}
-                            <div>
-                              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                Departure
-                              </dt>
-                              <dd className="mt-1 text-sm font-mono text-gray-900">
-                                {formatTime(stop.departureTime)}
-                              </dd>
-                            </div>
-
-                            {/* Dwell Time */}
-                            <div>
-                              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                Dwell Time
-                              </dt>
-                              <dd className="mt-1 text-sm text-gray-900">
-                                {calculateDuration(stop.arrivalTime, stop.departureTime) || '--'}
-                              </dd>
-                            </div>
-                          </div>
-
-                          {/* Location Info */}
-                          {stop.location && (
-                            <div className="mt-3 pt-3 border-t border-gray-100">
-                              <div className="text-sm text-gray-500">
-                                Location: {stop.location.latitude?.toFixed(6)}, {stop.location.longitude?.toFixed(6)}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center space-x-2">
-                          <button className="p-1 text-gray-400 hover:text-gray-600">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-1 text-gray-400 hover:text-red-600">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <button className="p-1 text-gray-400 hover:text-gray-600">
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
+                  {/* Departure Time */}
+                  <div className="flex-shrink-0 ml-4 text-center min-w-[80px]">
+                    <div className="text-xs text-gray-500 mb-1">Departure</div>
+                    <div className="text-sm font-mono text-gray-900">
+                      {formatTime(stop.departureTime)}
                     </div>
+                  </div>
 
-                    {/* Travel Duration to Next Stop */}
-                    {!isLast && duration && (
-                      <div className="absolute left-6 top-16 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                        {duration}
-                      </div>
-                    )}
+                  {/* Dwell Time */}
+                  <div className="flex-shrink-0 ml-4 text-center min-w-[70px]">
+                    <div className="text-xs text-gray-500 mb-1">Dwell</div>
+                    <div className="text-sm text-gray-900">
+                      {calculateDuration(stop.arrivalTime, stop.departureTime) || '--'}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex-shrink-0 ml-6 flex items-center space-x-2">
+                    <button 
+                      onClick={() => router.push(`/mot/bus-stops/${stop.stopId}`)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                      title="View stop details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => router.push(`/mot/bus-stops/${stop.stopId}/edit`)}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                      title="Edit stop"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               );
