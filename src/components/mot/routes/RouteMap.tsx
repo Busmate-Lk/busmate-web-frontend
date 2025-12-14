@@ -503,39 +503,6 @@ export function RouteMap({ route, className = "" }: RouteMapProps) {
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Route Info */}
-      <div className={`${route.direction === 'INBOUND' ? 'bg-purple-50' : 'bg-blue-50'} rounded-lg p-4`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className={`font-medium ${route.direction === 'INBOUND' ? 'text-purple-900' : 'text-blue-900'}`}>
-              {route.name || 'Route Map'}
-            </h4>
-            <p className={`text-sm ${route.direction === 'INBOUND' ? 'text-purple-700' : 'text-blue-700'}`}>
-              {stops.length} stops • {(route.distanceKm || 0).toFixed(1)} km • Direction: {route.direction || 'OUTBOUND'}
-            </p>
-            <p className={`text-xs ${route.direction === 'INBOUND' ? 'text-purple-600' : 'text-blue-600'} mt-1`}>
-              🛣️ Showing road-based route paths (not direct lines)
-            </p>
-            <p className={`text-xs ${route.direction === 'INBOUND' ? 'text-purple-500' : 'text-blue-500'} mt-1`}>
-              {route.direction === 'INBOUND' ? '⬅️ Return journey route' : '➡️ Outward journey route'}
-            </p>
-          </div>
-          <div className={`flex items-center gap-2 text-sm ${route.direction === 'INBOUND' ? 'text-purple-700' : 'text-blue-700'}`}>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              Start
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              Stop
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              End
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Map Container */}
       <div className="relative">
@@ -602,30 +569,25 @@ export function RouteMap({ route, className = "" }: RouteMapProps) {
         })()}
       </div>
 
-      {/* Stops List */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h4 className="font-medium text-gray-900 mb-3">Route Stops ({stops.length})</h4>
-        <p className="text-xs text-gray-500 mb-3">
-          ℹ️ {route.direction === 'INBOUND' ? 'Purple' : 'Blue'} route = Road-based path • Red route = Direct fallback (if road data unavailable)
-        </p>
-        <div className="space-y-2 max-h-32 overflow-y-auto">
-          {stops.map((stop, index) => (
-            <div key={index} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <div 
-                  className={`w-2 h-2 rounded-full ${
-                    index === 0 ? 'bg-green-500' : 
-                    index === stops.length - 1 ? 'bg-red-500' : 
-                    'bg-blue-500'
-                  }`}
-                />
-                <span>{stop.stopName || `Stop ${index + 1}`}</span>
-              </div>
-              <span className="text-gray-500">
-                {(stop.distanceFromStartKm || 0).toFixed(1)} km
-              </span>
+      {/* Legend */}
+      <div className={`${route.direction === 'INBOUND' ? 'bg-purple-50' : 'bg-blue-50'} rounded-lg p-4`}>
+        <div className="flex items-center justify-between">
+          <div className="font-medium text-sm">Legend</div>
+          
+          <div className={`flex items-center gap-2 text-sm ${route.direction === 'INBOUND' ? 'text-purple-700' : 'text-blue-700'}`}>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              Start
             </div>
-          ))}
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              Stop
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              End
+            </div>
+          </div>
         </div>
       </div>
 
