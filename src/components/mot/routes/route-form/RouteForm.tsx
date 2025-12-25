@@ -26,8 +26,15 @@ export interface RouteStop {
 export interface RouteFormData {
   id?: string;
   name: string;
+  nameSinhala?: string;
+  nameTamil?: string;
   description: string;
   direction: 'OUTBOUND' | 'INBOUND';
+  routeNumber?: string;
+  roadType?: string;
+  routeThrough?: string;
+  routeThroughSinhala?: string;
+  routeThroughTamil?: string;
   startStopId: string;
   startStopName: string;
   endStopId: string;
@@ -39,6 +46,8 @@ export interface RouteFormData {
 
 export interface RouteGroupFormData {
   name: string;
+  nameSinhala?: string;
+  nameTamil?: string;
   description: string;
   outboundRoute: RouteFormData;
   inboundRoute: RouteFormData;
@@ -208,8 +217,15 @@ function ValidationSummary({ errors, onErrorClick }: ValidationSummaryProps) {
 const createEmptyRouteFormData = (direction: 'OUTBOUND' | 'INBOUND'): RouteFormData => ({
   id: undefined,
   name: '',
+  nameSinhala: '',
+  nameTamil: '',
   description: '',
   direction,
+  routeNumber: '',
+  roadType: '',
+  routeThrough: '',
+  routeThroughSinhala: '',
+  routeThroughTamil: '',
   startStopId: '',
   startStopName: '',
   endStopId: '',
@@ -221,6 +237,8 @@ const createEmptyRouteFormData = (direction: 'OUTBOUND' | 'INBOUND'): RouteFormD
 
 const createEmptyFormData = (): RouteGroupFormData => ({
   name: '',
+  nameSinhala: '',
+  nameTamil: '',
   description: '',
   outboundRoute: createEmptyRouteFormData('OUTBOUND'),
   inboundRoute: createEmptyRouteFormData('INBOUND')
@@ -259,6 +277,8 @@ export function RouteForm({
       // Convert RouteGroupResponse to RouteGroupFormData format
       const convertedData: RouteGroupFormData = {
         name: initialData.name || '',
+        nameSinhala: initialData.nameSinhala || '',
+        nameTamil: initialData.nameTamil || '',
         description: initialData.description || '',
         outboundRoute: createEmptyRouteFormData('OUTBOUND'),
         inboundRoute: createEmptyRouteFormData('INBOUND')
@@ -297,8 +317,15 @@ export function RouteForm({
           const routeData: RouteFormData = {
             id: route.id,
             name: route.name || '',
+            nameSinhala: route.nameSinhala || '',
+            nameTamil: route.nameTamil || '',
             description: route.description || '',
             direction: route.direction as 'OUTBOUND' | 'INBOUND',
+            routeNumber: route.routeNumber || '',
+            roadType: route.roadType || '',
+            routeThrough: route.routeThrough || '',
+            routeThroughSinhala: route.routeThroughSinhala || '',
+            routeThroughTamil: route.routeThroughTamil || '',
             startStopId: route.startStopId || '',
             startStopName: route.startStopName || '',
             endStopId: route.endStopId || '',

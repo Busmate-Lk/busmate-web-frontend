@@ -36,12 +36,21 @@ export default function EditRouteGroupPage() {
       // Store original form data for comparison
       const originalData: RouteGroupFormData = {
         name: routeGroupData.name || '',
+        nameSinhala: routeGroupData.nameSinhala || '',
+        nameTamil: routeGroupData.nameTamil || '',
         description: routeGroupData.description || '',
         outboundRoute: {
           id: undefined,
           name: '',
+          nameSinhala: '',
+          nameTamil: '',
           description: '',
           direction: 'OUTBOUND',
+          routeNumber: '',
+          roadType: '',
+          routeThrough: '',
+          routeThroughSinhala: '',
+          routeThroughTamil: '',
           startStopId: '',
           startStopName: '',
           endStopId: '',
@@ -53,8 +62,15 @@ export default function EditRouteGroupPage() {
         inboundRoute: {
           id: undefined,
           name: '',
+          nameSinhala: '',
+          nameTamil: '',
           description: '',
           direction: 'INBOUND',
+          routeNumber: '',
+          roadType: '',
+          routeThrough: '',
+          routeThroughSinhala: '',
+          routeThroughTamil: '',
           startStopId: '',
           startStopName: '',
           endStopId: '',
@@ -98,8 +114,15 @@ export default function EditRouteGroupPage() {
           const routeData = {
             id: route.id, // Preserve the route ID
             name: route.name || '',
+            nameSinhala: route.nameSinhala || '',
+            nameTamil: route.nameTamil || '',
             description: route.description || '',
             direction: route.direction as 'OUTBOUND' | 'INBOUND',
+            routeNumber: route.routeNumber || '',
+            roadType: route.roadType || '',
+            routeThrough: route.routeThrough || '',
+            routeThroughSinhala: route.routeThroughSinhala || '',
+            routeThroughTamil: route.routeThroughTamil || '',
             startStopId: route.startStopId || '',
             startStopName: route.startStopName || '',
             endStopId: route.endStopId || '',
@@ -186,21 +209,31 @@ export default function EditRouteGroupPage() {
 
       // Check if anything has actually changed
       if (!hasFormDataChanged(formData)) {
-        setError('No changes detected. Please make some changes before updating.');
+        setError('No changes detected. Route group is already up to date.');
+        setIsLoading(false);
         return;
       }
 
       // Prepare route group data for API - INCLUDING ROUTE IDs
       const routeGroupRequest: RouteGroupRequest = {
         name: formData.name,
+        nameSinhala: formData.nameSinhala,
+        nameTamil: formData.nameTamil,
         description: formData.description,
         routes: [
           // Outbound route with ID
           {
             id: formData.outboundRoute.id, // Include existing route ID
             name: formData.outboundRoute.name,
+            nameSinhala: formData.outboundRoute.nameSinhala,
+            nameTamil: formData.outboundRoute.nameTamil,
             description: formData.outboundRoute.description,
             direction: formData.outboundRoute.direction,
+            routeNumber: formData.outboundRoute.routeNumber,
+            roadType: formData.outboundRoute.roadType,
+            routeThrough: formData.outboundRoute.routeThrough,
+            routeThroughSinhala: formData.outboundRoute.routeThroughSinhala,
+            routeThroughTamil: formData.outboundRoute.routeThroughTamil,
             startStopId: formData.outboundRoute.startStopId,
             endStopId: formData.outboundRoute.endStopId,
             distanceKm: formData.outboundRoute.distanceKm,
@@ -211,8 +244,15 @@ export default function EditRouteGroupPage() {
           {
             id: formData.inboundRoute.id, // Include existing route ID
             name: formData.inboundRoute.name,
+            nameSinhala: formData.inboundRoute.nameSinhala,
+            nameTamil: formData.inboundRoute.nameTamil,
             description: formData.inboundRoute.description,
             direction: formData.inboundRoute.direction,
+            routeNumber: formData.inboundRoute.routeNumber,
+            roadType: formData.inboundRoute.roadType,
+            routeThrough: formData.inboundRoute.routeThrough,
+            routeThroughSinhala: formData.inboundRoute.routeThroughSinhala,
+            routeThroughTamil: formData.inboundRoute.routeThroughTamil,
             startStopId: formData.inboundRoute.startStopId,
             endStopId: formData.inboundRoute.endStopId,
             distanceKm: formData.inboundRoute.distanceKm,
@@ -236,8 +276,9 @@ export default function EditRouteGroupPage() {
       if (error?.body?.message) {
         if (error.body.message.includes('already exists') || error.body.message.includes('name')) {
           if (formData.name === originalFormData?.name) {
-            // If the name hasn't changed, this might be a backend bug
-            setError('This appears to be a system error. The route group name hasn\'t changed, but the server is reporting a duplicate name. Please try again or contact support.');
+            // If the name hasn't changed, this is a backend validation bug
+            // Try to provide helpful feedback
+            setError('Backend validation error: The route group name hasn\'t changed but the system is reporting a duplicate. This is a known backend issue. Please try modifying other route details or contact support if the issue persists.');
           } else {
             setError(`A route group with the name "${formData.name}" already exists. Please choose a different name.`);
           }
