@@ -37,15 +37,7 @@ export default function RouteStopsList() {
         setStops(updateStopType(updatedStops));
     };
 
-    const getTypeLabel = (type: 'S' | 'E' | 'I') => {
-        switch (type) {
-            case 'S': return 'Start';
-            case 'E': return 'End';
-            case 'I': return 'Intermediate';
-        }
-    };
-
-    const getTypeBadgeColor = (type: 'S' | 'E' | 'I') => {
+    const getOrderBadgeColor = (type: 'S' | 'E' | 'I') => {
         switch (type) {
             case 'S': return 'bg-green-500';
             case 'E': return 'bg-red-500';
@@ -64,8 +56,7 @@ export default function RouteStopsList() {
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="border border-gray-300 px-4 py-2 text-left">Order</th>
-                            <th className="border border-gray-300 px-4 py-2 text-left">Stop Name</th>
-                            <th className="border border-gray-300 px-4 py-2 text-left">Type</th>
+                            <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
                             <th className="border border-gray-300 px-4 py-2 text-left">Distance (km)</th>
                         </tr>
                     </thead>
@@ -75,7 +66,7 @@ export default function RouteStopsList() {
                             return (
                                 <tr key={stop.orderNumber} className="hover:bg-gray-50">
                                     <td className="border border-gray-300 px-4 py-2">
-                                        <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                                        <span className={`${getOrderBadgeColor(stop.type)} text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold`}>
                                             {stop.orderNumber}
                                         </span>
                                     </td>
@@ -86,11 +77,6 @@ export default function RouteStopsList() {
                                             onChange={(e) => handleFieldChange(actualIndex, 'stopName', e.target.value)}
                                             className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
-                                    </td>
-                                    <td className="border border-gray-300 px-4 py-2">
-                                        <span className={`${getTypeBadgeColor(stop.type)} text-white rounded-full px-3 py-1 text-xs font-bold inline-block`}>
-                                            {getTypeLabel(stop.type)}
-                                        </span>
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2">
                                         <input
