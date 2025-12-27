@@ -8,7 +8,7 @@ interface RouteStopsListProps {
 }
 
 export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
-    const { data, updateRouteStop, addRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex } = useRouteWorkspace();
+    const { data, updateRoute, updateRouteStop, addRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex } = useRouteWorkspace();
     const route = data.routeGroup.routes[routeIndex];
 
     if (!route) {
@@ -51,9 +51,18 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     };
 
     const handleAddIntermediateStop = () => {
-        const newOrderNumber = stops.length;
+        const insertIndex = stops.length - 1;
+        const newOrderNumber = stops[insertIndex].orderNumber;
         const newStop = createEmptyRouteStop(newOrderNumber);
-        addRouteStop(routeIndex, newStop);
+        
+        // Create new array with the new stop inserted before the end
+        const newStops = [...stops];
+        newStops.splice(insertIndex, 0, newStop);
+        
+        // Increment the order number of the end stop (now at the new last position)
+        newStops[newStops.length - 1].orderNumber += 1;
+        
+        updateRoute(routeIndex, { routeStops: newStops });
     };
 
     const getOrderBadgeColor = (stopIndex: number) => {
@@ -100,7 +109,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                     }`}
                                 >
                                     <td className={`border border-gray-300 px-2 py-2 ${getOrderBadgeColor(actualIndex)} text-white text-center font-bold`}>
-                                        {getStopTypeLabel(actualIndex)}
+                                        {actualIndex + 1}
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2 text-sm text-gray-600">
                                         {routeStop.stop.id || '(new)'}
