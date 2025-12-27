@@ -9,7 +9,7 @@ interface RouteStopsListProps {
 }
 
 export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
-    const { data, updateRoute, updateRouteStop, addRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex } = useRouteWorkspace();
+    const { data, updateRoute, updateRouteStop, addRouteStop, removeRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex } = useRouteWorkspace();
     const route = data.routeGroup.routes[routeIndex];
 
     if (!route) {
@@ -53,15 +53,29 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
 
     const handleAddIntermediateStop = () => {
         const insertIndex = stops.length - 1;
-        const newOrderNumber = stops[insertIndex].orderNumber;
+        const newOrderNumber = insertIndex;
         const newStop = createEmptyRouteStop(newOrderNumber);
         
         // Create new array with the new stop inserted before the end
         const newStops = [...stops];
         newStops.splice(insertIndex, 0, newStop);
         
-        // Increment the order number of the end stop (now at the new last position)
-        newStops[newStops.length - 1].orderNumber += 1;
+        // Recalculate order numbers to be sequential (0, 1, 2, ...)
+        newStops.forEach((stop, index) => {
+            stop.orderNumber = index;
+        });
+        
+        updateRoute(routeIndex, { routeStops: newStops });
+    };
+
+    const handleDeleteStop = (stopIndex: number) => {
+        // Remove the stop
+        const newStops = stops.filter((_, idx) => idx !== stopIndex);
+        
+        // Recalculate order numbers to be sequential (0, 1, 2, ...)
+        newStops.forEach((stop, index) => {
+            stop.orderNumber = index;
+        });
         
         updateRoute(routeIndex, { routeStops: newStops });
     };
@@ -89,7 +103,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="w-6"></th>
-                            <th className="border border-gray-300 px-2 py-2 text-left">#</th>
+                            <th className="border border-gray-300 px-2 py-2 text-left" title='Stop Order Number'>#</th>
                             <th className="border border-gray-300 px-4 py-2 text-left">Id</th>
                             <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
                             <th className="border border-gray-300 px-4 py-2 text-left">Existing?</th>
@@ -115,7 +129,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                         <GripVertical className="text-gray-400" />
                                     </td>
                                     <td className={`border border-gray-300 px-2 py-2 ${getOrderBadgeColor(actualIndex)} text-white text-center font-bold`}>
-                                        {actualIndex + 1}
+                                        {routeStop.orderNumber}
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2 text-sm text-gray-600">
                                         {routeStop.stop.id || '(new)'}
@@ -156,7 +170,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    // handleDeleteStop(actualIndex);
+                                                    handleDeleteStop(actualIndex);
                                                 }}
                                                 className="text-red-500 hover:text-red-700 p-1"
                                                 title="Delete stop"
