@@ -54,7 +54,7 @@ export default function RouteStopsList() {
         <div>
             <h3 className="font-semibold mb-3">{title}</h3>
             <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
+                <table className="w-full border-collapse border border-gray-300 bg-white">
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="border border-gray-300 px-2 py-2 text-left">#</th>
@@ -112,7 +112,7 @@ export default function RouteStopsList() {
     );
 
     return (
-        <div className="col-span-2">
+        <div className="col-span-2 flex flex-col rounded-md px-4 py-2 bg-gray-100">
             <span className="underline">RouteStopsList</span>
 
             <div className="space-y-6">

@@ -14,7 +14,8 @@ const sampleRouteStops = [
 
 const mapContainerStyle = {
   width: '100%',
-  height: '600px',
+  height: '100%',
+  borderRadius: '0.375rem', // rounded-md
 };
 
 const mapOptions = {
@@ -86,8 +87,8 @@ export default function RouteStopsMap() {
   };
 
   return (
-    <div className="col-span-2">
-      <span className="underline mb-2 block">RouteStopsMap</span>
+    <div className="col-span-2 flex flex-col rounded-md px-0 pt-0 bg-gray-100">
+      {/* <span className="underline my-2 block">RouteStopsMap</span> */}
       {isLoading && <div className="text-sm text-gray-600 mb-2">Loading route...</div>}
       <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}>
         <GoogleMap
