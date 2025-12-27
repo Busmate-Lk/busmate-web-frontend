@@ -12,6 +12,7 @@ export interface RouteWorkspaceContextType {
   addRoute: (route: Route) => void;
   addRouteStop: (routeIndex: number, routeStop: RouteStop) => void;
   removeRouteStop: (routeIndex: number, stopIndex: number) => void;
+  reorderRouteStop: (routeIndex: number, fromIndex: number, toIndex: number) => void;
   setActiveRouteIndex: (index: number) => void;
   selectedRouteIndex: number | null;
   selectedStopIndex: number | null;
@@ -33,6 +34,7 @@ export const RouteWorkspaceContext = createContext<RouteWorkspaceContextType>({
   addRoute: () => {},
   addRouteStop: () => {},
   removeRouteStop: () => {},
+  reorderRouteStop: () => {},
   setActiveRouteIndex: () => {},
   selectedRouteIndex: null,
   selectedStopIndex: null,

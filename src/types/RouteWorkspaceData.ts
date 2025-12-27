@@ -277,3 +277,45 @@ export function reorderRouteStops(routeStops: RouteStop[]): RouteStop[] {
     }))
     .sort((a, b) => a.orderNumber - b.orderNumber);
 }
+
+/**
+ * Moves a route stop from one position to another and recalculates all order numbers
+ * @param routeStops - Array of route stops
+ * @param fromIndex - Current index of the stop to move
+ * @param toIndex - Target index where the stop should be moved
+ * @returns New array of route stops with updated order numbers and stop types
+ */
+export function moveRouteStop(
+  routeStops: RouteStop[],
+  fromIndex: number,
+  toIndex: number
+): RouteStop[] {
+  // Validate indices
+  if (
+    fromIndex < 0 ||
+    fromIndex >= routeStops.length ||
+    toIndex < 0 ||
+    toIndex >= routeStops.length ||
+    fromIndex === toIndex
+  ) {
+    return routeStops;
+  }
+
+  // Create a copy of the array
+  const newStops = [...routeStops];
+  
+  // Remove the item from the old position
+  const [movedStop] = newStops.splice(fromIndex, 1);
+  
+  // Insert it at the new position
+  newStops.splice(toIndex, 0, movedStop);
+  
+  // Recalculate order numbers (0, 1, 2, ...)
+  const reorderedStops = newStops.map((stop, index) => ({
+    ...stop,
+    orderNumber: index,
+  }));
+  
+  // Update stop types based on new positions
+  return updateStopTypes(reorderedStops);
+}

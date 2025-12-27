@@ -2,7 +2,7 @@
 
 import { ReactNode, useState, useCallback } from 'react';
 import { RouteWorkspaceContext } from './RouteWorkspaceContext';
-import { RouteWorkspaceData, createEmptyRouteWorkspaceData, RouteGroup, Route, RouteStop, createEmptyRoute } from '@/types/RouteWorkspaceData';
+import { RouteWorkspaceData, createEmptyRouteWorkspaceData, RouteGroup, Route, RouteStop, createEmptyRoute, moveRouteStop } from '@/types/RouteWorkspaceData';
 import { serializeToYaml, parseFromYaml } from '@/services/routeWorkspaceSerializer';
 
 interface RouteWorkspaceProviderProps {
@@ -136,6 +136,23 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
     });
   }, []);
 
+  const reorderRouteStop = useCallback((routeIndex: number, fromIndex: number, toIndex: number) => {
+    setData(prevData => {
+      const routes = [...prevData.routeGroup.routes];
+      if (routes[routeIndex]) {
+        const reorderedStops = moveRouteStop(routes[routeIndex].routeStops, fromIndex, toIndex);
+        routes[routeIndex] = { ...routes[routeIndex], routeStops: reorderedStops };
+      }
+      return {
+        ...prevData,
+        routeGroup: {
+          ...prevData.routeGroup,
+          routes,
+        },
+      };
+    });
+  }, []);
+
   const setActiveRouteIndex = useCallback((index: number) => {
     setData(prevData => ({
       ...prevData,
@@ -178,6 +195,7 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
         addRoute,
         addRouteStop,
         removeRouteStop,
+        reorderRouteStop,
         setActiveRouteIndex,
         selectedRouteIndex,
         selectedStopIndex,
