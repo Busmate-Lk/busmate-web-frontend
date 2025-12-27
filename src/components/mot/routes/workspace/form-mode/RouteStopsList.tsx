@@ -137,9 +137,9 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                     <td className="border border-gray-300">
                                         <input
                                             type="text"
-                                            value={routeStop.stop.name || ''}
+                                            defaultValue={routeStop.stop.name || ''}
                                             onClick={(e) => e.stopPropagation()}
-                                            onChange={(e) => handleFieldChange(actualIndex, 'stopName', e.target.value)}
+                                            onBlur={(e) => handleFieldChange(actualIndex, 'stopName', e.target.value)}
                                             className="w-full px-4 py-2 border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                     </td>
@@ -161,9 +161,9 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                         <input
                                             type="number"
                                             step="0.1"
-                                            value={routeStop.distanceFromStart || 0}
+                                            defaultValue={routeStop.distanceFromStart || 0}
                                             onClick={(e) => e.stopPropagation()}
-                                            onChange={(e) => handleFieldChange(actualIndex, 'distanceFromStart', parseFloat(e.target.value) || 0)}
+                                            onBlur={(e) => handleFieldChange(actualIndex, 'distanceFromStart', parseFloat(e.target.value) || 0)}
                                             className="w-full px-4 py-2 border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                     </td>
