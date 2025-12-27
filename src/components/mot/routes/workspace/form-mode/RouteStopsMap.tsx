@@ -1,7 +1,7 @@
 'use client';
 
 import { GoogleMap, useLoadScript, Marker, DirectionsRenderer } from '@react-google-maps/api';
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 
 interface RouteStopsMapProps {
@@ -24,9 +24,10 @@ const mapOptions = {
 };
 
 export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: RouteStopsMapProps) {
-  const { data } = useRouteWorkspace();
+  const { data, coordinateEditingMode, updateRouteStop } = useRouteWorkspace();
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const mapRef = useRef<google.maps.Map | null>(null);
 
   // Load Google Maps script
   const { isLoaded, loadError } = useLoadScript({
@@ -51,7 +52,8 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
         name: rs.stop.name || 'Unnamed Stop',
         lat: rs.stop.location!.latitude!,
         lng: rs.stop.location!.longitude!,
-        type: index === 0 ? 'start' : (index === routeStops.length - 1 ? 'end' : 'intermediate')
+        type: index === 0 ? 'start' : (index === routeStops.length - 1 ? 'end' : 'intermediate'),
+        stopIndex: index
       }));
   }, [routeStops]);
 
@@ -124,6 +126,56 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
     fetchDirections();
   }, [fetchDirections]);
 
+  const onMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    // Only handle clicks when coordinate editing mode is active
+    if (coordinateEditingMode && coordinateEditingMode.routeIndex === routeIndex) {
+      const lat = e.latLng?.lat();
+      const lng = e.latLng?.lng();
+      
+      if (lat && lng) {
+        const { stopIndex } = coordinateEditingMode;
+        const currentStop = routeStops[stopIndex];
+        
+        if (currentStop) {
+          // Update the stop's coordinates
+          updateRouteStop(routeIndex, stopIndex, {
+            stop: {
+              ...currentStop.stop,
+              location: {
+                ...currentStop.stop.location,
+                latitude: lat,
+                longitude: lng
+              }
+            }
+          });
+        }
+      }
+    }
+  }, [coordinateEditingMode, routeIndex, routeStops, updateRouteStop]);
+
+  // Store map reference and focus on selected stop when coordinate editing mode is activated
+  const handleMapLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+    fetchDirections();
+  }, [fetchDirections]);
+
+  // Focus on the stop when coordinate editing mode is activated
+  useEffect(() => {
+    if (coordinateEditingMode && coordinateEditingMode.routeIndex === routeIndex && mapRef.current) {
+      const stopIndex = coordinateEditingMode.stopIndex;
+      const stop = routeStops[stopIndex];
+      
+      if (stop?.stop?.location?.latitude && stop?.stop?.location?.longitude) {
+        const lat = stop.stop.location.latitude;
+        const lng = stop.stop.location.longitude;
+        
+        // Pan and zoom to the stop
+        mapRef.current.panTo({ lat, lng });
+        mapRef.current.setZoom(15);
+      }
+    }
+  }, [coordinateEditingMode, routeIndex, routeStops]);
+
   const directionsRendererOptions = {
     suppressMarkers: true,
     polylineOptions: {
@@ -156,6 +208,11 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
       </div>
       {!collapsed && (
         <>
+          {coordinateEditingMode?.routeIndex === routeIndex && (
+            <div className="mx-2 mb-2 px-3 py-2 bg-blue-100 border border-blue-400 rounded text-sm text-blue-800">
+              <strong>Coordinate Editing Mode Active:</strong> Click anywhere on the map to update the stop location.
+            </div>
+          )}
           {loadError && (
             <div className="text-sm text-red-600 mb-2 px-2">Error loading Google Maps</div>
           )}
@@ -177,8 +234,13 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
                 mapContainerStyle={mapContainerStyle}
                 center={center}
                 zoom={validStops.length === 0 ? 8 : 9}
-                options={mapOptions}
-                onLoad={onMapLoad}
+                options={{
+                  ...mapOptions,
+                  // Change cursor to crosshair when in coordinate editing mode
+                  draggableCursor: coordinateEditingMode?.routeIndex === routeIndex ? 'crosshair' : undefined,
+                }}
+                onLoad={handleMapLoad}
+                onClick={onMapClick}
               >
                 {directions && validStops.length >= 2 && (
                   <DirectionsRenderer
@@ -186,14 +248,22 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
                     options={directionsRendererOptions}
                   />
                 )}
-                {validStops.map((stop) => (
-                  <Marker
-                    key={stop.id}
-                    position={{ lat: stop.lat, lng: stop.lng }}
-                    title={stop.name}
-                    icon={getMarkerIcon(stop.type)}
-                  />
-                ))}
+                {validStops.map((stop) => {
+                  const isEditingThisStop = coordinateEditingMode?.routeIndex === routeIndex && coordinateEditingMode?.stopIndex === stop.stopIndex;
+                  return (
+                    <Marker
+                      key={stop.id}
+                      position={{ lat: stop.lat, lng: stop.lng }}
+                      title={stop.name}
+                      icon={{
+                        url: getMarkerIcon(stop.type),
+                        // Make marker larger and more prominent when in editing mode
+                        scaledSize: isEditingThisStop ? new google.maps.Size(40, 40) : undefined,
+                      }}
+                      animation={isEditingThisStop ? google.maps.Animation.BOUNCE : undefined}
+                    />
+                  );
+                })}
               </GoogleMap>
             </>
           )}

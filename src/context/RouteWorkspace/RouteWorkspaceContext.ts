@@ -17,6 +17,9 @@ export interface RouteWorkspaceContextType {
   selectedStopIndex: number | null;
   setSelectedStop: (routeIndex: number, stopIndex: number) => void;
   clearSelectedStop: () => void;
+  coordinateEditingMode: { routeIndex: number; stopIndex: number } | null;
+  setCoordinateEditingMode: (routeIndex: number | null, stopIndex: number | null) => void;
+  clearCoordinateEditingMode: () => void;
 }
 
 export const RouteWorkspaceContext = createContext<RouteWorkspaceContextType>({
@@ -35,4 +38,7 @@ export const RouteWorkspaceContext = createContext<RouteWorkspaceContextType>({
   selectedStopIndex: null,
   setSelectedStop: () => {},
   clearSelectedStop: () => {},
+  coordinateEditingMode: null,
+  setCoordinateEditingMode: () => {},
+  clearCoordinateEditingMode: () => {},
 });

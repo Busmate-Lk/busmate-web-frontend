@@ -9,7 +9,7 @@ interface RouteStopsListProps {
 }
 
 export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
-    const { data, updateRoute, updateRouteStop, addRouteStop, removeRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex } = useRouteWorkspace();
+    const { data, updateRoute, updateRouteStop, addRouteStop, removeRouteStop, setSelectedStop, selectedRouteIndex, selectedStopIndex, coordinateEditingMode, setCoordinateEditingMode, clearCoordinateEditingMode } = useRouteWorkspace();
     const route = data.routeGroup.routes[routeIndex];
 
     if (!route) {
@@ -92,6 +92,18 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         return 'I'; // Intermediate
     };
 
+    const handleToggleCoordinateEditingMode = (stopIndex: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        
+        // If this stop is already in editing mode, deactivate it
+        if (coordinateEditingMode?.routeIndex === routeIndex && coordinateEditingMode?.stopIndex === stopIndex) {
+            clearCoordinateEditingMode();
+        } else {
+            // Activate editing mode for this stop
+            setCoordinateEditingMode(routeIndex, stopIndex);
+        }
+    };
+
     const startEndStops = stops.filter((_, idx) => idx === 0 || idx === stops.length - 1);
     const intermediateStops = stops.filter((_, idx) => idx !== 0 && idx !== stops.length - 1);
 
@@ -116,6 +128,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                         {tableStops.map((routeStop) => {
                             const actualIndex = stops.findIndex(s => s.orderNumber === routeStop.orderNumber);
                             const isSelected = selectedRouteIndex === routeIndex && selectedStopIndex === actualIndex;
+                            const isInCoordinateEditingMode = coordinateEditingMode?.routeIndex === routeIndex && coordinateEditingMode?.stopIndex === actualIndex;
                             return (
                                 <tr 
                                     key={routeStop.orderNumber} 
@@ -170,11 +183,13 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                     </td>
                                     <td className="border border-gray-300 w-8">
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                            }}
-                                            className="text-gray-500 hover:text-gray-700 p-1"
-                                            title="Coordinates editing mode on map"
+                                            onClick={(e) => handleToggleCoordinateEditingMode(actualIndex, e)}
+                                            className={`p-1 rounded transition-colors ${
+                                                isInCoordinateEditingMode 
+                                                    ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
+                                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                            }`}
+                                            title={isInCoordinateEditingMode ? "Deactivate coordinates editing mode" : "Activate coordinates editing mode on map"}
                                         >
                                             <LocationEditIcon size={16} />
                                         </button>

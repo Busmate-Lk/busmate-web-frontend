@@ -13,6 +13,7 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
   const [data, setData] = useState<RouteWorkspaceData>(createEmptyRouteWorkspaceData());
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | null>(null);
   const [selectedStopIndex, setSelectedStopIndex] = useState<number | null>(null);
+  const [coordinateEditingMode, setCoordinateEditingModeState] = useState<{ routeIndex: number; stopIndex: number } | null>(null);
 
   const updateRouteGroup = useCallback((routeGroup: Partial<RouteGroup>) => {
     setData(prevData => ({
@@ -152,6 +153,18 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
     setSelectedStopIndex(null);
   }, []);
 
+  const setCoordinateEditingMode = useCallback((routeIndex: number | null, stopIndex: number | null) => {
+    if (routeIndex !== null && stopIndex !== null) {
+      setCoordinateEditingModeState({ routeIndex, stopIndex });
+    } else {
+      setCoordinateEditingModeState(null);
+    }
+  }, []);
+
+  const clearCoordinateEditingMode = useCallback(() => {
+    setCoordinateEditingModeState(null);
+  }, []);
+
   return (
     <RouteWorkspaceContext.Provider
       value={{
@@ -170,6 +183,9 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
         selectedStopIndex,
         setSelectedStop,
         clearSelectedStop,
+        coordinateEditingMode,
+        setCoordinateEditingMode,
+        clearCoordinateEditingMode,
       }}
     >
       {children}
