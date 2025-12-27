@@ -6,6 +6,7 @@ export interface RouteWorkspaceContextType {
   updateRouteGroup: (routeGroup: Partial<RouteGroup>) => void;
   updateFromYaml: (yaml: string) => void;
   getYaml: () => string;
+  getRouteGroupData: () => RouteGroup;
 }
 
 export const RouteWorkspaceContext = createContext<RouteWorkspaceContextType>({
@@ -13,4 +14,5 @@ export const RouteWorkspaceContext = createContext<RouteWorkspaceContextType>({
   updateRouteGroup: () => {},
   updateFromYaml: () => {},
   getYaml: () => '',
+  getRouteGroupData: () => createEmptyRouteWorkspaceData().routeGroup,
 });
