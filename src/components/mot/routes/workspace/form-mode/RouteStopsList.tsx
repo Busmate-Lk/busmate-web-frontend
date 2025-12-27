@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 interface RouteStop {
     orderNumber: number;
+    id: string;
     stopName: string;
     type: 'S' | 'E' | 'I';
     distanceFromStart: number;
@@ -11,11 +12,11 @@ interface RouteStop {
 }
 
 const dummyStops: RouteStop[] = [
-    { orderNumber: 0, stopName: 'Embilipitiya', type: 'S', distanceFromStart: 0, isExisting: true },
-    { orderNumber: 1, stopName: 'Ratnapura', type: 'I', distanceFromStart: 50, isExisting: true },
-    { orderNumber: 2, stopName: 'Kuruwita', type: 'I', distanceFromStart: 90, isExisting: false },
-    { orderNumber: 3, stopName: 'Avissawella', type: 'I', distanceFromStart: 120, isExisting: true },
-    { orderNumber: 4, stopName: 'Colombo', type: 'E', distanceFromStart: 160, isExisting: true }
+    { orderNumber: 0, id: 'STOP001', stopName: 'Embilipitiya', type: 'S', distanceFromStart: 0, isExisting: true },
+    { orderNumber: 1, id: 'STOP002', stopName: 'Ratnapura', type: 'I', distanceFromStart: 50, isExisting: true },
+    { orderNumber: 2, id: '', stopName: 'Kuruwita', type: 'I', distanceFromStart: 90, isExisting: false },
+    { orderNumber: 3, id: 'STOP003', stopName: 'Avissawella', type: 'I', distanceFromStart: 120, isExisting: true },
+    { orderNumber: 4, id: 'STOP004', stopName: 'Colombo', type: 'E', distanceFromStart: 160, isExisting: true }
 ];
 
 export default function RouteStopsList() {
@@ -57,6 +58,7 @@ export default function RouteStopsList() {
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="border border-gray-300 px-2 py-2 text-left">#</th>
+                            <th className="border border-gray-300 px-4 py-2 text-left">Id</th>
                             <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
                             <th className="border border-gray-300 px-4 py-2 text-left">Existing?</th>
                             <th className="border border-gray-300 px-4 py-2 text-left">Distance (km)</th>
@@ -69,6 +71,9 @@ export default function RouteStopsList() {
                                 <tr key={stop.orderNumber} className="hover:bg-gray-50">
                                     <td className={`border border-gray-300 px-2 py-2 ${getOrderBadgeColor(stop.type)} text-white text-center`}>
                                         {stop.orderNumber}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2">
+                                        {stop.id}
                                     </td>
                                     <td className="border border-gray-300">
                                         <input

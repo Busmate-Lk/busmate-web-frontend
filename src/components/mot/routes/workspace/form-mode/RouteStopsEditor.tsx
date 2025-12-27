@@ -14,7 +14,7 @@ export default function RouteStopsEditor() {
 
                     <RouteStopsList />
 
-                    <RouteStopsMap />
+                    {/* <RouteStopsMap /> */}
                 </div>
             </div>
         </>

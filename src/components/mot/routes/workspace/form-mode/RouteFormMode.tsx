@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import RouteStopsEditor from "./RouteStopsEditor";
+import { useRouteWorkspace } from "@/context/RouteWorkspace/useRouteWorkspace";
 
 export default function RouteFormMode() {
     const [activeTab, setActiveTab] = useState<'outbound' | 'inbound'>('outbound');
@@ -36,25 +37,47 @@ export default function RouteFormMode() {
 }
 
 function RouteGroupInfo() {
+    const { data, updateRouteGroup } = useRouteWorkspace();
+
     return (
         <div className="flex flex-col rounded-md px-6 py-4 bg-gray-200">
             <span className="mb-2 underline">Route Group Info</span>
             <form className="space-y-4">
                 <div className="flex">
                     <label className="block text-sm font-medium w-32">Name (English) <span className="text-red-500">*</span></label>
-                    <input type="text" className="w-200 border border-gray-400 rounded px-2 bg-white" />
+                    <input 
+                        type="text" 
+                        className="w-200 border border-gray-400 rounded px-2 bg-white"
+                        value={data.routeGroup.nameEnglish}
+                        onChange={(e) => updateRouteGroup({ nameEnglish: e.target.value })}
+                    />
                 </div>
                 <div className="flex">
                     <label className="block text-sm font-medium w-32">Name (Sinhala)</label>
-                    <input type="text" className="w-200 border border-gray-400 rounded px-2 bg-white" />
+                    <input 
+                        type="text" 
+                        className="w-200 border border-gray-400 rounded px-2 bg-white"
+                        value={data.routeGroup.nameSinhala}
+                        onChange={(e) => updateRouteGroup({ nameSinhala: e.target.value })}
+                    />
                 </div>
                 <div className="flex">
                     <label className="block text-sm font-medium w-32">Name (Tamil)</label>
-                    <input type="text" className="w-200 border border-gray-400 rounded px-2 bg-white" />
+                    <input 
+                        type="text" 
+                        className="w-200 border border-gray-400 rounded px-2 bg-white"
+                        value={data.routeGroup.nameTamil}
+                        onChange={(e) => updateRouteGroup({ nameTamil: e.target.value })}
+                    />
                 </div>
                 <div className="flex">
                     <label className="block text-sm font-medium w-32">Description</label>
-                    <textarea className="w-200 border border-gray-400 rounded px-2 bg-white" rows={3}></textarea>
+                    <textarea 
+                        className="w-200 border border-gray-400 rounded px-2 bg-white" 
+                        rows={3}
+                        value={data.routeGroup.description}
+                        onChange={(e) => updateRouteGroup({ description: e.target.value })}
+                    ></textarea>
                 </div>
             </form>
         </div>
@@ -115,20 +138,6 @@ function RouteInfo() {
                     </div>
                     <div className="flex gap-4 w-full">
                         <div className="flex flex-col w-full">
-                            <label className="block text-sm font-medium mb-2">Start Stop</label>
-                            <select className="w-full border border-gray-400 rounded px-2 bg-white">
-                                <option value="">Select start stop</option>
-                            </select>
-                        </div>
-                        <div className="flex flex-col w-full">
-                            <label className="block text-sm font-medium mb-2">End Stop</label>
-                            <select className="w-full border border-gray-400 rounded px-2 bg-white">
-                                <option value="">Select end stop</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="flex gap-4 w-full">
-                        <div className="flex flex-col w-full">
                             <label className="block text-sm font-medium mb-2">Distance (km)</label>
                             <input type="number" step="0.01" className="w-full border border-gray-400 rounded px-2 bg-white" />
                         </div>
@@ -140,6 +149,20 @@ function RouteInfo() {
                     <div className="flex flex-col">
                         <label className="block text-sm font-medium w-32">Description</label>
                         <textarea className="w-full border border-gray-400 rounded px-2 bg-white" rows={3}></textarea>
+                    </div>
+                    <div className="flex gap-4 w-full">
+                        <div className="flex flex-col w-full">
+                            <label className="block text-sm font-medium mb-2">Start Stop</label>
+                            <select className="w-full border border-gray-400 rounded px-2 bg-white">
+                                <option value="">Select start stop</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col w-full">
+                            <label className="block text-sm font-medium mb-2">End Stop</label>
+                            <select className="w-full border border-gray-400 rounded px-2 bg-white">
+                                <option value="">Select end stop</option>
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>
