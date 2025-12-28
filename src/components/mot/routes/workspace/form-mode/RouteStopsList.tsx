@@ -23,7 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useRef, useEffect } from 'react';
-import { fetchRouteDirections, applyDistancesToRouteStops, extractValidStops } from '@/services/routeWorkspaceMap';
+import { fetchRouteDirections, applyDistancesToRouteStops, extractValidStops, fetchAllStopCoordinates, fetchMissingStopCoordinates, applyCoordinatesToRouteStops, extractStopsForCoordinateFetch } from '@/services/routeWorkspaceMap';
 
 interface RouteStopsListProps {
     routeIndex: number;
@@ -35,6 +35,9 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
     const [isFetchingDistances, setIsFetchingDistances] = useState(false);
+    const [isFetchingAllCoordinates, setIsFetchingAllCoordinates] = useState(false);
+    const [isFetchingMissingCoordinates, setIsFetchingMissingCoordinates] = useState(false);
+    const [coordinateFetchProgress, setCoordinateFetchProgress] = useState<string>('');
     const actionsMenuRef = useRef<HTMLDivElement>(null);
 
     const sensors = useSensors(
@@ -113,6 +116,86 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
             alert(`Failed to fetch distances. Please try again. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
             setIsFetchingDistances(false);
+        }
+    };
+
+    const handleFetchAllCoordinates = async () => {
+        // Check if we have at least 2 stops with names
+        const stopsWithNames = stops.filter(s => s.stop?.name?.trim());
+        if (stopsWithNames.length < 2) {
+            alert('At least 2 stops with names are required to fetch coordinates.');
+            return;
+        }
+
+        setIsFetchingAllCoordinates(true);
+        setIsActionsMenuOpen(false);
+        setCoordinateFetchProgress('Starting...');
+
+        try {
+            const result = await fetchAllStopCoordinates(stops, (currentChunk, totalChunks) => {
+                setCoordinateFetchProgress(`Fetching chunk ${currentChunk} of ${totalChunks}...`);
+            });
+
+            // Apply the fetched coordinates to the route stops
+            const updatedStops = applyCoordinatesToRouteStops(stops, result.coordinates);
+            updateRoute(routeIndex, { routeStops: updatedStops });
+
+            if (result.failedStops.length > 0) {
+                const failedNames = result.failedStops.map(s => s.name).join(', ');
+                alert(`Coordinates fetched for ${result.successCount} stops.\nFailed to get coordinates for: ${failedNames}`);
+            } else {
+                alert(`Successfully fetched coordinates for all ${result.successCount} stops!`);
+            }
+        } catch (error) {
+            console.error('Error fetching coordinates:', error);
+            alert(`Failed to fetch coordinates. ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsFetchingAllCoordinates(false);
+            setCoordinateFetchProgress('');
+        }
+    };
+
+    const handleFetchMissingCoordinates = async () => {
+        // Check stops info
+        const stopsInfo = extractStopsForCoordinateFetch(stops);
+        const stopsWithCoordinates = stopsInfo.filter(s => s.hasCoordinates);
+        const stopsWithoutCoordinates = stopsInfo.filter(s => !s.hasCoordinates && s.name.trim() !== '');
+
+        if (stopsWithoutCoordinates.length === 0) {
+            alert('All stops already have coordinates.');
+            return;
+        }
+
+        if (stopsWithCoordinates.length === 0) {
+            alert('At least one stop with coordinates is required. Use "Fetch All Coordinates" instead.');
+            return;
+        }
+
+        setIsFetchingMissingCoordinates(true);
+        setIsActionsMenuOpen(false);
+        setCoordinateFetchProgress('Starting...');
+
+        try {
+            const result = await fetchMissingStopCoordinates(stops, (currentChunk, totalChunks) => {
+                setCoordinateFetchProgress(`Fetching chunk ${currentChunk} of ${totalChunks}...`);
+            });
+
+            // Apply the fetched coordinates to the route stops
+            const updatedStops = applyCoordinatesToRouteStops(stops, result.coordinates);
+            updateRoute(routeIndex, { routeStops: updatedStops });
+
+            if (result.failedStops.length > 0) {
+                const failedNames = result.failedStops.map(s => s.name).join(', ');
+                alert(`Coordinates fetched for ${result.successCount} of ${result.totalProcessed} missing stops.\nFailed: ${failedNames}`);
+            } else {
+                alert(`Successfully fetched coordinates for all ${result.successCount} missing stops!`);
+            }
+        } catch (error) {
+            console.error('Error fetching missing coordinates:', error);
+            alert(`Failed to fetch coordinates. ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsFetchingMissingCoordinates(false);
+            setCoordinateFetchProgress('');
         }
     };
 
@@ -406,34 +489,73 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                         e.stopPropagation();
                         setIsActionsMenuOpen(!isActionsMenuOpen);
                     }}
+                    disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
                     className="px-1 py-1 text-sm text-black rounded hover:bg-gray-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1 relative"
                     title="Actions"
                 >
-                    <EllipsisVertical size={16} />
+                    {(isFetchingAllCoordinates || isFetchingMissingCoordinates) ? (
+                        <div className="flex items-center gap-1">
+                            <Loader2 className="animate-spin" size={16} />
+                            <span className="text-xs">{coordinateFetchProgress}</span>
+                        </div>
+                    ) : (
+                        <EllipsisVertical size={16} />
+                    )}
                     {isActionsMenuOpen && (
-                        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 min-w-[200px]" ref={actionsMenuRef}>
+                        <div className="absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 min-w-[250px]" ref={actionsMenuRef}>
+                            {/* Coordinates Section */}
+                            <div className="px-3 py-1 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
+                                Coordinates
+                            </div>
+                            <button
+                                onClick={handleFetchAllCoordinates}
+                                disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
+                                className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Fetch coordinates for all stops using their names via Google Directions API"
+                            >
+                                {isFetchingAllCoordinates ? (
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="animate-spin" size={14} />
+                                        Fetching all coordinates...
+                                    </div>
+                                ) : (
+                                    '📍 Fetch all coordinates by names'
+                                )}
+                            </button>
+                            <button
+                                onClick={handleFetchMissingCoordinates}
+                                disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
+                                className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Fetch coordinates only for stops that are missing coordinates, using existing coordinates as anchors"
+                            >
+                                {isFetchingMissingCoordinates ? (
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="animate-spin" size={14} />
+                                        Fetching missing coordinates...
+                                    </div>
+                                ) : (
+                                    '📍 Fetch missing coordinates only'
+                                )}
+                            </button>
+                            
+                            {/* Distances Section */}
+                            <div className="px-3 py-1 bg-gray-50 border-b border-t border-gray-200 text-xs font-semibold text-gray-500 uppercase mt-1">
+                                Distances
+                            </div>
                             <button
                                 onClick={handleFetchDistancesFromMap}
-                                disabled={isFetchingDistances}
+                                disabled={isFetchingDistances || isFetchingAllCoordinates || isFetchingMissingCoordinates}
                                 className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Calculate distances from start for all stops using Google Directions API"
                             >
                                 {isFetchingDistances ? (
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="animate-spin" size={14} />
-                                        Fetching...
+                                        Fetching distances...
                                     </div>
                                 ) : (
-                                    'Fetch all distances from map'
+                                    '📏 Fetch all distances from map'
                                 )}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    console.log('Sample action 2 triggered');
-                                    setIsActionsMenuOpen(false);
-                                }}
-                                className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm"
-                            >
-                                Sample action 2
                             </button>
                         </div>
                     )}
