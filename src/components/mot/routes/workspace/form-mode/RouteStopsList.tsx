@@ -2,7 +2,7 @@
 
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 import { StopTypeEnum, StopExistenceType, createEmptyRouteStop } from '@/types/RouteWorkspaceData';
-import { GripVertical, LocationEditIcon, Trash, EllipsisVertical, Loader2 } from 'lucide-react';
+import { GripVertical, LocationEditIcon, Trash, EllipsisVertical, Loader2, Search } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -24,6 +24,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useRef, useEffect } from 'react';
 import { fetchRouteDirections, applyDistancesToRouteStops, extractValidStops, fetchAllStopCoordinates, fetchMissingStopCoordinates, applyCoordinatesToRouteStops, extractStopsForCoordinateFetch } from '@/services/routeWorkspaceMap';
+import { 
+    searchStopExistence, 
+    processStopExistenceResult, 
+    searchAllStopsExistence, 
+    applyBulkSearchResultsToRouteStops,
+    canSearchStop 
+} from '@/services/routeWorkspaceValidation';
+import { useToast } from '@/hooks/use-toast';
 
 interface RouteStopsListProps {
     routeIndex: number;
@@ -38,7 +46,11 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     const [isFetchingAllCoordinates, setIsFetchingAllCoordinates] = useState(false);
     const [isFetchingMissingCoordinates, setIsFetchingMissingCoordinates] = useState(false);
     const [coordinateFetchProgress, setCoordinateFetchProgress] = useState<string>('');
+    const [isSearchingAllStops, setIsSearchingAllStops] = useState(false);
+    const [searchingStopIndex, setSearchingStopIndex] = useState<number | null>(null);
+    const [searchProgress, setSearchProgress] = useState<string>('');
     const actionsMenuRef = useRef<HTMLDivElement>(null);
+    const { toast } = useToast();
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -199,6 +211,128 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         }
     };
 
+    // Handler for searching a single stop's existence
+    const handleSearchSingleStopExistence = async (stopIndex: number) => {
+        const routeStop = stops[stopIndex];
+        if (!routeStop) return;
+
+        // Check if stop can be searched
+        if (!canSearchStop(routeStop.stop)) {
+            toast({
+                title: "Cannot Search",
+                description: "Stop has no ID or name to search",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setSearchingStopIndex(stopIndex);
+
+        try {
+            const result = await searchStopExistence(routeStop.stop);
+
+            if (result.error) {
+                toast({
+                    title: "Search Failed",
+                    description: result.error,
+                    variant: "destructive"
+                });
+            } else if (result.found && result.stop) {
+                // Stop found - update with fetched data
+                updateRouteStop(routeIndex, stopIndex, {
+                    stop: result.stop
+                });
+
+                toast({
+                    title: "Stop Found",
+                    description: `Loaded: ${result.stop.name}`,
+                    variant: "default"
+                });
+            } else {
+                // Stop not found - process result to handle ID clearing
+                const processedResult = processStopExistenceResult(routeStop.stop, result);
+                
+                // Update the stop with processed data
+                updateRouteStop(routeIndex, stopIndex, {
+                    stop: processedResult.stop
+                });
+
+                const message = processedResult.clearIdIfNotFound
+                    ? `Not found. Invalid ID cleared.`
+                    : `No stop found with ${result.searchedBy}: ${result.searchValue}`;
+
+                toast({
+                    title: "Stop Not Found",
+                    description: message,
+                    variant: "destructive"
+                });
+            }
+        } catch (error) {
+            console.error('Error searching for stop:', error);
+            toast({
+                title: "Search Failed",
+                description: error instanceof Error ? error.message : "Unknown error",
+                variant: "destructive"
+            });
+        } finally {
+            setSearchingStopIndex(null);
+        }
+    };
+
+    // Handler for searching all stops' existence
+    const handleSearchAllStopsExistence = async () => {
+        if (stops.length === 0) {
+            toast({
+                title: "No Stops",
+                description: "No stops to search for existence",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        // Check if any stops can be searched
+        const searchableStops = stops.filter(s => canSearchStop(s.stop));
+        if (searchableStops.length === 0) {
+            toast({
+                title: "Cannot Search",
+                description: "No stops have ID or name to search",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsSearchingAllStops(true);
+        setIsActionsMenuOpen(false);
+        setSearchProgress('Starting...');
+
+        try {
+            const results = await searchAllStopsExistence(stops, (current, total, stopName) => {
+                setSearchProgress(`Searching ${current}/${total}: ${stopName}`);
+            });
+
+            // Apply results to route stops
+            const updatedStops = applyBulkSearchResultsToRouteStops(stops, results);
+            updateRoute(routeIndex, { routeStops: updatedStops });
+
+            // Show summary toast
+            toast({
+                title: "Search Complete",
+                description: `Found: ${results.successCount}, Not Found: ${results.notFoundCount}, Errors: ${results.errorCount}`,
+                variant: results.successCount > 0 ? "default" : "destructive"
+            });
+        } catch (error) {
+            console.error('Error searching all stops:', error);
+            toast({
+                title: "Search Failed",
+                description: error instanceof Error ? error.message : "Unknown error",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSearchingAllStops(false);
+            setSearchProgress('');
+        }
+    };
+
     const handleFieldChange = (stopIndex: number, field: string, value: any) => {
         const currentStop = stops[stopIndex];
         if (field === 'stopName') {
@@ -312,9 +446,10 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         actualIndex: number;
         isSelected: boolean;
         isInCoordinateEditingMode: boolean;
+        isSearchingThis: boolean;
     }
 
-    const SortableStopRow = ({ routeStop, actualIndex, isSelected, isInCoordinateEditingMode }: SortableStopRowProps) => {
+    const SortableStopRow = ({ routeStop, actualIndex, isSelected, isInCoordinateEditingMode, isSearchingThis }: SortableStopRowProps) => {
         const {
             attributes,
             listeners,
@@ -372,11 +507,19 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                             {routeStop.stop.type === StopExistenceType.EXISTING ? 'exist' : 'new'}
                         </span>
                         <button
-                            onClick={() => console.log(`Searching for availability of ${routeStop.stop.name}`)}
-                            className="px-2 py-1 border border-blue-500 text-blue-500 text-sm rounded hover:bg-blue-50"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleSearchSingleStopExistence(actualIndex);
+                            }}
+                            disabled={isSearchingThis || isSearchingAllStops}
+                            className="px-2 py-1 border border-blue-500 text-blue-500 text-sm rounded hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[32px]"
                             title="Search for existing stop"
                         >
-                            🔍
+                            {isSearchingThis ? (
+                                <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                                <Search size={14} />
+                            )}
                         </button>
                     </div>
                 </td>
@@ -449,6 +592,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                     const actualIndex = stops.findIndex(s => s.orderNumber === routeStop.orderNumber);
                                     const isSelected = selectedRouteIndex === routeIndex && selectedStopIndex === actualIndex;
                                     const isInCoordinateEditingMode = coordinateEditingMode?.routeIndex === routeIndex && coordinateEditingMode?.stopIndex === actualIndex;
+                                    const isSearchingThis = searchingStopIndex === actualIndex;
                                     return (
                                         <SortableStopRow
                                             key={routeStop.orderNumber}
@@ -456,6 +600,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                             actualIndex={actualIndex}
                                             isSelected={isSelected}
                                             isInCoordinateEditingMode={isInCoordinateEditingMode}
+                                            isSearchingThis={isSearchingThis}
                                         />
                                     );
                                 })}
@@ -489,7 +634,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                         e.stopPropagation();
                         setIsActionsMenuOpen(!isActionsMenuOpen);
                     }}
-                    disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates}
+                    disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops}
                     className="px-1 py-1 text-sm text-black rounded hover:bg-gray-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1 relative"
                     title="Actions"
                 >
@@ -497,6 +642,11 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                         <div className="flex items-center gap-1">
                             <Loader2 className="animate-spin" size={16} />
                             <span className="text-xs">{coordinateFetchProgress}</span>
+                        </div>
+                    ) : isSearchingAllStops ? (
+                        <div className="flex items-center gap-1">
+                            <Loader2 className="animate-spin" size={16} />
+                            <span className="text-xs">{searchProgress}</span>
                         </div>
                     ) : (
                         <EllipsisVertical size={16} />
@@ -544,7 +694,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                             </div>
                             <button
                                 onClick={handleFetchDistancesFromMap}
-                                disabled={isFetchingDistances || isFetchingAllCoordinates || isFetchingMissingCoordinates}
+                                disabled={isFetchingDistances || isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops}
                                 className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Calculate distances from start for all stops using Google Directions API"
                             >
@@ -555,6 +705,26 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                     </div>
                                 ) : (
                                     '📏 Fetch all distances from map'
+                                )}
+                            </button>
+                            
+                            {/* Validate Section */}
+                            <div className="px-3 py-1 bg-gray-50 border-b border-t border-gray-200 text-xs font-semibold text-gray-500 uppercase mt-1">
+                                Validate
+                            </div>
+                            <button
+                                onClick={handleSearchAllStopsExistence}
+                                disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates || isFetchingDistances || isSearchingAllStops}
+                                className="w-full px-4 py-2 text-left hover:bg-gray-100 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Search for existence of all stops in the system by their ID or name"
+                            >
+                                {isSearchingAllStops ? (
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="animate-spin" size={14} />
+                                        {searchProgress || 'Searching stops...'}
+                                    </div>
+                                ) : (
+                                    '🔍 Search all stops existence'
                                 )}
                             </button>
                         </div>

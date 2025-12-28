@@ -5,6 +5,7 @@ import RouteTextualMode from '@/components/mot/routes/workspace/textual-mode/Rou
 import { Layout } from '@/components/shared/layout';
 import { RouteWorkspaceProvider } from '@/context/RouteWorkspace/RouteWorkspaceProvider';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
+import { Toaster } from '@/components/ui/toaster';
 import { useState } from 'react';
 
 function RouteWorkspaceContent() {
@@ -69,6 +70,7 @@ export default function RoutesWorkspacePage() {
     return (
         <RouteWorkspaceProvider>
             <RouteWorkspaceContent />
+            <Toaster />
         </RouteWorkspaceProvider>
     );
 }

@@ -1,7 +1,14 @@
 'use client';
 
+import { useState } from "react";
 import { useRouteWorkspace } from "@/context/RouteWorkspace/useRouteWorkspace";
 import { StopExistenceType, Location } from "@/types/RouteWorkspaceData";
+import { useToast } from "@/hooks/use-toast";
+import { 
+    searchStopExistence, 
+    processStopExistenceResult,
+    canSearchStop
+} from "@/services/routeWorkspaceValidation";
 
 interface StopEditorProps {
     onToggle: () => void;
@@ -10,6 +17,8 @@ interface StopEditorProps {
 
 export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
     const { data, selectedRouteIndex, selectedStopIndex, updateRouteStop } = useRouteWorkspace();
+    const { toast } = useToast();
+    const [isSearching, setIsSearching] = useState(false);
 
     // Get selected stop data
     const selectedStop = 
@@ -176,6 +185,81 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
         }
     };
 
+    const handleSearchExistingStop = async () => {
+        if (selectedRouteIndex === null || selectedStopIndex === null || !selectedStop) {
+            toast({
+                title: "Error",
+                description: "No stop selected",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const currentStop = selectedStop.stop;
+        
+        // Check if stop can be searched
+        if (!canSearchStop(currentStop)) {
+            toast({
+                title: "Search Criteria Missing",
+                description: "Please enter either a Stop ID or Name to search",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsSearching(true);
+
+        try {
+            const result = await searchStopExistence(currentStop);
+
+            if (result.error) {
+                toast({
+                    title: "Search Failed",
+                    description: result.error,
+                    variant: "destructive"
+                });
+            } else if (result.found && result.stop) {
+                // Stop found - update with fetched data
+                updateRouteStop(selectedRouteIndex, selectedStopIndex, {
+                    stop: result.stop
+                });
+
+                toast({
+                    title: "Stop Found",
+                    description: `Successfully loaded: ${result.stop.name}`,
+                    variant: "default"
+                });
+            } else {
+                // Stop not found - process result to handle ID clearing
+                const processedResult = processStopExistenceResult(currentStop, result);
+                
+                // Update the stop with processed data (clears ID if searched by ID and not found)
+                updateRouteStop(selectedRouteIndex, selectedStopIndex, {
+                    stop: processedResult.stop
+                });
+
+                const message = processedResult.clearIdIfNotFound
+                    ? `No stop found with ${result.searchedBy}: ${result.searchValue}. Invalid ID has been cleared.`
+                    : `No stop found with ${result.searchedBy}: ${result.searchValue}`;
+
+                toast({
+                    title: "Stop Not Found",
+                    description: message,
+                    variant: "destructive"
+                });
+            }
+        } catch (error: any) {
+            console.error('Error searching for stop:', error);
+            toast({
+                title: "Search Failed",
+                description: error.message || "Failed to search for existing stop",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
     return (
         <div className={`flex flex-col rounded-md px-4 py-2 bg-gray-100 ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
             <div className={`flex ${collapsed ? 'flex-col items-center' : 'justify-between items-center'} mb-2`}>
@@ -205,11 +289,36 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                         </div>
                     ) : (
                         <form className="space-y-4">
-                            <div className="flex gap-4 items-center">
-                                <label className="block text-sm font-medium">Id :</label>
-                                <span className={`text-sm px-2 py-1 rounded ${selectedStop.stop.type === StopExistenceType.EXISTING ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                                    {selectedStop.stop.id || 'new'}
-                                </span>
+                            <div className="flex gap-4 items-center justify-between">
+                                <div className="flex gap-4 items-center">
+                                    <label className="block text-sm font-medium">Id :</label>
+                                    <span className={`text-sm px-2 py-1 rounded ${selectedStop.stop.type === StopExistenceType.EXISTING ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                        {selectedStop.stop.id || 'new'}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleSearchExistingStop}
+                                    disabled={isSearching}
+                                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {isSearching ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Searching...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                            Search Existing
+                                        </>
+                                    )}
+                                </button>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium">Name (Eng)</label>
