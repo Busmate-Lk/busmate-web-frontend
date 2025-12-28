@@ -9,6 +9,8 @@ import {
     processStopExistenceResult,
     canSearchStop
 } from "@/services/routeWorkspaceValidation";
+import { BusStopManagementService } from "@/lib/api-client/route-management";
+import type { StopRequest } from "@/lib/api-client/route-management";
 
 interface StopEditorProps {
     onToggle: () => void;
@@ -19,12 +21,12 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
     const { data, selectedRouteIndex, selectedStopIndex, updateRouteStop } = useRouteWorkspace();
     const { toast } = useToast();
     const [isSearching, setIsSearching] = useState(false);
-
-    // Get selected stop data
-    const selectedStop = 
-        selectedRouteIndex !== null && 
-        selectedStopIndex !== null && 
-        data.routeGroup.routes[selectedRouteIndex]?.routeStops[selectedStopIndex]
+    const [isCreating, setIsCreating] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);    // Get selected stop data
+    const selectedStop =
+        selectedRouteIndex !== null &&
+            selectedStopIndex !== null &&
+            data.routeGroup.routes[selectedRouteIndex]?.routeStops[selectedStopIndex]
             ? data.routeGroup.routes[selectedRouteIndex].routeStops[selectedStopIndex]
             : null;
 
@@ -75,106 +77,106 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
             });
         } else if (field === 'latitude') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ latitude: value })
                 }
             });
         } else if (field === 'longitude') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ longitude: value })
                 }
             });
         } else if (field === 'address') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ address: value })
                 }
             });
         } else if (field === 'addressSinhala') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ addressSinhala: value })
                 }
             });
         } else if (field === 'addressTamil') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ addressTamil: value })
                 }
             });
         } else if (field === 'city') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ city: value })
                 }
             });
         } else if (field === 'citySinhala') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ citySinhala: value })
                 }
             });
         } else if (field === 'cityTamil') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ cityTamil: value })
                 }
             });
         } else if (field === 'state') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ state: value })
                 }
             });
         } else if (field === 'stateSinhala') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ stateSinhala: value })
                 }
             });
         } else if (field === 'stateTamil') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ stateTamil: value })
                 }
             });
         } else if (field === 'zipCode') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ zipCode: value })
                 }
             });
         } else if (field === 'country') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ country: value })
                 }
             });
         } else if (field === 'countrySinhala') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ countrySinhala: value })
                 }
             });
         } else if (field === 'countryTamil') {
             updateRouteStop(selectedRouteIndex, selectedStopIndex, {
-                stop: { 
-                    ...currentStop, 
+                stop: {
+                    ...currentStop,
                     location: ensureValidLocation({ countryTamil: value })
                 }
             });
@@ -196,7 +198,7 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
         }
 
         const currentStop = selectedStop.stop;
-        
+
         // Check if stop can be searched
         if (!canSearchStop(currentStop)) {
             toast({
@@ -232,7 +234,7 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
             } else {
                 // Stop not found - process result to handle ID clearing
                 const processedResult = processStopExistenceResult(currentStop, result);
-                
+
                 // Update the stop with processed data (clears ID if searched by ID and not found)
                 updateRouteStop(selectedRouteIndex, selectedStopIndex, {
                     stop: processedResult.stop
@@ -257,6 +259,267 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
             });
         } finally {
             setIsSearching(false);
+        }
+    };
+
+    const handleCreateStop = async () => {
+        if (selectedRouteIndex === null || selectedStopIndex === null || !selectedStop) {
+            toast({
+                title: "Error",
+                description: "No stop selected",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const currentStop = selectedStop.stop;
+
+        // Check if stop already has an ID (might be existing)
+        if (currentStop.id && currentStop.id.trim() !== '') {
+            toast({
+                title: "Cannot Create",
+                description: "This stop already has an ID. It might be an existing stop. Use Update instead.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        // Check if stop name is provided
+        if (!currentStop.name || currentStop.name.trim() === '') {
+            toast({
+                title: "Validation Error",
+                description: "Stop name is required to create a stop",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        // Check if stop exists by name
+        setIsCreating(true);
+        try {
+            // First check if stop exists by name
+            const existsResult = await searchStopExistence(currentStop);
+            
+            if (existsResult.found) {
+                toast({
+                    title: "Stop Already Exists",
+                    description: `A stop with name "${currentStop.name}" already exists in the system. Use Search to load it.`,
+                    variant: "destructive"
+                });
+                setIsCreating(false);
+                return;
+            }
+
+            // Validate location data
+            if (!currentStop.location || 
+                currentStop.location.latitude === 0 || 
+                currentStop.location.longitude === 0) {
+                toast({
+                    title: "Validation Error",
+                    description: "Valid coordinates (latitude and longitude) are required to create a stop",
+                    variant: "destructive"
+                });
+                setIsCreating(false);
+                return;
+            }
+
+            // Prepare stop request
+            const stopRequest: StopRequest = {
+                name: currentStop.name,
+                nameSinhala: currentStop.nameSinhala,
+                nameTamil: currentStop.nameTamil,
+                description: currentStop.description,
+                location: {
+                    latitude: currentStop.location.latitude,
+                    longitude: currentStop.location.longitude,
+                    address: currentStop.location.address,
+                    city: currentStop.location.city,
+                    state: currentStop.location.state,
+                    zipCode: currentStop.location.zipCode,
+                    country: currentStop.location.country,
+                    addressSinhala: currentStop.location.addressSinhala,
+                    citySinhala: currentStop.location.citySinhala,
+                    stateSinhala: currentStop.location.stateSinhala,
+                    countrySinhala: currentStop.location.countrySinhala,
+                    addressTamil: currentStop.location.addressTamil,
+                    cityTamil: currentStop.location.cityTamil,
+                    stateTamil: currentStop.location.stateTamil,
+                    countryTamil: currentStop.location.countryTamil,
+                },
+                isAccessible: currentStop.isAccessible
+            };
+
+            // Create the stop
+            const createdStop = await BusStopManagementService.createStop(stopRequest);
+
+            // Update the stop with created data (including ID)
+            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
+                stop: {
+                    id: createdStop.id ?? '',
+                    name: createdStop.name ?? '',
+                    nameSinhala: createdStop.nameSinhala,
+                    nameTamil: createdStop.nameTamil,
+                    description: createdStop.description,
+                    location: {
+                        latitude: createdStop.location?.latitude ?? 0,
+                        longitude: createdStop.location?.longitude ?? 0,
+                        address: createdStop.location?.address,
+                        city: createdStop.location?.city,
+                        state: createdStop.location?.state,
+                        zipCode: createdStop.location?.zipCode,
+                        country: createdStop.location?.country,
+                        addressSinhala: createdStop.location?.addressSinhala,
+                        citySinhala: createdStop.location?.citySinhala,
+                        stateSinhala: createdStop.location?.stateSinhala,
+                        countrySinhala: createdStop.location?.countrySinhala,
+                        addressTamil: createdStop.location?.addressTamil,
+                        cityTamil: createdStop.location?.cityTamil,
+                        stateTamil: createdStop.location?.stateTamil,
+                        countryTamil: createdStop.location?.countryTamil,
+                    },
+                    isAccessible: createdStop.isAccessible,
+                    type: StopExistenceType.EXISTING
+                }
+            });
+
+            toast({
+                title: "Stop Created",
+                description: `Stop "${createdStop.name}" created successfully with ID: ${createdStop.id}`,
+                variant: "default"
+            });
+        } catch (error: any) {
+            console.error('Error creating stop:', error);
+            const errorMessage = error.body?.message || error.message || "Failed to create stop";
+            toast({
+                title: "Creation Failed",
+                description: errorMessage,
+                variant: "destructive"
+            });
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    const handleUpdateStop = async () => {
+        if (selectedRouteIndex === null || selectedStopIndex === null || !selectedStop) {
+            toast({
+                title: "Error",
+                description: "No stop selected",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const currentStop = selectedStop.stop;
+
+        // Check if stop has an ID
+        if (!currentStop.id || currentStop.id.trim() === '') {
+            toast({
+                title: "Cannot Update",
+                description: "This stop doesn't have an ID. Create it first before updating.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        // Check if stop name is provided
+        if (!currentStop.name || currentStop.name.trim() === '') {
+            toast({
+                title: "Validation Error",
+                description: "Stop name is required to update a stop",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        // Validate location data
+        if (!currentStop.location || 
+            currentStop.location.latitude === 0 || 
+            currentStop.location.longitude === 0) {
+            toast({
+                title: "Validation Error",
+                description: "Valid coordinates (latitude and longitude) are required to update a stop",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsUpdating(true);
+        try {
+            // Prepare stop request
+            const stopRequest: StopRequest = {
+                name: currentStop.name,
+                nameSinhala: currentStop.nameSinhala,
+                nameTamil: currentStop.nameTamil,
+                description: currentStop.description,
+                location: {
+                    latitude: currentStop.location.latitude,
+                    longitude: currentStop.location.longitude,
+                    address: currentStop.location.address,
+                    city: currentStop.location.city,
+                    state: currentStop.location.state,
+                    zipCode: currentStop.location.zipCode,
+                    country: currentStop.location.country,
+                    addressSinhala: currentStop.location.addressSinhala,
+                    citySinhala: currentStop.location.citySinhala,
+                    stateSinhala: currentStop.location.stateSinhala,
+                    countrySinhala: currentStop.location.countrySinhala,
+                    addressTamil: currentStop.location.addressTamil,
+                    cityTamil: currentStop.location.cityTamil,
+                    stateTamil: currentStop.location.stateTamil,
+                    countryTamil: currentStop.location.countryTamil,
+                },
+                isAccessible: currentStop.isAccessible
+            };
+
+            // Update the stop
+            const updatedStop = await BusStopManagementService.updateStop(currentStop.id, stopRequest);
+
+            // Update the stop with updated data
+            updateRouteStop(selectedRouteIndex, selectedStopIndex, {
+                stop: {
+                    id: updatedStop.id ?? '',
+                    name: updatedStop.name ?? '',
+                    nameSinhala: updatedStop.nameSinhala,
+                    nameTamil: updatedStop.nameTamil,
+                    description: updatedStop.description,
+                    location: {
+                        latitude: updatedStop.location?.latitude ?? 0,
+                        longitude: updatedStop.location?.longitude ?? 0,
+                        address: updatedStop.location?.address,
+                        city: updatedStop.location?.city,
+                        state: updatedStop.location?.state,
+                        zipCode: updatedStop.location?.zipCode,
+                        country: updatedStop.location?.country,
+                        addressSinhala: updatedStop.location?.addressSinhala,
+                        citySinhala: updatedStop.location?.citySinhala,
+                        stateSinhala: updatedStop.location?.stateSinhala,
+                        countrySinhala: updatedStop.location?.countrySinhala,
+                        addressTamil: updatedStop.location?.addressTamil,
+                        cityTamil: updatedStop.location?.cityTamil,
+                        stateTamil: updatedStop.location?.stateTamil,
+                        countryTamil: updatedStop.location?.countryTamil,
+                    },
+                    isAccessible: updatedStop.isAccessible,
+                    type: StopExistenceType.EXISTING
+                }
+            });
+
+            toast({
+                title: "Stop Updated",
+                description: `Stop "${updatedStop.name}" updated successfully`,
+                variant: "default"
+            });
+        } catch (error: any) {
+            console.error('Error updating stop:', error);
+            const errorMessage = error.body?.message || error.message || "Failed to update stop";
+            toast({
+                title: "Update Failed",
+                description: errorMessage,
+                variant: "destructive"
+            });
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -289,17 +552,50 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                         </div>
                     ) : (
                         <form className="space-y-4">
-                            <div className="flex gap-4 items-center justify-between">
-                                <div className="flex gap-4 items-center">
-                                    <label className="block text-sm font-medium">Id :</label>
-                                    <span className={`text-sm px-2 py-1 rounded ${selectedStop.stop.type === StopExistenceType.EXISTING ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                                        {selectedStop.stop.id || 'new'}
-                                    </span>
+                            {/* Top action bar for stop tasks */}
+                            <div className="border-2 border-gray-300 px-1 py-1 rounded flex gap-2 justify-between">
+                                <div className="flex gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={handleCreateStop}
+                                        disabled={isCreating || isUpdating || isSearching}
+                                        className="px-2 py-1 bg-purple-600 text-sm text-white rounded hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                        {isCreating ? (
+                                            <>
+                                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Creating...
+                                            </>
+                                        ) : (
+                                            'Create'
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleUpdateStop}
+                                        disabled={isUpdating || isCreating || isSearching}
+                                        className="px-2 py-1 bg-green-600 text-sm text-white rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
+                                    >
+                                        {isUpdating ? (
+                                            <>
+                                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Updating...
+                                            </>
+                                        ) : (
+                                            'Update'
+                                        )}
+                                    </button>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={handleSearchExistingStop}
-                                    disabled={isSearching}
+                                    disabled={isSearching || isCreating || isUpdating}
                                     className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
                                     {isSearching ? (
@@ -315,16 +611,24 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                             </svg>
-                                            Search Existing
+                                            Search
                                         </>
                                     )}
                                 </button>
                             </div>
+                            <div className="flex gap-4 items-center justify-between">
+                                <div className="flex gap-4 items-center">
+                                    <label className="block text-sm font-medium">Id :</label>
+                                    <span className={`text-sm px-2 py-1 rounded ${selectedStop.stop.type === StopExistenceType.EXISTING ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                        {selectedStop.stop.id || 'new'}
+                                    </span>
+                                </div>
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium">Name (Eng)</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                <input
+                                    type="text"
+                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                     value={selectedStop.stop.name || ''}
                                     onChange={(e) => handleFieldChange('name', e.target.value)}
                                 />
@@ -332,9 +636,9 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
 
                             <div>
                                 <label className="block text-sm font-medium">Name (Sin)</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                <input
+                                    type="text"
+                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                     value={selectedStop.stop.nameSinhala || ''}
                                     onChange={(e) => handleFieldChange('nameSinhala', e.target.value)}
                                 />
@@ -342,9 +646,9 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
 
                             <div>
                                 <label className="block text-sm font-medium">Name (Tam)</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                <input
+                                    type="text"
+                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                     value={selectedStop.stop.nameTamil || ''}
                                     onChange={(e) => handleFieldChange('nameTamil', e.target.value)}
                                 />
@@ -352,8 +656,8 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
 
                             <div>
                                 <label className="block text-sm font-medium">Description</label>
-                                <textarea 
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                <textarea
+                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                     rows={3}
                                     value={selectedStop.stop.description || ''}
                                     onChange={(e) => handleFieldChange('description', e.target.value)}
@@ -363,20 +667,20 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="block text-sm font-medium">Latitude</label>
-                                    <input 
-                                        type="number" 
-                                        step="any" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.latitude || ''}
                                         onChange={(e) => handleFieldChange('latitude', parseFloat(e.target.value) || 0)}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium">Longitude</label>
-                                    <input 
-                                        type="number" 
-                                        step="any" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="number"
+                                        step="any"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.longitude || ''}
                                         onChange={(e) => handleFieldChange('longitude', parseFloat(e.target.value) || 0)}
                                     />
@@ -385,9 +689,9 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
 
                             <div>
                                 <label className="block text-sm font-medium">Address (Eng)</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                <input
+                                    type="text"
+                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                     value={selectedStop.stop.location?.address || ''}
                                     onChange={(e) => handleFieldChange('address', e.target.value)}
                                 />
@@ -395,9 +699,9 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
 
                             <div>
                                 <label className="block text-sm font-medium">Address (Sin)</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                <input
+                                    type="text"
+                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                     value={selectedStop.stop.location?.addressSinhala || ''}
                                     onChange={(e) => handleFieldChange('addressSinhala', e.target.value)}
                                 />
@@ -405,9 +709,9 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
 
                             <div>
                                 <label className="block text-sm font-medium">Address (Tam)</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                <input
+                                    type="text"
+                                    className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                     value={selectedStop.stop.location?.addressTamil || ''}
                                     onChange={(e) => handleFieldChange('addressTamil', e.target.value)}
                                 />
@@ -416,27 +720,27 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                             <div className="grid grid-cols-3 gap-2">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">City (Eng)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.city || ''}
                                         onChange={(e) => handleFieldChange('city', e.target.value)}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">City (Sin)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.citySinhala || ''}
                                         onChange={(e) => handleFieldChange('citySinhala', e.target.value)}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">City (Tam)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.cityTamil || ''}
                                         onChange={(e) => handleFieldChange('cityTamil', e.target.value)}
                                     />
@@ -446,27 +750,27 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                             <div className="grid grid-cols-3 gap-2">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">State (Eng)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.state || ''}
                                         onChange={(e) => handleFieldChange('state', e.target.value)}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">State (Sin)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.stateSinhala || ''}
                                         onChange={(e) => handleFieldChange('stateSinhala', e.target.value)}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">State (Tam)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.stateTamil || ''}
                                         onChange={(e) => handleFieldChange('stateTamil', e.target.value)}
                                     />
@@ -476,9 +780,9 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Zip Code</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.zipCode || ''}
                                         onChange={(e) => handleFieldChange('zipCode', e.target.value)}
                                     />
@@ -488,27 +792,27 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                             <div className="grid grid-cols-3 gap-2">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Country (Eng)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.country || ''}
                                         onChange={(e) => handleFieldChange('country', e.target.value)}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Country (Sin)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.countrySinhala || ''}
                                         onChange={(e) => handleFieldChange('countrySinhala', e.target.value)}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Country (Tam)</label>
-                                    <input 
-                                        type="text" 
-                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white" 
+                                    <input
+                                        type="text"
+                                        className="w-full border border-gray-400 rounded px-2 py-1 bg-white"
                                         value={selectedStop.stop.location?.countryTamil || ''}
                                         onChange={(e) => handleFieldChange('countryTamil', e.target.value)}
                                     />
@@ -516,9 +820,9 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
                             </div>
 
                             <div className="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    id="accessible" 
+                                <input
+                                    type="checkbox"
+                                    id="accessible"
                                     checked={selectedStop.stop.isAccessible || false}
                                     onChange={(e) => handleFieldChange('isAccessible', e.target.checked)}
                                 />
