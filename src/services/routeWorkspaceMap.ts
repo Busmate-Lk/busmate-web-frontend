@@ -95,7 +95,9 @@ export function extractValidStops(routeStops: RouteStop[]): ValidStop[] {
       typeof stop.lat === 'number' && 
       typeof stop.lng === 'number' &&
       !isNaN(stop.lat) && 
-      !isNaN(stop.lng)
+      !isNaN(stop.lng) &&
+      // Filter out 0,0 coordinates which are default/invalid
+      !(stop.lat === 0 && stop.lng === 0)
     );
 }
 
