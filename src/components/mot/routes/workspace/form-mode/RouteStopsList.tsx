@@ -629,28 +629,30 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                     </svg>
                     View Full Route
                 </button>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setIsActionsMenuOpen(!isActionsMenuOpen);
-                    }}
-                    disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops}
-                    className="px-1 py-1 text-sm text-black rounded hover:bg-gray-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1 relative"
-                    title="Actions"
-                >
-                    {(isFetchingAllCoordinates || isFetchingMissingCoordinates) ? (
-                        <div className="flex items-center gap-1">
-                            <Loader2 className="animate-spin" size={16} />
-                            <span className="text-xs">{coordinateFetchProgress}</span>
-                        </div>
-                    ) : isSearchingAllStops ? (
-                        <div className="flex items-center gap-1">
-                            <Loader2 className="animate-spin" size={16} />
-                            <span className="text-xs">{searchProgress}</span>
-                        </div>
-                    ) : (
-                        <EllipsisVertical size={16} />
-                    )}
+                <div className="relative">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsActionsMenuOpen(!isActionsMenuOpen);
+                        }}
+                        disabled={isFetchingAllCoordinates || isFetchingMissingCoordinates || isSearchingAllStops}
+                        className="px-1 py-1 text-sm text-black rounded hover:bg-gray-300 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
+                        title="Actions"
+                    >
+                        {(isFetchingAllCoordinates || isFetchingMissingCoordinates) ? (
+                            <div className="flex items-center gap-1">
+                                <Loader2 className="animate-spin" size={16} />
+                                <span className="text-xs">{coordinateFetchProgress}</span>
+                            </div>
+                        ) : isSearchingAllStops ? (
+                            <div className="flex items-center gap-1">
+                                <Loader2 className="animate-spin" size={16} />
+                                <span className="text-xs">{searchProgress}</span>
+                            </div>
+                        ) : (
+                            <EllipsisVertical size={16} />
+                        )}
+                    </button>
                     {isActionsMenuOpen && (
                         <div className="absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 min-w-[250px]" ref={actionsMenuRef}>
                             {/* Coordinates Section */}
@@ -729,7 +731,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                             </button>
                         </div>
                     )}
-                </button>
+                </div>
                 </div>
             </div>
 
