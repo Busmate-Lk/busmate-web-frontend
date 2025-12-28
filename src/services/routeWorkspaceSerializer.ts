@@ -84,6 +84,7 @@ export function serializeToYaml(data: RouteWorkspaceData): string {
 
           return {
             route_stop: {
+              id: routeStop.id || '',
               order_number: routeStop.orderNumber,
               distance_from_start: routeStop.distanceFromStart,
               stop_type: index === 0 ? 'S' : index === route.routeStops.length - 1 ? 'E' : 'I',
@@ -217,6 +218,7 @@ export function parseFromYaml(yamlText: string): Partial<RouteWorkspaceData> {
               }
 
               const routeStop: RouteStop = {
+                id: stopData.id ? String(stopData.id) : undefined,
                 orderNumber: stopData.order_number !== undefined ? Number(stopData.order_number) : 0,
                 distanceFromStart: stopData.distance_from_start !== undefined ? Number(stopData.distance_from_start) : 
                                    stopData.distance_from_start_km !== undefined ? Number(stopData.distance_from_start_km) : 0,

@@ -72,6 +72,7 @@ export interface Stop {
 // ============================================================================
 
 export interface RouteStop {
+  id?: string; // Unique identifier for the route stop (for updates)
   orderNumber: number;
   distanceFromStart: number; // in kilometers
   stop: Stop;
