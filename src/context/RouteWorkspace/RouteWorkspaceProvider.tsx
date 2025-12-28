@@ -2,8 +2,15 @@
 
 import { ReactNode, useState, useCallback } from 'react';
 import { RouteWorkspaceContext } from './RouteWorkspaceContext';
-import { RouteWorkspaceData, createEmptyRouteWorkspaceData, RouteGroup, Route, RouteStop, createEmptyRoute, moveRouteStop } from '@/types/RouteWorkspaceData';
+import { RouteWorkspaceData, createEmptyRouteWorkspaceData, RouteGroup, Route, RouteStop, createEmptyRoute, moveRouteStop, DirectionEnum } from '@/types/RouteWorkspaceData';
 import { serializeToYaml, parseFromYaml } from '@/services/routeWorkspaceSerializer';
+import { 
+  generateRouteFromCorresponding as generateRouteFromCorrespondingService,
+  findRouteByDirection,
+  findRouteIndexByDirection,
+  AutoGenerationOptions,
+  RouteAutoGenerationResult
+} from '@/services/routeAutoGeneration';
 
 interface RouteWorkspaceProviderProps {
   children: ReactNode;
@@ -103,6 +110,22 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
     }));
   }, []);
 
+  const replaceRoute = useCallback((routeIndex: number, route: Route) => {
+    setData(prevData => {
+      const routes = [...prevData.routeGroup.routes];
+      if (routeIndex >= 0 && routeIndex < routes.length) {
+        routes[routeIndex] = route;
+      }
+      return {
+        ...prevData,
+        routeGroup: {
+          ...prevData.routeGroup,
+          routes,
+        },
+      };
+    });
+  }, []);
+
   const addRouteStop = useCallback((routeIndex: number, routeStop: RouteStop) => {
     setData(prevData => {
       const routes = [...prevData.routeGroup.routes];
@@ -163,6 +186,66 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
     }));
   }, []);
 
+  const getRouteIndexByDirection = useCallback((direction: DirectionEnum): number => {
+    return findRouteIndexByDirection(data.routeGroup.routes, direction);
+  }, [data.routeGroup.routes]);
+
+  const generateRouteFromCorresponding = useCallback((
+    targetDirection: DirectionEnum,
+    options?: AutoGenerationOptions
+  ): RouteAutoGenerationResult => {
+    // Determine the source direction (opposite of target)
+    const sourceDirection = targetDirection === DirectionEnum.OUTBOUND
+      ? DirectionEnum.INBOUND
+      : DirectionEnum.OUTBOUND;
+
+    // Find the source route
+    const sourceRoute = findRouteByDirection(data.routeGroup.routes, sourceDirection);
+
+    if (!sourceRoute) {
+      return {
+        success: false,
+        route: createEmptyRoute(),
+        message: `No ${sourceDirection} route found to generate from. Please create the ${sourceDirection} route first.`,
+        warnings: [],
+      };
+    }
+
+    // Generate the route using the service
+    const result = generateRouteFromCorrespondingService(sourceRoute, options);
+
+    if (result.success) {
+      // Find if a route with the target direction already exists
+      const existingIndex = findRouteIndexByDirection(data.routeGroup.routes, targetDirection);
+
+      if (existingIndex >= 0) {
+        // Replace the existing route
+        setData(prevData => {
+          const routes = [...prevData.routeGroup.routes];
+          routes[existingIndex] = result.route;
+          return {
+            ...prevData,
+            routeGroup: {
+              ...prevData.routeGroup,
+              routes,
+            },
+          };
+        });
+      } else {
+        // Add as new route
+        setData(prevData => ({
+          ...prevData,
+          routeGroup: {
+            ...prevData.routeGroup,
+            routes: [...prevData.routeGroup.routes, result.route],
+          },
+        }));
+      }
+    }
+
+    return result;
+  }, [data.routeGroup.routes]);
+
   const setSelectedStop = useCallback((routeIndex: number, stopIndex: number) => {
     setSelectedRouteIndex(routeIndex);
     setSelectedStopIndex(stopIndex);
@@ -204,10 +287,13 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
         updateRoute,
         updateRouteStop,
         addRoute,
+        replaceRoute,
         addRouteStop,
         removeRouteStop,
         reorderRouteStop,
         setActiveRouteIndex,
+        getRouteIndexByDirection,
+        generateRouteFromCorresponding,
         selectedRouteIndex,
         selectedStopIndex,
         setSelectedStop,
