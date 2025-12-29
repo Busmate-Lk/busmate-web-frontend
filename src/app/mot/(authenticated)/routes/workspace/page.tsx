@@ -6,17 +6,17 @@ import { Layout } from '@/components/shared/layout';
 import { RouteWorkspaceProvider } from '@/context/RouteWorkspace/RouteWorkspaceProvider';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
 import { Toaster } from '@/components/ui/toaster';
+import RouteSubmissionModal from '@/components/mot/routes/workspace/RouteSubmissionModal';
 import { useState } from 'react';
 
 function RouteWorkspaceContent() {
     const [activeTab, setActiveTab] = useState<'form' | 'textual'>('form');
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const { getRouteGroupData } = useRouteWorkspace();
 
     const handleSubmit = () => {
         const routeGroupData = getRouteGroupData();
-        console.log('=== ROUTE GROUP DATA FOR SUBMISSION ===');
-        console.log(JSON.stringify(routeGroupData, null, 2));
-        console.log('=======================================');
+        setIsModalOpen(true);
     };
 
     return (
@@ -62,6 +62,7 @@ function RouteWorkspaceContent() {
                     {activeTab === 'textual' && <RouteTextualMode />}
                 </div>
             </div>
+            <RouteSubmissionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </Layout>
     );
 }
