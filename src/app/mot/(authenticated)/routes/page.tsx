@@ -359,7 +359,8 @@ export default function RoutesPage() {
   };
 
   const handleAddNewRoute = () => {
-    router.push('/mot/routes/add-new');
+    // router.push('/mot/routes/add-new');  // old route creation page
+    router.push('/mot/routes/workspace')
   };
 
   const handleImport = () => {
@@ -378,7 +379,8 @@ export default function RoutesPage() {
     // Navigate to route group edit page
     const route = routes.find(r => r.id === routeId);
     if (route?.routeGroupId) {
-      router.push(`/mot/routes/${route.routeGroupId}/edit?route=${routeId}`);
+      // router.push(`/mot/routes/${route.routeGroupId}/edit?route=${routeId}`); //old route edit page
+      router.push(`/mot/routes/workspace?routeGroupId=${route.routeGroupId}`);
     }
   };
 
