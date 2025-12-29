@@ -205,7 +205,76 @@ export function RouteTabsContainer({
           </div>
         </div>
 
-        {/* Row 2: Distance and Duration */}
+        {/* Row 2: Route Number, Road Type, Route Through */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Route Number
+            </label>
+            <input
+              type="text"
+              value={currentRoute.routeNumber || ''}
+              onChange={(e) => onRouteChange(currentRouteKey, 'routeNumber', e.target.value)}
+              placeholder="e.g., 101, A1"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Road Type
+            </label>
+            <select
+              value={currentRoute.roadType || ''}
+              onChange={(e) => onRouteChange(currentRouteKey, 'roadType', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="NORMALWAY">Normalway</option>
+              <option value="EXPRESSWAY">Highway</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Row 3: Multilingual Route Through */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Route Through
+            </label>
+            <input
+              type="text"
+              value={currentRoute.routeThrough || ''}
+              onChange={(e) => onRouteChange(currentRouteKey, 'routeThrough', e.target.value)}
+              placeholder="e.g., via Peradeniya"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Route Through (Sinhala)
+            </label>
+            <input
+              type="text"
+              value={currentRoute.routeThroughSinhala || ''}
+              onChange={(e) => onRouteChange(currentRouteKey, 'routeThroughSinhala', e.target.value)}
+              placeholder="යන මාර්ගය..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Route Through (Tamil)
+            </label>
+            <input
+              type="text"
+              value={currentRoute.routeThroughTamil || ''}
+              onChange={(e) => onRouteChange(currentRouteKey, 'routeThroughTamil', e.target.value)}
+              placeholder="கொழும்பு வழியாக செல்லும் பாதை..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Row 4: Distance and Duration */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

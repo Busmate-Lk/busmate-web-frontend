@@ -26,10 +26,11 @@ interface LayoutProps {
   pageDescription?: string
   role?:string
   padding?: number
+  initialSidebarCollapsed?: boolean
 }
 
-export function Layout({ children, activeItem = "dashboard", pageTitle, pageDescription,role, padding = 6 }: LayoutProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+export function Layout({ children, activeItem = "dashboard", pageTitle, pageDescription,role, padding = 6, initialSidebarCollapsed = false }: LayoutProps) {
+  const [isCollapsed, setIsCollapsed] = useState(initialSidebarCollapsed)
   const paddingStr = padding.toString();
 
   return (

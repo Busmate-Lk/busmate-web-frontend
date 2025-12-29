@@ -6,6 +6,7 @@ import type { PageStopResponse } from '../models/PageStopResponse';
 import type { RouteStopDetailResponse } from '../models/RouteStopDetailResponse';
 import type { ScheduleStopDetailResponse } from '../models/ScheduleStopDetailResponse';
 import type { StopBulkUpdateResponse } from '../models/StopBulkUpdateResponse';
+import type { StopExistsResponse } from '../models/StopExistsResponse';
 import type { StopFilterOptionsResponse } from '../models/StopFilterOptionsResponse';
 import type { StopImportResponse } from '../models/StopImportResponse';
 import type { StopRequest } from '../models/StopRequest';
@@ -83,6 +84,30 @@ export class BusStopManagementService {
         });
     }
     /**
+     * Check if a stop exists by ID or name
+     * Check if a bus stop exists in the system by providing either an ID or a name. If the stop is found, its full data is returned. Priority: ID takes precedence over name if both are provided. Name search matches against English, Sinhala, and Tamil name variants (case-insensitive). Note: In a future implementation, this will support checking by both name and city for more precise matching.
+     * @param id Stop ID (UUID format)
+     * @param name Stop name (English, Sinhala, or Tamil)
+     * @returns StopExistsResponse Check completed - exists field indicates if stop was found
+     * @throws ApiError
+     */
+    public static checkStopExists(
+        id?: string,
+        name?: string,
+    ): CancelablePromise<StopExistsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/stops/exists',
+            query: {
+                'id': id,
+                'name': name,
+            },
+            errors: {
+                400: `Neither ID nor name provided`,
+            },
+        });
+    }
+    /**
      * Export stops with flexible filtering and format options
      * Export stops to CSV or JSON format with highly flexible filtering options. Supports exporting all stops, filtering by city/state/country, specific IDs, accessibility, and custom field selection. Perfect for bulk operations like route imports where you need stop IDs to replace in external datasets. The exported file includes comprehensive metadata about applied filters and export options for audit purposes.
      * @param exportAll Export all stops (ignores other filters if true)
@@ -147,7 +172,7 @@ export class BusStopManagementService {
      * @returns StopFilterOptionsResponse Filter options retrieved successfully
      * @throws ApiError
      */
-    public static getFilterOptions(): CancelablePromise<StopFilterOptionsResponse> {
+    public static getFilterOptions1(): CancelablePromise<StopFilterOptionsResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/stops/filters/options',

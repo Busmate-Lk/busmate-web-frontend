@@ -81,6 +81,88 @@ export class RouteManagementService {
         });
     }
     /**
+     * Export routes in CSV format with rich filtering and two distinct modes
+     * Export routes data exclusively in CSV format with comprehensive filtering options and two distinct export modes:
+     *
+     * **MODE 1 - ROUTE_ONLY**: One row per route containing only start and end stop information.
+     * **MODE 2 - ROUTE_WITH_ALL_STOPS**: One row per stop (multiple rows per route) including all intermediate stops.
+     *
+     * Supports extensive filtering by route attributes, stop criteria, text search, and customizable field inclusion. Perfect for system integrations, BI dashboards, schedule imports, and route database migrations. All exports include UUIDs for efficient data integration.
+     * @param exportAll Export all routes (ignores other filters if true)
+     * @param routeIds Specific route IDs to export (comma-separated)
+     * @param routeGroupIds Filter by route group IDs (comma-separated)
+     * @param travelsThroughStopIds Filter by stops that routes travel through (comma-separated)
+     * @param startStopIds Filter by start stop IDs (comma-separated)
+     * @param endStopIds Filter by end stop IDs (comma-separated)
+     * @param directions Filter by direction (UP, DOWN) - comma-separated
+     * @param roadTypes Filter by road type (NORMALWAY, EXPRESSWAY) - comma-separated
+     * @param minDistanceKm Filter by minimum distance in kilometers
+     * @param maxDistanceKm Filter by maximum distance in kilometers
+     * @param minDurationMinutes Filter by minimum estimated duration in minutes
+     * @param maxDurationMinutes Filter by maximum estimated duration in minutes
+     * @param searchText Search text to filter routes by name, route number, or description in all languages
+     * @param exportMode Export mode - determines CSV structure
+     * @param format Export format
+     * @param includeMultiLanguageFields Include multi-language fields (name_sinhala, name_tamil, etc.)
+     * @param includeRouteGroupInfo Include route group information
+     * @param includeAuditFields Include audit fields (created_at, updated_at, created_by, updated_by)
+     * @param customFields Custom fields to include in export (comma-separated, if specified only these fields will be exported)
+     * @returns string CSV export completed successfully with comprehensive metadata
+     * @throws ApiError
+     */
+    public static exportRoutes(
+        exportAll: boolean = false,
+        routeIds?: Array<string>,
+        routeGroupIds?: Array<string>,
+        travelsThroughStopIds?: Array<string>,
+        startStopIds?: Array<string>,
+        endStopIds?: Array<string>,
+        directions?: Array<string>,
+        roadTypes?: Array<string>,
+        minDistanceKm?: number,
+        maxDistanceKm?: number,
+        minDurationMinutes?: number,
+        maxDurationMinutes?: number,
+        searchText?: string,
+        exportMode: 'ROUTE_ONLY' | 'ROUTE_WITH_ALL_STOPS' = 'ROUTE_ONLY',
+        format: 'CSV' | 'JSON' = 'CSV',
+        includeMultiLanguageFields: boolean = true,
+        includeRouteGroupInfo: boolean = true,
+        includeAuditFields: boolean = false,
+        customFields?: Array<string>,
+    ): CancelablePromise<string> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/routes/export',
+            query: {
+                'exportAll': exportAll,
+                'routeIds': routeIds,
+                'routeGroupIds': routeGroupIds,
+                'travelsThroughStopIds': travelsThroughStopIds,
+                'startStopIds': startStopIds,
+                'endStopIds': endStopIds,
+                'directions': directions,
+                'roadTypes': roadTypes,
+                'minDistanceKm': minDistanceKm,
+                'maxDistanceKm': maxDistanceKm,
+                'minDurationMinutes': minDurationMinutes,
+                'maxDurationMinutes': maxDurationMinutes,
+                'searchText': searchText,
+                'exportMode': exportMode,
+                'format': format,
+                'includeMultiLanguageFields': includeMultiLanguageFields,
+                'includeRouteGroupInfo': includeRouteGroupInfo,
+                'includeAuditFields': includeAuditFields,
+                'customFields': customFields,
+            },
+            errors: {
+                400: `Invalid export request parameters or validation errors`,
+                401: `Unauthorized - authentication required`,
+                500: `Internal server error during CSV generation`,
+            },
+        });
+    }
+    /**
      * Get all route filter options
      * Retrieve all filter options in one consolidated response including directions, route groups, distance range, and duration range. This endpoint provides everything needed for the UI filtering functionality in a single API call.
      * @returns RouteFilterOptionsResponse All filter options retrieved successfully

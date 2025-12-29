@@ -244,7 +244,7 @@ export class TripManagementService {
      * @returns TripResponse OK
      * @throws ApiError
      */
-    public static generateTripsForSchedule(
+    public static generateTripsForSchedule1(
         scheduleId: string,
         fromDate?: string,
         toDate?: string,

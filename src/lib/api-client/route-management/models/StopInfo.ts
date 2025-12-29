@@ -3,12 +3,14 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { LocationDto } from './LocationDto';
-export type RouteStopResponse = {
+/**
+ * Stop information summary
+ */
+export type StopInfo = {
     id?: string;
-    stopId?: string;
-    stopName?: string;
+    name?: string;
+    nameSinhala?: string;
+    nameTamil?: string;
     location?: LocationDto;
-    stopOrder?: number;
-    distanceFromStartKm?: number;
 };
 

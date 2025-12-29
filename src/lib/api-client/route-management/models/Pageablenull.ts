@@ -7,8 +7,8 @@ export type Pageablenull = {
     paged?: boolean;
     pageNumber?: number;
     pageSize?: number;
+    unpaged?: boolean;
     offset?: number;
     sort?: Sortnull;
-    unpaged?: boolean;
 };
 

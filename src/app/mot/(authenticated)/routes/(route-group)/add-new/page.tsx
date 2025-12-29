@@ -56,13 +56,22 @@ export default function AddNewRouteGroupPage() {
       // Prepare route group data for API
       const routeGroupRequest: RouteGroupRequest = {
         name: formData.name,
+        nameSinhala: formData.nameSinhala,
+        nameTamil: formData.nameTamil,
         description: formData.description,
         routes: [
           // Outbound route
           {
             name: formData.outboundRoute.name,
+            nameSinhala: formData.outboundRoute.nameSinhala,
+            nameTamil: formData.outboundRoute.nameTamil,
             description: formData.outboundRoute.description,
             direction: formData.outboundRoute.direction,
+            routeNumber: formData.outboundRoute.routeNumber,
+            roadType: formData.outboundRoute.roadType,
+            routeThrough: formData.outboundRoute.routeThrough,
+            routeThroughSinhala: formData.outboundRoute.routeThroughSinhala,
+            routeThroughTamil: formData.outboundRoute.routeThroughTamil,
             startStopId: formData.outboundRoute.startStopId,
             endStopId: formData.outboundRoute.endStopId,
             distanceKm: formData.outboundRoute.distanceKm,
@@ -72,8 +81,15 @@ export default function AddNewRouteGroupPage() {
           // Inbound route
           {
             name: formData.inboundRoute.name,
+            nameSinhala: formData.inboundRoute.nameSinhala,
+            nameTamil: formData.inboundRoute.nameTamil,
             description: formData.inboundRoute.description,
             direction: formData.inboundRoute.direction,
+            routeNumber: formData.inboundRoute.routeNumber,
+            roadType: formData.inboundRoute.roadType,
+            routeThrough: formData.inboundRoute.routeThrough,
+            routeThroughSinhala: formData.inboundRoute.routeThroughSinhala,
+            routeThroughTamil: formData.inboundRoute.routeThroughTamil,
             startStopId: formData.inboundRoute.startStopId,
             endStopId: formData.inboundRoute.endStopId,
             distanceKm: formData.inboundRoute.distanceKm,

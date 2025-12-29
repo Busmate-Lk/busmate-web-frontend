@@ -15,6 +15,7 @@ export default function TripAssignmentPage() {
       pageTitle="Trip Assignment" 
       pageDescription="Assign weekly schedule instances/trips to passenger service permits" 
       role="MOT"
+      initialSidebarCollapsed={true}
       padding={0}>
       <TripAssignment />
     </Layout>
