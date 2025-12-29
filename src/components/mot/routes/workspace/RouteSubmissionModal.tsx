@@ -9,7 +9,7 @@ import {
   applyBulkSearchResultsToRouteStops,
   BulkStopExistenceSearchResult 
 } from '@/services/routeWorkspaceValidation';
-import { BusStopManagementService, StopRequest } from '@/lib/api-client/route-management';
+import { BusStopManagementService, StopRequest, RouteManagementService, RouteGroupRequest } from '@/lib/api-client/route-management';
 import { 
   RouteGroup, 
   Route, 
@@ -223,7 +223,8 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
   // Step 2: Create new stops
   // Now accepts stopsToCreate directly instead of reading from state
-  const createNewStops = useCallback(async (stopsToCreate: Stop[]): Promise<boolean> => {
+  // Returns the created stops mapping for use by buildRouteGroup
+  const createNewStops = useCallback(async (stopsToCreate: Stop[]): Promise<{ success: boolean; createdStops: { original: Stop; created: Stop }[] }> => {
     console.log("Creating new stops...", stopsToCreate);
 
     if (stopsToCreate.length === 0) {
@@ -240,7 +241,7 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         }
       }));
       console.log("No new stops to create.");
-      return true;
+      return { success: true, createdStops: [] };
     }
 
     setState(prev => ({
@@ -389,14 +390,16 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         currentStep: 'failed',
         error: `Failed to create ${failedStops.length} stops. Route group cannot be submitted with missing stops.`
       }));
-      return false;
+      return { success: false, createdStops };
     }
 
-    return true;
+    return { success: true, createdStops };
   }, [data.routeGroup.routes, updateRoute]);
 
   // Step 3: Build final route group object
-  const buildRouteGroup = useCallback(async () => {
+  // Now accepts createdStops mapping to look up IDs for newly created stops
+  // This avoids relying on async React state updates
+  const buildRouteGroup = useCallback(async (createdStopsMapping: { original: Stop; created: Stop }[]) => {
     setState(prev => ({
       ...prev,
       currentStep: 'building-route',
@@ -411,19 +414,41 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
 
     setProgress({
       current: 1,
-      total: 1,
+      total: 2,
       label: 'Preparing route group data...'
     });
 
     try {
-      // Get fresh data from context (includes newly created stops)
+      // Get data from context
       const routeGroup = data.routeGroup;
       
-      // Validate all stops have IDs
+      // Create a map of original stop names to their created IDs
+      // This is used to look up IDs for newly created stops since React state updates are async
+      const createdStopIdMap = new Map<string, string>();
+      createdStopsMapping.forEach(({ original, created }) => {
+        if (original.name && created.id) {
+          createdStopIdMap.set(original.name, created.id);
+        }
+      });
+
+      console.log('Created stops ID mapping:', Object.fromEntries(createdStopIdMap));
+
+      // Helper function to get stop ID - checks created mapping first, then existing ID
+      const getStopId = (stop: Stop): string => {
+        // First check if this stop was just created (use the mapping)
+        if (stop.name && createdStopIdMap.has(stop.name)) {
+          return createdStopIdMap.get(stop.name)!;
+        }
+        // Otherwise use the existing ID
+        return stop.id || '';
+      };
+      
+      // Validate all stops have IDs (either existing or from created mapping)
       const stopsWithoutIds: string[] = [];
       routeGroup.routes.forEach(route => {
         route.routeStops.forEach(routeStop => {
-          if (!routeStop.stop.id || routeStop.stop.id.trim() === '') {
+          const stopId = getStopId(routeStop.stop);
+          if (!stopId || stopId.trim() === '') {
             stopsWithoutIds.push(routeStop.stop.name || `Order ${routeStop.orderNumber}`);
           }
         });
@@ -446,41 +471,56 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
         return false;
       }
 
-      // Build the route group request object
-      const routeGroupRequest = {
+      // Build the route group request object using the helper to get correct IDs
+      const routeGroupRequest: RouteGroupRequest = {
         name: routeGroup.name,
         nameSinhala: routeGroup.nameSinhala,
         nameTamil: routeGroup.nameTamil,
         description: routeGroup.description,
-        routes: routeGroup.routes.map(route => ({
-          name: route.name,
-          nameSinhala: route.nameSinhala,
-          nameTamil: route.nameTamil,
-          routeNumber: route.routeNumber,
-          description: route.description,
-          roadType: route.roadType,
-          routeThrough: route.routeThrough,
-          routeThroughSinhala: route.routeThroughSinhala,
-          routeThroughTamil: route.routeThroughTamil,
-          startStopId: route.routeStops[0]?.stop.id || '',
-          endStopId: route.routeStops[route.routeStops.length - 1]?.stop.id || '',
-          distanceKm: route.distanceKm,
-          estimatedDurationMinutes: route.estimatedDurationMinutes,
-          direction: route.direction,
-          routeStops: route.routeStops.map((routeStop, index) => ({
-            stopId: routeStop.stop.id,
+        routes: routeGroup.routes.map(route => {
+          const routeStopsWithIds = route.routeStops.map((routeStop, index) => ({
+            stopId: getStopId(routeStop.stop),
             stopOrder: index,
             distanceFromStartKm: routeStop.distanceFromStart
-          }))
-        }))
+          }));
+
+          return {
+            name: route.name,
+            nameSinhala: route.nameSinhala,
+            nameTamil: route.nameTamil,
+            routeNumber: route.routeNumber,
+            description: route.description,
+            roadType: route.roadType,
+            routeThrough: route.routeThrough,
+            routeThroughSinhala: route.routeThroughSinhala,
+            routeThroughTamil: route.routeThroughTamil,
+            startStopId: routeStopsWithIds[0]?.stopId || '',
+            endStopId: routeStopsWithIds[routeStopsWithIds.length - 1]?.stopId || '',
+            distanceKm: route.distanceKm,
+            estimatedDurationMinutes: route.estimatedDurationMinutes,
+            direction: route.direction,
+            routeStops: routeStopsWithIds
+          };
+        })
       };
 
-      // Console log the final route group object (as per requirement)
+      // Console log the final route group object
       console.log('='.repeat(80));
       console.log('ROUTE GROUP SUBMISSION - Final Request Object');
       console.log('='.repeat(80));
       console.log(JSON.stringify(routeGroupRequest, null, 2));
       console.log('='.repeat(80));
+
+      setProgress({
+        current: 2,
+        total: 2,
+        label: 'Submitting route group to server...'
+      });
+
+      // Call the API to create the route group
+      const createdRouteGroup = await RouteManagementService.createRouteGroup(routeGroupRequest);
+
+      console.log('Route group created successfully:', createdRouteGroup);
 
       setState(prev => ({
         ...prev,
@@ -489,33 +529,36 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
           ...prev.steps,
           routeBuilding: { 
             status: 'completed',
-            message: 'Route group built successfully',
+            message: 'Route group created successfully',
             details: [
               `Route Group: ${routeGroup.name}`,
+              `Route Group ID: ${createdRouteGroup.id}`,
               `Routes: ${routeGroup.routes.length}`,
-              `Total Stops: ${routeGroup.routes.reduce((acc, r) => acc + r.routeStops.length, 0)}`,
-              '(Check browser console for the complete request object)'
+              `Total Stops: ${routeGroup.routes.reduce((acc, r) => acc + r.routeStops.length, 0)}`
             ]
           }
         },
         currentStep: 'completed',
-        createdRouteGroupId: 'pending-api-implementation'
+        createdRouteGroupId: createdRouteGroup.id
       }));
 
       return true;
     } catch (error: any) {
+      const errorMessage = error.body?.message || error.message || 'Failed to create route group';
+      console.error('Failed to create route group:', error);
+      
       setState(prev => ({
         ...prev,
         steps: {
           ...prev.steps,
           routeBuilding: { 
             status: 'failed',
-            message: 'Failed to build route group',
-            details: [error.message || 'Unknown error']
+            message: 'Failed to create route group',
+            details: [errorMessage]
           }
         },
         currentStep: 'failed',
-        error: error.message || 'Failed to build route group'
+        error: errorMessage
       }));
       return false;
     }
@@ -530,16 +573,16 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
     
     if (!validationResult.success) return;
 
-    // Step 2: Create stops - pass the stops directly
+    // Step 2: Create stops - pass the stops directly and get the created mapping back
     console.log("Step 2: Creating new stops...");
-    const creationSuccess = await createNewStops(validationResult.stopsToCreate);
-    console.log("Step 2 complete. Success:", creationSuccess);
+    const creationResult = await createNewStops(validationResult.stopsToCreate);
+    console.log("Step 2 complete. Success:", creationResult.success, "Created stops:", creationResult.createdStops.length);
     
-    if (!creationSuccess) return;
+    if (!creationResult.success) return;
 
-    // Step 3: Build route group
+    // Step 3: Build route group - pass the created stops mapping to avoid async state issues
     console.log("Step 3: Building route group...");
-    await buildRouteGroup();
+    await buildRouteGroup(creationResult.createdStops);
     console.log("Step 3 complete.");
   }, [validateStops, createNewStops, buildRouteGroup]);
 
@@ -727,15 +770,17 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
           </div>
         </div>
 
-        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <div className="flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-amber-800">
-              <p className="font-medium">Note:</p>
-              <p>The route group creation API is not yet implemented. The final request object has been logged to the browser console.</p>
+        {state.createdRouteGroupId && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex gap-3">
+              <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium">Route Group Created</p>
+                <p>ID: {state.createdRouteGroupId}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-4 space-y-3">
           {renderStepIndicator(state.steps.validation, 'Stop Validation', 1)}
@@ -745,7 +790,11 @@ export default function RouteSubmissionModal({ isOpen, onClose }: RouteSubmissio
       </div>
 
       <DialogFooter className="gap-2">
-        <Button variant="outline" onClick={handleViewRouteGroup} disabled>
+        <Button 
+          variant="outline" 
+          onClick={handleViewRouteGroup} 
+          disabled={!state.createdRouteGroupId}
+        >
           <ExternalLink className="w-4 h-4 mr-2" />
           View Route Group
         </Button>
