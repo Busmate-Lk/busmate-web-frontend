@@ -63,6 +63,30 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
         })
     );
 
+    const handleCopyRouteStopId = (routeStopId: string | undefined, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!routeStopId) {
+            toast({
+                title: "No Route Stop ID",
+                description: "This route stop doesn't have an ID yet.",
+                variant: "destructive"
+            });
+            return;
+        }
+        navigator.clipboard.writeText(routeStopId).then(() => {
+            toast({
+                title: "Copied!",
+                description: "Route Stop ID copied to clipboard."
+            });
+        }).catch(() => {
+            toast({
+                title: "Failed to copy",
+                description: "Could not copy Route Stop ID to clipboard.",
+                variant: "destructive"
+            });
+        });
+    };
+
     const handleCopyStopId = (stopId: string | undefined, e: React.MouseEvent) => {
         e.stopPropagation();
         if (!stopId) {
@@ -514,16 +538,31 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                 </td>
                 <td className="border border-gray-300 px-2 py-2 text-sm">
                     <div className='flex items-center gap-2'>
+                        <span className='font-mono text-xs text-gray-700'>
+                            {routeStop.id ? routeStop.id.substring(0, 8) + '...' : '(new)'}
+                        </span>
+                        <button
+                            onClick={(e) => handleCopyRouteStopId(routeStop.id, e)}
+                            disabled={!routeStop.id}
+                            className="px-1.5 py-1.5 border border-gray-400 text-gray-600 text-sm rounded hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                            title='Copy full Route Stop ID'
+                        >
+                            <Copy size={14}/>
+                        </button>
+                    </div>
+                </td>
+                <td className="border border-gray-300 px-2 py-2 text-sm">
+                    <div className='flex items-center gap-2'>
                         <div className='flex flex-col gap-1 flex-grow'>
-                            <div className='flex items-center gap-2'>
+                            <div className='flex items-center gap-0'>
                                 <span className='font-mono text-xs text-gray-700'>
-                                    {routeStop.stop.id ? routeStop.stop.id.substring(0, 8) + '...' : '(new)'}
+                                    {routeStop.stop.id ? routeStop.stop.id.substring(0, 8) + '...' : ''}
                                 </span>
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-white text-xs font-medium ${
-                                    routeStop.stop.type === StopExistenceType.EXISTING ? 'bg-green-500' : 'bg-orange-500'
-                                }`}>
-                                    {routeStop.stop.type === StopExistenceType.EXISTING ? 'Existing' : 'New'}
-                                </span>
+                                {!routeStop.stop.id && (
+                                    <span className="inline-block px-2 py-0.5 rounded-full text-white text-xs font-medium bg-orange-500">
+                                        New
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <div className='flex gap-1'>
@@ -615,6 +654,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
                                 <tr className="bg-gray-100">
                                     <th className="w-6"></th>
                                     <th className="border border-gray-300 px-2 py-2 text-left" title='Stop Order Number'>#</th>
+                                    <th className="border border-gray-300 px-4 py-2 text-left" title='Route Stop ID'>Route Stop Id</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left" title='Stop ID with existence status'>Stop Id</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
                                     <th className="border border-gray-300 px-4 py-2 text-left" title='Distance from start(km)'>
