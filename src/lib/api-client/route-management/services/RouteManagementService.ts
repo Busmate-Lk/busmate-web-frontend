@@ -32,7 +32,7 @@ export class RouteManagementService {
      * @returns PageRouteResponse Routes retrieved successfully
      * @throws ApiError
      */
-    public static getAllRoutes1(
+    public static getAllRoutes(
         page?: number,
         size: number = 10,
         sortBy: string = 'name',

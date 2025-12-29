@@ -136,6 +136,7 @@ export function RouteWorkspaceProvider({ children }: RouteWorkspaceProviderProps
           }
 
           routeStops.push({
+            id: routeStopResponse.id,  // Preserve route stop ID for updates
             orderNumber: routeStopResponse.stopOrder ?? routeStops.length,
             distanceFromStart: routeStopResponse.distanceFromStartKm ?? 0,
             stop: stopData,
