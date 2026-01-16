@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock, RefreshCw, Trash2 } from 'lucide-react';
 import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';
 import { formatTimeForDisplay } from '@/types/ScheduleWorkspaceData';
@@ -223,10 +223,9 @@ export default function ScheduleGrid() {
                                                             editingCell?.field === 'departureTime';
 
                                         return (
-                                            <>
+                                            <React.Fragment key={`${scheduleIndex}-${stopIndex}`}>
                                                 {/* Arrival time */}
                                                 <td
-                                                    key={`${scheduleIndex}-${stopIndex}-arr`}
                                                     onClick={() => handleCellClick(scheduleIndex, stopIndex, 'arrivalTime')}
                                                     className={cn(
                                                         'px-1 py-1 border-b border-gray-200 text-center cursor-pointer',
@@ -280,7 +279,7 @@ export default function ScheduleGrid() {
                                                         </span>
                                                     )}
                                                 </td>
-                                            </>
+                                            </React.Fragment>
                                         );
                                     })}
                                 </tr>
