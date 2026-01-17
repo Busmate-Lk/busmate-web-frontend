@@ -231,8 +231,51 @@ export function ScheduleWorkspaceProvider({ children }: ScheduleWorkspaceProvide
   }, []);
 
   // Remove schedule
-  const removeSchedule = useCallback((scheduleIndex: number) => {
+  const removeSchedule = useCallback(async (scheduleIndex: number) => {
     setData(prev => {
+      if (scheduleIndex < 0 || scheduleIndex >= prev.schedules.length) return prev;
+      
+      const scheduleToRemove = prev.schedules[scheduleIndex];
+      
+      // If schedule has an ID, it exists in the backend and needs to be deleted via API
+      if (scheduleToRemove.id) {
+        setIsLoading(true);
+        
+        ScheduleManagementService.deleteSchedule(scheduleToRemove.id)
+          .then(() => {
+            console.log(`Successfully deleted schedule "${scheduleToRemove.name}" from backend`);
+            // After successful backend deletion, remove from local state
+            setData(current => {
+              const newSchedules = current.schedules.filter((_, i) => i !== scheduleIndex);
+              let newActiveIndex = current.activeScheduleIndex;
+              
+              if (newActiveIndex !== null) {
+                if (newActiveIndex === scheduleIndex) {
+                  newActiveIndex = newSchedules.length > 0 ? Math.min(scheduleIndex, newSchedules.length - 1) : null;
+                } else if (newActiveIndex > scheduleIndex) {
+                  newActiveIndex = newActiveIndex - 1;
+                }
+              }
+              
+              return {
+                ...current,
+                schedules: newSchedules,
+                activeScheduleIndex: newActiveIndex,
+              };
+            });
+          })
+          .catch((error) => {
+            console.error(`Failed to delete schedule "${scheduleToRemove.name}":`, error);
+            setLoadError(error instanceof Error ? error.message : 'Failed to delete schedule');
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+        
+        return prev; // Return current state while API call is in progress
+      }
+      
+      // For new schedules (no ID), just remove from local state immediately
       const newSchedules = prev.schedules.filter((_, i) => i !== scheduleIndex);
       let newActiveIndex = prev.activeScheduleIndex;
       
