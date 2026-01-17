@@ -288,23 +288,6 @@ export default function ScheduleGrid() {
                     </tbody>
                 </table>
             </div>
-
-            {/* Summary */}
-            <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-                <div className="flex gap-4 flex-wrap">
-                    {schedules.map((schedule, idx) => (
-                        <span key={idx} className="text-xs">
-                            <span className="font-medium">{schedule.name || `Schedule ${idx + 1}`}:</span>{' '}
-                            {getScheduleStartTime(schedule)} → {schedule.scheduleStops[schedule.scheduleStops.length - 1]?.arrivalTime 
-                                ? formatTimeForDisplay(schedule.scheduleStops[schedule.scheduleStops.length - 1].arrivalTime!) 
-                                : '--:--'}
-                        </span>
-                    ))}
-                </div>
-                <div className="text-xs text-gray-500">
-                    Click cell to edit • Double-click header to select schedule
-                </div>
-            </div>
         </div>
     );
 }

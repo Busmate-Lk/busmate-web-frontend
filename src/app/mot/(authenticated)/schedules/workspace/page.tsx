@@ -121,14 +121,6 @@ function ScheduleWorkspaceContent() {
                             <Sparkles className="w-4 h-4" />
                             AI Studio
                         </button>
-                        <span className="ml-4 text-sm text-gray-500 flex items-center gap-2">
-                            Mode: <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                mode === 'create' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                            }`}>{mode.toUpperCase()}</span>
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
-                                {schedules.length} Schedule{schedules.length !== 1 ? 's' : ''}
-                            </span>
-                        </span>
                     </div>
                     <div className="flex items-center gap-2">
                         <button

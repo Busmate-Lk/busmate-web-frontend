@@ -66,7 +66,7 @@ export function ScheduleTabs() {
     }
 
     return (
-        <div className="border-b bg-gray-50 rounded-md">
+        <div className="bg-gray-50 rounded-md">
             {/* Delete Confirmation Modal */}
             {confirmDeleteIndex !== null && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -92,9 +92,9 @@ export function ScheduleTabs() {
             )}
 
             {/* Schedule Tabs Header */}
-            <div className="flex items-center justify-between px-4 py-2 border-b">
-                <div className="text-sm font-medium">
-                    Schedules ({schedules.length})
+            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300">
+                <div className="text-md font-bold flex items-center gap-2">
+                    Schedules <span className='bg-gray-400 w-6 h-6 text-sm rounded-full flex items-center justify-center text-white'>{schedules.length}</span>
                 </div>
                 <Button
                     variant="outline"
@@ -121,7 +121,7 @@ export function ScheduleTabs() {
                             onClick={() => handleTabClick(index)}
                             className={cn(
                                 'group relative flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors min-w-[160px]',
-                                'border hover:border-blue-400',
+                                'border border-gray-300 hover:border-gray-400',
                                 activeScheduleIndex === index
                                     ? 'bg-blue-600 text-white border-blue-600'
                                     : 'bg-white hover:bg-gray-100'
