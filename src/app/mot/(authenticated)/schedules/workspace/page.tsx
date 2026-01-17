@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Layout } from '@/components/shared/layout';
 import { Toaster } from '@/components/ui/toaster';
@@ -151,7 +151,9 @@ function ScheduleWorkspaceContent() {
 export default function ScheduleWorkspacePage() {
     return (
         <ScheduleWorkspaceProvider>
-            <ScheduleWorkspaceContent />
+            <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>}>
+                <ScheduleWorkspaceContent />
+            </Suspense>
             <Toaster />
         </ScheduleWorkspaceProvider>
     );

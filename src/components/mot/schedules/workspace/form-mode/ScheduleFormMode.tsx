@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';
 import { ScheduleTabs } from './ScheduleTabs';
@@ -18,6 +18,12 @@ export default function ScheduleFormMode() {
     const searchParams = useSearchParams();
     const { data, setSelectedRoute, isLoading, activeScheduleIndex } = useScheduleWorkspace();
     const { availableRoutes, selectedRouteId, selectedRouteName, selectedRouteGroupName, schedules } = data;
+
+    // Prevent hydration mismatch by tracking mount state
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // View mode state
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -52,7 +58,7 @@ export default function ScheduleFormMode() {
                     name="route"
                     value={selectedRouteId || ''}
                     onChange={handleRouteChange}
-                    disabled={isLoading}
+                    disabled={isLoading && mounted}
                     className="block w-full border border-slate-300 rounded-lg shadow-sm py-2.5 px-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-400"
                 >
                     <option value="">-- Select a Route --</option>
