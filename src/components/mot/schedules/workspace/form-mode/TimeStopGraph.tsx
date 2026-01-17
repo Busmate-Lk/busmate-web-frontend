@@ -342,7 +342,7 @@ export default function TimeStopGraph() {
         <div className="flex flex-col rounded-md px-6 py-4 bg-gray-200">
             <div className="flex items-center justify-between mb-4">
                 <span className="underline font-medium">
-                    Time-Stop Graph ({routeStops.length} stops × {schedules.length} schedules)
+                    Time-Stop Graph
                 </span>
                 
                 <ZoomControls

@@ -104,13 +104,8 @@ export default function ScheduleGrid() {
         <div className="flex flex-col rounded-md px-6 py-4 bg-gray-200">
             <div className="flex items-center justify-between mb-4">
                 <span className="underline font-medium">
-                    Schedule Grid ({routeStops.length} stops × {schedules.length} schedules)
+                    Schedule Grid
                 </span>
-                <div className="text-xs text-gray-600">
-                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded mr-2">
-                        Double-click column header to select schedule
-                    </span>
-                </div>
             </div>
 
             <div className="overflow-x-auto">
