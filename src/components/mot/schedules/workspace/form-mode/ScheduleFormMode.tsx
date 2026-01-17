@@ -18,7 +18,7 @@ export default function ScheduleFormMode() {
     const searchParams = useSearchParams();
     const { data, setSelectedRoute, isLoading, activeScheduleIndex } = useScheduleWorkspace();
     const { availableRoutes, selectedRouteId, selectedRouteName, selectedRouteGroupName, schedules } = data;
-    
+
     // View mode state
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
@@ -41,10 +41,10 @@ export default function ScheduleFormMode() {
     const hasActiveSchedule = activeScheduleIndex !== null && schedules.length > 0;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             {/* Route selector */}
-            <div className='flex items-center gap-4'>
-                <label htmlFor="route" className="text-sm font-medium whitespace-nowrap">
+            <div className='flex items-center gap-4 bg-white rounded-lg border border-slate-200 p-4 shadow-sm'>
+                <label htmlFor="route" className="text-sm font-medium text-slate-700 whitespace-nowrap">
                     Select Route:
                 </label>
                 <select
@@ -53,7 +53,7 @@ export default function ScheduleFormMode() {
                     value={selectedRouteId || ''}
                     onChange={handleRouteChange}
                     disabled={isLoading}
-                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="block w-full border border-slate-300 rounded-lg shadow-sm py-2.5 px-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 disabled:bg-slate-50 disabled:text-slate-400"
                 >
                     <option value="">-- Select a Route --</option>
                     {availableRoutes.map(route => (
@@ -70,7 +70,7 @@ export default function ScheduleFormMode() {
 
             {/* Schedule Metadata and Exceptions for Active Schedule */}
             {hasActiveSchedule && (
-                <div className='flex gap-4'>
+                <div className='flex gap-6'>
                     <ScheduleMetadata />
                     <ScheduleExceptions />
                 </div>
@@ -80,34 +80,36 @@ export default function ScheduleFormMode() {
             {selectedRouteId && (
                 <>
                     {/* View mode toggle */}
-                    <div className="flex items-center justify-end gap-2">
-                        <span className="text-sm text-gray-600 mr-2">View:</span>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                                viewMode === 'grid'
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            )}
-                            title="Grid View"
-                        >
-                            <Grid3X3 className="h-4 w-4" />
-                            Grid
-                        </button>
-                        <button
-                            onClick={() => setViewMode('graph')}
-                            className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                                viewMode === 'graph'
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            )}
-                            title="Time-Stop Graph"
-                        >
-                            <LineChart className="h-4 w-4" />
-                            Graph
-                        </button>
+                    <div className="flex items-center justify-end gap-3">
+                        <span className="text-sm text-slate-500 mr-1">View:</span>
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
+                                    viewMode === 'grid'
+                                        ? "bg-blue-700 text-white shadow-sm"
+                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                )}
+                                title="Grid View"
+                            >
+                                <Grid3X3 className="h-4 w-4" />
+                                Grid
+                            </button>
+                            <button
+                                onClick={() => setViewMode('graph')}
+                                className={cn(
+                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200",
+                                    viewMode === 'graph'
+                                        ? "bg-blue-700 text-white shadow-sm"
+                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                )}
+                                title="Time-Stop Graph"
+                            >
+                                <LineChart className="h-4 w-4" />
+                                Graph
+                            </button>
+                        </div>
                     </div>
 
                     {/* Conditional view rendering */}

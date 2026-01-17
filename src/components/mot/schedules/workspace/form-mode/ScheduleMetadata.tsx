@@ -4,27 +4,27 @@ import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';
 import { ScheduleTypeEnum, ScheduleStatusEnum, ScheduleCalendar } from '@/types/ScheduleWorkspaceData';
 
 export default function ScheduleMetadata() {
-    const { 
-        getActiveSchedule, 
-        updateActiveSchedule, 
-        updateCalendar, 
-        setWeekdaysOnly, 
-        setWeekendsOnly, 
+    const {
+        getActiveSchedule,
+        updateActiveSchedule,
+        updateCalendar,
+        setWeekdaysOnly,
+        setWeekendsOnly,
         setAllDays,
         activeScheduleIndex,
     } = useScheduleWorkspace();
-    
+
     const activeSchedule = getActiveSchedule();
-    
+
     // Don't render if no active schedule
     if (!activeSchedule || activeScheduleIndex === null) {
         return (
-            <div className="flex flex-col rounded-md px-6 py-4 bg-gray-200 w-3/5">
-                <span className="mb-2 text-gray-500">No schedule selected</span>
+            <div className="flex flex-col rounded-lg p-5 bg-white border border-slate-200 shadow-sm w-3/5">
+                <span className="text-sm text-slate-500">No schedule selected</span>
             </div>
         );
     }
-    
+
     const { calendar } = activeSchedule;
 
     const daysOfWeek = [
@@ -42,22 +42,26 @@ export default function ScheduleMetadata() {
     };
 
     return (
-        <div className="flex flex-col rounded-md px-6 py-4 bg-gray-200 w-3/5">
-            <span className="mb-2 underline font-medium">
-                Schedule Metadata
-                <span className="text-sm font-normal text-gray-600 ml-2">
-                    (Editing: {activeSchedule.name || `Schedule ${activeScheduleIndex + 1}`})
+        <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm w-3/5 overflow-hidden">
+            {/* Section Header */}
+            <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700">
+                    Schedule Metadata
+                </h3>
+                <span className="text-xs text-slate-500">
+                    Editing: {activeSchedule.name || `Schedule ${activeScheduleIndex + 1}`}
                 </span>
-            </span>
-            <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+            </div>
+
+            <form className="flex flex-col gap-5 p-5" onSubmit={(e) => e.preventDefault()}>
                 {/* First row: Name, Schedule Type, Status */}
                 <div className="flex flex-row gap-4">
                     {/* Schedule name */}
                     <div className="flex flex-col flex-1">
-                        <label className="block text-sm font-medium mb-1">Schedule Name *</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Schedule Name *</label>
                         <input
                             type="text"
-                            className="border border-gray-400 rounded px-2 py-1 bg-white"
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             value={activeSchedule.name}
                             onChange={(e) => updateActiveSchedule({ name: e.target.value })}
                             placeholder="Enter schedule name"
@@ -65,9 +69,9 @@ export default function ScheduleMetadata() {
                     </div>
                     {/* scheduleType */}
                     <div className="flex flex-col flex-1">
-                        <label className="block text-sm font-medium mb-1">Schedule Type</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Schedule Type</label>
                         <select
-                            className="border border-gray-400 rounded px-2 py-1 bg-white"
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             value={activeSchedule.scheduleType}
                             onChange={(e) => updateActiveSchedule({ scheduleType: e.target.value as ScheduleTypeEnum })}
                         >
@@ -77,9 +81,9 @@ export default function ScheduleMetadata() {
                     </div>
                     {/* ScheduleStatus */}
                     <div className="flex flex-col flex-1">
-                        <label className="block text-sm font-medium mb-1">Status</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Status</label>
                         <select
-                            className="border border-gray-400 rounded px-2 py-1 bg-white"
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             value={activeSchedule.status}
                             onChange={(e) => updateActiveSchedule({ status: e.target.value as ScheduleStatusEnum })}
                         >
@@ -94,29 +98,29 @@ export default function ScheduleMetadata() {
                 <div className="flex flex-row gap-4">
                     {/* Start Date */}
                     <div className="flex flex-col flex-1">
-                        <label className="block text-sm font-medium mb-1">Start Date *</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Start Date *</label>
                         <input
                             type="date"
-                            className="border border-gray-400 rounded px-2 py-1 bg-white"
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             value={activeSchedule.effectiveStartDate}
                             onChange={(e) => updateActiveSchedule({ effectiveStartDate: e.target.value })}
                         />
                     </div>
                     {/* End Date */}
                     <div className="flex flex-col flex-1">
-                        <label className="block text-sm font-medium mb-1">End Date</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">End Date</label>
                         <input
                             type="date"
-                            className="border border-gray-400 rounded px-2 py-1 bg-white"
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             value={activeSchedule.effectiveEndDate || ''}
                             onChange={(e) => updateActiveSchedule({ effectiveEndDate: e.target.value })}
                         />
                     </div>
                     {/* Description */}
                     <div className="flex flex-col flex-1">
-                        <label className="block text-sm font-medium mb-1">Description</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Description</label>
                         <textarea
-                            className="border border-gray-400 rounded px-2 py-1 bg-white"
+                            className="border border-slate-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
                             value={activeSchedule.description || ''}
                             onChange={(e) => updateActiveSchedule({ description: e.target.value })}
                             rows={1}
@@ -127,62 +131,62 @@ export default function ScheduleMetadata() {
                 {/* Third row: Operating Days with quick actions */}
                 <div className="flex flex-col">
                     <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium">Operating Days</label>
-                        <div className="flex gap-2">
+                        <label className="block text-xs font-medium text-slate-600">Operating Days</label>
+                        <div className="flex gap-1.5">
                             <button
                                 type="button"
                                 onClick={setWeekdaysOnly}
-                                className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                                className="text-xs px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors font-medium"
                             >
                                 Weekdays
                             </button>
                             <button
                                 type="button"
                                 onClick={setWeekendsOnly}
-                                className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                                className="text-xs px-2.5 py-1 bg-violet-50 text-violet-700 rounded-md hover:bg-violet-100 transition-colors font-medium"
                             >
                                 Weekends
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setAllDays(true)}
-                                className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                                className="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100 transition-colors font-medium"
                             >
                                 All
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setAllDays(false)}
-                                className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-300"
+                                className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors font-medium"
                             >
                                 None
                             </button>
                         </div>
                     </div>
-                    <div className="grid grid-cols-7 gap-2">
+                    <div className="grid grid-cols-7 gap-3">
                         {daysOfWeek.map(day => (
-                            <label key={day.key} className="flex items-center cursor-pointer">
+                            <label key={day.key} className="flex items-center cursor-pointer group">
                                 <input
                                     type="checkbox"
                                     checked={calendar[day.key]}
                                     onChange={() => handleDayToggle(day.key)}
-                                    className="mr-2 cursor-pointer"
+                                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer transition-colors"
                                 />
-                                <span className="text-sm">{day.short}</span>
+                                <span className="text-sm text-slate-600 ml-2 group-hover:text-slate-900 transition-colors">{day.short}</span>
                             </label>
                         ))}
                     </div>
                 </div>
                 {/* Generate Trips toggle */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                     <input
                         type="checkbox"
                         id="generateTrips"
                         checked={activeSchedule.generateTrips ?? false}
                         onChange={(e) => updateActiveSchedule({ generateTrips: e.target.checked })}
-                        className="cursor-pointer"
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer"
                     />
-                    <label htmlFor="generateTrips" className="text-sm cursor-pointer">
+                    <label htmlFor="generateTrips" className="text-sm text-slate-600 cursor-pointer">
                         Automatically generate trips for this schedule
                     </label>
                 </div>

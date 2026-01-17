@@ -32,13 +32,13 @@ function ScheduleWorkspaceContent() {
 
     const handleSubmit = async () => {
         const validation = validateAllSchedules();
-        
+
         if (!validation.valid) {
             // Show validation errors with schedule information
-            const errorMessages = validation.scheduleErrors.flatMap((scheduleError, idx) => 
+            const errorMessages = validation.scheduleErrors.flatMap((scheduleError, idx) =>
                 scheduleError.errors.map(error => `Schedule ${idx + 1} (${schedules[idx]?.name || 'Unnamed'}): ${error}`)
             );
-            
+
             toast({
                 title: `Validation Failed (${validation.invalidCount} of ${schedules.length} schedules have errors)`,
                 description: (
@@ -90,54 +90,55 @@ function ScheduleWorkspaceContent() {
             initialSidebarCollapsed={true}
             padding={0}
         >
-            <div>
-                <div className="flex bg-gray-100 border-b pl-1 sticky top-20 justify-between">
-                    <div className="flex items-center">
+            <div className="min-h-screen bg-slate-50">
+                {/* Tab Bar */}
+                <div className="flex bg-white border-b border-slate-200 px-4 py-2 sticky top-20 z-10 justify-between items-center shadow-sm">
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
                         <button
                             onClick={() => setActiveTab('form')}
-                            className={`px-4 py-2 font-medium transition-colors ${activeTab === 'form'
-                                ? 'text-white bg-blue-800'
-                                : 'text-gray-600 hover:text-gray-900'
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'form'
+                                ? 'bg-blue-700 text-white shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                 }`}
                         >
                             Form Mode
                         </button>
                         <button
                             onClick={() => setActiveTab('textual')}
-                            className={`px-4 py-2 font-medium transition-colors ${activeTab === 'textual'
-                                ? 'text-white bg-blue-800'
-                                : 'text-gray-600 hover:text-gray-900'
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'textual'
+                                ? 'bg-blue-700 text-white shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                 }`}
                         >
                             Textual Mode
                         </button>
                         <button
                             onClick={() => setActiveTab('ai-studio')}
-                            className={`px-4 py-2 font-medium transition-colors flex items-center gap-1.5 ${activeTab === 'ai-studio'
-                                ? 'text-white bg-purple-700'
-                                : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 ${activeTab === 'ai-studio'
+                                ? 'bg-violet-600 text-white shadow-sm'
+                                : 'text-violet-600 hover:text-violet-800 hover:bg-violet-50'
                                 }`}
                         >
                             <Sparkles className="w-4 h-4" />
                             AI Studio
                         </button>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={handleReset}
-                            className="px-4 py-2 font-medium text-gray-600 transition-colors hover:bg-gray-200"
+                            className="px-4 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 rounded-lg border border-slate-200"
                         >
                             Reset
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className="px-4 py-2 font-medium text-white transition-colors bg-green-600 hover:bg-green-700"
+                            className="px-5 py-2 text-sm font-medium text-white transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm"
                         >
                             Submit
                         </button>
                     </div>
                 </div>
-                <div className="p-4">
+                <div className="p-6">
                     {activeTab === 'form' && <ScheduleFormMode />}
                     {activeTab === 'textual' && <ScheduleTextualMode />}
                     {activeTab === 'ai-studio' && <ScheduleAIStudio />}

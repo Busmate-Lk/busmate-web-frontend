@@ -59,30 +59,30 @@ export function ScheduleTabs() {
 
     if (!selectedRouteId) {
         return (
-            <div className="flex items-center justify-center p-4 text-sm text-muted-foreground border-b">
+            <div className="flex items-center justify-center p-4 text-sm text-slate-500 bg-white rounded-lg border border-slate-200">
                 Select a route to view schedules
             </div>
         );
     }
 
     return (
-        <div className="bg-gray-50 rounded-md">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             {/* Delete Confirmation Modal */}
             {confirmDeleteIndex !== null && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 max-w-md shadow-xl">
-                        <h3 className="text-lg font-semibold mb-2">Remove Schedule</h3>
-                        <p className="text-gray-600 mb-4">
+                    <div className="bg-white rounded-xl p-6 max-w-md shadow-2xl border border-slate-200">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">Remove Schedule</h3>
+                        <p className="text-slate-600 mb-4">
                             Are you sure you want to remove &quot;{schedules[confirmDeleteIndex]?.name || `Schedule ${confirmDeleteIndex + 1}`}&quot;?
                             This action cannot be undone.
                         </p>
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={handleCancelRemove}>
                                 Cancel
                             </Button>
-                            <Button 
+                            <Button
                                 onClick={handleConfirmRemove}
-                                className="bg-red-600 hover:bg-red-700 text-white"
+                                className="bg-rose-600 hover:bg-rose-700 text-white"
                             >
                                 Remove
                             </Button>
@@ -92,15 +92,18 @@ export function ScheduleTabs() {
             )}
 
             {/* Schedule Tabs Header */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-gray-300">
-                <div className="text-md font-bold flex items-center gap-2">
-                    Schedules <span className='bg-gray-400 w-6 h-6 text-sm rounded-full flex items-center justify-center text-white'>{schedules.length}</span>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+                <div className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    Schedules
+                    <span className='bg-blue-700 w-6 h-6 text-xs rounded-full flex items-center justify-center text-white font-medium'>
+                        {schedules.length}
+                    </span>
                 </div>
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={handleAddSchedule}
-                    className="h-7 gap-1"
+                    className="h-8 gap-1.5 text-blue-700 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
                     title="Add a new schedule for this route"
                 >
                     <Plus className="h-3.5 w-3.5" />
@@ -109,9 +112,9 @@ export function ScheduleTabs() {
             </div>
 
             {/* Tabs Container with Horizontal Scroll */}
-            <div className="flex gap-1 p-2 overflow-x-auto">
+            <div className="flex gap-2 p-3 overflow-x-auto bg-white">
                 {schedules.length === 0 ? (
-                    <div className="flex items-center justify-center w-full py-3 text-sm text-gray-500">
+                    <div className="flex items-center justify-center w-full py-4 text-sm text-slate-500">
                         No schedules. Click &quot;Add Schedule&quot; to create one.
                     </div>
                 ) : (
@@ -120,11 +123,11 @@ export function ScheduleTabs() {
                             key={index}
                             onClick={() => handleTabClick(index)}
                             className={cn(
-                                'group relative flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer transition-colors min-w-[160px]',
-                                'border border-gray-300 hover:border-gray-400',
+                                'group relative flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 min-w-[170px]',
+                                'border hover:shadow-sm',
                                 activeScheduleIndex === index
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-white hover:bg-gray-100'
+                                    ? 'bg-blue-700 text-white border-blue-700 shadow-sm'
+                                    : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             )}
                         >
                             {/* Schedule Time Badge */}
@@ -133,7 +136,7 @@ export function ScheduleTabs() {
                                     'flex items-center gap-1 text-xs font-medium',
                                     activeScheduleIndex === index
                                         ? 'text-blue-100'
-                                        : 'text-gray-500'
+                                        : 'text-slate-500'
                                 )}
                             >
                                 <Clock className="h-3 w-3" />
@@ -156,10 +159,10 @@ export function ScheduleTabs() {
                                     onClick={(e) => handleDuplicateSchedule(index, e)}
                                     title="Duplicate this schedule"
                                     className={cn(
-                                        'p-1 rounded hover:bg-white/20',
+                                        'p-1 rounded transition-colors',
                                         activeScheduleIndex === index
-                                            ? 'text-blue-100 hover:text-white'
-                                            : 'text-gray-400 hover:text-gray-600'
+                                            ? 'text-blue-100 hover:text-white hover:bg-blue-600'
+                                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                                     )}
                                 >
                                     <Copy className="h-3.5 w-3.5" />
@@ -170,10 +173,10 @@ export function ScheduleTabs() {
                                         onClick={(e) => handleRemoveClick(index, e)}
                                         title="Remove this schedule"
                                         className={cn(
-                                            'p-1 rounded hover:bg-red-100',
+                                            'p-1 rounded transition-colors',
                                             activeScheduleIndex === index
-                                                ? 'text-blue-100 hover:text-red-500'
-                                                : 'text-gray-400 hover:text-red-500'
+                                                ? 'text-blue-100 hover:text-rose-200 hover:bg-blue-600'
+                                                : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
                                         )}
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />

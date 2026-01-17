@@ -44,12 +44,14 @@ interface EmptyStateProps {
 
 function EmptyState({ icon, title, description }: EmptyStateProps) {
     return (
-        <div className="flex flex-col rounded-md px-6 py-4 bg-gray-200">
-            <span className="mb-2 underline font-medium">Time-Stop Graph</span>
-            <div className="bg-white rounded-md p-8 text-center text-gray-500">
+        <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700">Time-Stop Graph</h3>
+            </div>
+            <div className="p-8 text-center text-slate-500">
                 {icon}
-                <p className="text-lg font-medium">{title}</p>
-                <p className="text-sm mt-2">{description}</p>
+                <p className="text-base font-medium text-slate-700">{title}</p>
+                <p className="text-sm mt-2 text-slate-500">{description}</p>
             </div>
         </div>
     );
@@ -64,29 +66,30 @@ interface ZoomControlsProps {
 function ZoomControls({ onZoomIn, onZoomOut, onResetView }: ZoomControlsProps) {
     return (
         <div className="flex items-center gap-2">
-            <button
-                onClick={onZoomIn}
-                className="p-2 bg-white rounded-md hover:bg-gray-100 transition-colors"
-                title="Zoom In"
-            >
-                <ZoomIn className="h-4 w-4" />
-            </button>
-            <button
-                onClick={onZoomOut}
-                className="p-2 bg-white rounded-md hover:bg-gray-100 transition-colors"
-                title="Zoom Out"
-            >
-                <ZoomOut className="h-4 w-4" />
-            </button>
-            <button
-                onClick={onResetView}
-                className="p-2 bg-white rounded-md hover:bg-gray-100 transition-colors"
-                title="Reset View"
-            >
-                <RotateCcw className="h-4 w-4" />
-            </button>
-            <div className="w-px h-6 bg-gray-300 mx-1" />
-            <span className="text-xs text-gray-600 flex items-center gap-1">
+            <div className="flex items-center bg-slate-100 rounded-lg p-1">
+                <button
+                    onClick={onZoomIn}
+                    className="p-1.5 bg-white rounded-md hover:bg-slate-50 transition-colors shadow-sm"
+                    title="Zoom In"
+                >
+                    <ZoomIn className="h-4 w-4 text-slate-600" />
+                </button>
+                <button
+                    onClick={onZoomOut}
+                    className="p-1.5 bg-white rounded-md hover:bg-slate-50 transition-colors shadow-sm ml-1"
+                    title="Zoom Out"
+                >
+                    <ZoomOut className="h-4 w-4 text-slate-600" />
+                </button>
+                <button
+                    onClick={onResetView}
+                    className="p-1.5 bg-white rounded-md hover:bg-slate-50 transition-colors shadow-sm ml-1"
+                    title="Reset View"
+                >
+                    <RotateCcw className="h-4 w-4 text-slate-600" />
+                </button>
+            </div>
+            <span className="text-xs text-slate-500 flex items-center gap-1">
                 <Move className="h-3 w-3" /> Drag to pan, scroll to zoom
             </span>
         </div>
@@ -164,14 +167,14 @@ function LegendPanel({
                     </button>
                 </div>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto space-y-2">
                 {schedules.map((schedule, index) => {
                     const color = getScheduleColor(index);
                     const isVisible = visibleSchedules.has(index);
                     const isActive = activeScheduleIndex === index;
                     const firstStopTime = getScheduleStartTime(schedule);
-                    
+
                     return (
                         <div
                             key={index}
@@ -213,13 +216,13 @@ function LegendPanel({
             </div>
 
             {/* Legend info */}
-            <div className="mt-4 pt-3 border-t border-gray-200 text-xs text-gray-500 space-y-1">
+            <div className="mt-4 pt-3 border-t border-slate-200 text-xs text-slate-500 space-y-1">
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-600" />
+                    <div className="w-3 h-3 rounded-full bg-emerald-600" />
                     <span>First stop</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-600" />
+                    <div className="w-3 h-3 rounded-full bg-rose-600" />
                     <span>Last stop</span>
                 </div>
             </div>
@@ -237,57 +240,57 @@ export default function TimeStopGraph() {
 
     // Custom hooks for state management
     const { containerRef, containerSize } = useContainerSize();
-    const { 
-        transform, 
-        isPanning, 
-        svgRef, 
-        handleMouseDown, 
-        handleMouseMove, 
-        handleMouseUp, 
+    const {
+        transform,
+        isPanning,
+        svgRef,
+        handleMouseDown,
+        handleMouseMove,
+        handleMouseUp,
         handleMouseLeave: handlePanMouseLeave,
         handleZoomIn,
         handleZoomOut,
         handleResetView,
     } = usePanZoom();
     const { tooltip, handlePointMouseEnter, handlePointMouseLeave, hideTooltip } = useTooltip();
-    const { 
-        visibleSchedules, 
-        toggleScheduleVisibility, 
-        showAllSchedules, 
-        hideAllSchedules 
+    const {
+        visibleSchedules,
+        toggleScheduleVisibility,
+        showAllSchedules,
+        hideAllSchedules
     } = useScheduleVisibility(schedules.length);
 
     // Calculate chart dimensions
-    const { chartWidth, chartHeight, margin } = useMemo(() => 
+    const { chartWidth, chartHeight, margin } = useMemo(() =>
         calculateChartDimensions(containerSize.width, containerSize.height, DEFAULT_MARGINS),
         [containerSize]
     );
 
     // Calculate time range from all schedules
-    const { minTime, maxTime, timeRange } = useMemo(() => 
+    const { minTime, maxTime, timeRange } = useMemo(() =>
         calculateTimeRange(schedules),
         [schedules]
     );
 
     // Scale functions
-    const xScale = useMemo(() => 
+    const xScale = useMemo(() =>
         createXScale(minTime, timeRange, chartWidth, margin.left),
         [minTime, timeRange, chartWidth, margin.left]
     );
 
-    const yScale = useMemo(() => 
+    const yScale = useMemo(() =>
         createYScale(routeStops.length, chartHeight, margin.top),
         [routeStops.length, chartHeight, margin.top]
     );
 
     // Generate points for each schedule
-    const schedulePoints = useMemo(() => 
+    const schedulePoints = useMemo(() =>
         generateSchedulePoints(schedules, routeStops, xScale, yScale),
         [schedules, routeStops, xScale, yScale]
     );
 
     // Generate time axis ticks
-    const timeAxisTicks = useMemo(() => 
+    const timeAxisTicks = useMemo(() =>
         generateTimeAxisTicks(minTime, maxTime),
         [minTime, maxTime]
     );
@@ -339,12 +342,12 @@ export default function TimeStopGraph() {
     }
 
     return (
-        <div className="flex flex-col rounded-md px-6 py-4 bg-gray-200">
-            <div className="flex items-center justify-between mb-4">
-                <span className="underline font-medium">
+        <div className="flex flex-col rounded-lg bg-white border border-slate-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-700">
                     Time-Stop Graph
-                </span>
-                
+                </h3>
+
                 <ZoomControls
                     onZoomIn={handleZoomIn}
                     onZoomOut={handleZoomOut}
@@ -352,11 +355,11 @@ export default function TimeStopGraph() {
                 />
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 p-4">
                 {/* Main graph area */}
                 <div
                     ref={containerRef}
-                    className="flex-1 bg-white rounded-md overflow-hidden relative"
+                    className="flex-1 bg-slate-50 rounded-lg overflow-hidden relative border border-slate-200"
                     style={{ height: '600px', cursor: isPanning ? 'grabbing' : 'grab' }}
                 >
                     <svg
@@ -466,7 +469,7 @@ export default function TimeStopGraph() {
                             {/* Schedule lines and points */}
                             {schedulePoints.map((points, scheduleIndex) => {
                                 if (!visibleSchedules.has(scheduleIndex)) return null;
-                                
+
                                 const color = getScheduleColor(scheduleIndex);
                                 const isActive = activeScheduleIndex === scheduleIndex;
                                 const pathD = buildPathFromPoints(points);
