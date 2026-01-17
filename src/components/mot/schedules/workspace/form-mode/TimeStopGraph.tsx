@@ -355,11 +355,11 @@ export default function TimeStopGraph() {
                 />
             </div>
 
-            <div className="flex gap-4 p-4">
+            <div className="flex gap-4">
                 {/* Main graph area */}
                 <div
                     ref={containerRef}
-                    className="flex-1 bg-slate-50 rounded-lg overflow-hidden relative border border-slate-200"
+                    className="flex-1 bg-slate-50 overflow-hidden relative border-r border-slate-200"
                     style={{ height: '600px', cursor: isPanning ? 'grabbing' : 'grab' }}
                 >
                     <svg
