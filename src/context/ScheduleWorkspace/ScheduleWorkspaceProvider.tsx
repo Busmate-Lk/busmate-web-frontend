@@ -490,8 +490,8 @@ export function ScheduleWorkspaceProvider({ children }: ScheduleWorkspaceProvide
           const apiRequest = scheduleToApiRequest(schedule) as ScheduleRequest;
 
           if (schedule.id) {
-            // Update existing schedule
-            await ScheduleManagementService.updateSchedule(schedule.id, apiRequest);
+            // Update existing schedule with full details (stops, calendar, exceptions)
+            await ScheduleManagementService.updateScheduleFull(schedule.id, apiRequest);
             results.push({ schedule, success: true, id: schedule.id });
           } else {
             // Create new schedule with full details
