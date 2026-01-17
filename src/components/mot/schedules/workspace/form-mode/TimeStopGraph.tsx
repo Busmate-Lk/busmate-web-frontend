@@ -53,11 +53,44 @@ function timeToMinutes(time: string | undefined): number | null {
     return hours * 60 + minutes;
 }
 
-// Format minutes to HH:mm
+// Format minutes to HH:mm (handles times beyond 24 hours)
 function minutesToTime(minutes: number): string {
-    const hours = Math.floor(minutes / 60) % 24;
+    const totalHours = Math.floor(minutes / 60);
     const mins = minutes % 60;
+    const hours = totalHours % 24;
+    const days = Math.floor(totalHours / 24);
+    
+    if (days > 0) {
+        // Show day indicator for multi-day schedules
+        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}+${days}d`;
+    }
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
+// Adjust times to handle midnight crossings
+// Returns adjusted time values where times after midnight are shifted to continue the sequence
+function adjustTimesForMidnightCrossing(times: (number | null)[]): number[] {
+    const adjusted: number[] = [];
+    let dayOffset = 0;
+    
+    for (let i = 0; i < times.length; i++) {
+        const time = times[i];
+        if (time === null) continue;
+        
+        // If current time is significantly less than previous time, we likely crossed midnight
+        if (i > 0 && adjusted.length > 0) {
+            const prevTime = adjusted[adjusted.length - 1] % 1440; // Get time within current day
+            // If time decreased by more than 12 hours, assume midnight crossing
+            if (time < prevTime && (prevTime - time) > 720) {
+                dayOffset += 1440; // Add 24 hours
+            }
+        }
+        
+        // adjusted.push(time + dayOffset);
+        adjusted[i] = time + dayOffset;
+    }
+    
+    return adjusted;
 }
 
 // Get display time for a stop (departure for all except last, arrival for last)
@@ -133,14 +166,20 @@ export default function TimeStopGraph() {
         let max = -Infinity;
 
         schedules.forEach((schedule) => {
-            schedule.scheduleStops.forEach((stop, idx) => {
+            // Extract all times for this schedule
+            const scheduleTimes = schedule.scheduleStops.map((stop, idx) => {
                 const isLast = idx === schedule.scheduleStops.length - 1;
                 const time = getDisplayTime(stop, isLast);
-                const minutes = timeToMinutes(time);
-                if (minutes !== null) {
-                    min = Math.min(min, minutes);
-                    max = Math.max(max, minutes);
-                }
+                return timeToMinutes(time);
+            });
+
+            // Adjust for midnight crossings
+            const adjustedTimes = adjustTimesForMidnightCrossing(scheduleTimes);
+
+            // Update min/max with adjusted times
+            adjustedTimes.forEach((time) => {
+                min = Math.min(min, time);
+                max = Math.max(max, time);
             });
         });
 
@@ -167,22 +206,50 @@ export default function TimeStopGraph() {
     const schedulePoints = useMemo(() => {
         return schedules.map((schedule, scheduleIndex) => {
             const points: Point[] = [];
-            schedule.scheduleStops.forEach((stop, stopIndex) => {
-                const isLast = stopIndex === schedule.scheduleStops.length - 1;
+            
+            // Extract all times first
+            const scheduleTimes = schedule.scheduleStops.map((stop, idx) => {
+                const isLast = idx === schedule.scheduleStops.length - 1;
                 const time = getDisplayTime(stop, isLast);
-                const minutes = timeToMinutes(time);
-                if (minutes !== null) {
+                return timeToMinutes(time);
+            });
+
+            // Adjust for midnight crossings
+            const adjustedTimes = adjustTimesForMidnightCrossing(scheduleTimes);
+
+            // Create points with adjusted times, matching stops by stopId
+            schedule.scheduleStops.forEach((scheduleStop, arrayIndex) => {
+                const adjustedMinutes = adjustedTimes[arrayIndex];
+                if (adjustedMinutes !== undefined) {
+                    const isLast = arrayIndex === schedule.scheduleStops.length - 1;
+                    const originalTime = getDisplayTime(scheduleStop, isLast);
+                    
+                    // Find the matching route stop by stopId (primary) or stopOrder (fallback)
+                    const routeStopIndex = routeStops.findIndex(
+                        rs => rs.id === scheduleStop.stopId || rs.stopOrder === scheduleStop.stopOrder
+                    );
+                    
+                    // Skip if s1top not found in route
+                    if (routeStopIndex === -1) {
+                        console.warn(`Schedule stop ${scheduleStop.stopName} (ID: ${scheduleStop.stopId}) not found in route stops`);
+                        return;
+                    }
+1
+                    const matchingRouteStop = routeStops[routeStopIndex];
+                    const stopName = scheduleStop.stopName || matchingRouteStop?.name || `Stop ${routeStopIndex + 1}`;
+                    
                     points.push({
-                        x: xScale(minutes),
-                        y: yScale(stopIndex),
-                        time: time || '',
-                        stopName: stop.stopName || routeStops[stopIndex]?.name || `Stop ${stopIndex + 1}`,
-                        stopIndex,
+                        x: xScale(adjustedMinutes),
+                        y: yScale(routeStopIndex), // Use routeStops array index for Y position
+                        time: originalTime || '',
+                        stopName: stopName,
+                        stopIndex: routeStopIndex, // Use route stop array index
                         scheduleIndex,
                         scheduleName: schedule.name || `Schedule ${scheduleIndex + 1}`,
                     });
                 }
             });
+            
             return points;
         });
     }, [schedules, routeStops, xScale, yScale]);
@@ -200,24 +267,6 @@ export default function TimeStopGraph() {
     }, [minTime, maxTime]);
 
     // Event handlers for pan and zoom
-    const handleWheel = useCallback((e: React.WheelEvent) => {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        const newScale = Math.min(5, Math.max(0.5, transform.scale * delta));
-        
-        // Zoom toward mouse position
-        const rect = svgRef.current?.getBoundingClientRect();
-        if (rect) {
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            
-            const newX = mouseX - (mouseX - transform.x) * (newScale / transform.scale);
-            const newY = mouseY - (mouseY - transform.y) * (newScale / transform.scale);
-            
-            setTransform({ x: newX, y: newY, scale: newScale });
-        }
-    }, [transform]);
-
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (e.button === 0) {
             setIsPanning(true);
@@ -243,6 +292,33 @@ export default function TimeStopGraph() {
         setIsPanning(false);
         setTooltip(prev => ({ ...prev, visible: false }));
     }, []);
+
+    // Wheel event handler
+    const handleWheel = useCallback((e: WheelEvent) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newScale = Math.min(5, Math.max(0.5, transform.scale * delta));
+        
+        const rect = svgRef.current?.getBoundingClientRect();
+        if (rect) {
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const newX = mouseX - (mouseX - transform.x) * (newScale / transform.scale);
+            const newY = mouseY - (mouseY - transform.y) * (newScale / transform.scale);
+            
+            setTransform({ x: newX, y: newY, scale: newScale });
+        }
+    }, [transform]);
+
+    // Add non-passive wheel event listener
+    useEffect(() => {
+        const svg = svgRef.current;
+        if (!svg) return;
+
+        svg.addEventListener('wheel', handleWheel, { passive: false });
+        return () => svg.removeEventListener('wheel', handleWheel);
+    }, [handleWheel]);
 
     // Zoom controls
     const handleZoomIn = () => {
@@ -399,7 +475,6 @@ export default function TimeStopGraph() {
                         ref={svgRef}
                         width="100%"
                         height="100%"
-                        onWheel={handleWheel}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
