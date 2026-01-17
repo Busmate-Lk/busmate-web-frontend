@@ -494,3 +494,313 @@ schedule_workspace:
               description: "Christmas Day"
 `;
 }
+
+// ============================================================================
+// JSON SERIALIZATION (Data -> JSON)
+// ============================================================================
+
+/**
+ * Serialize ScheduleWorkspaceData to JSON format
+ */
+export function serializeSchedulesToJson(data: ScheduleWorkspaceData): string {
+  const jsonData = {
+    schedule_workspace: {
+      // Route information (read-only context)
+      route_id: data.selectedRouteId || '',
+      route_name: data.selectedRouteName || '',
+      route_group_id: data.selectedRouteGroupId || '',
+      route_group_name: data.selectedRouteGroupName || '',
+      
+      // Schedules array
+      schedules: data.schedules.map((schedule, index) => 
+        serializeScheduleToJson(schedule, index)
+      ),
+    }
+  };
+
+  return JSON.stringify(jsonData, null, 2);
+}
+
+/**
+ * Serialize a single schedule to JSON-friendly object
+ */
+function serializeScheduleToJson(schedule: Schedule, index: number): any {
+  const scheduleObj: any = {
+    // Metadata
+    name: schedule.name || `Schedule ${index + 1}`,
+    schedule_type: schedule.scheduleType || 'REGULAR',
+    status: schedule.status || 'PENDING',
+    description: schedule.description || '',
+    
+    // Dates
+    effective_start_date: schedule.effectiveStartDate || '',
+    effective_end_date: schedule.effectiveEndDate || '',
+    
+    // Options
+    generate_trips: schedule.generateTrips ?? false,
+    
+    // Calendar (operating days)
+    calendar: {
+      monday: schedule.calendar.monday,
+      tuesday: schedule.calendar.tuesday,
+      wednesday: schedule.calendar.wednesday,
+      thursday: schedule.calendar.thursday,
+      friday: schedule.calendar.friday,
+      saturday: schedule.calendar.saturday,
+      sunday: schedule.calendar.sunday,
+    },
+    
+    // Schedule stops with timings
+    stops: schedule.scheduleStops.map(stop => ({
+      stop_id: stop.stopId || '',
+      stop_name: stop.stopName || '',
+      stop_order: stop.stopOrder,
+      ...(stop.arrivalTime && { arrival_time: stop.arrivalTime }),
+      ...(stop.departureTime && { departure_time: stop.departureTime }),
+      ...(stop.id && { id: stop.id }),
+    })),
+    
+    // Exceptions
+    exceptions: schedule.exceptions.map(exc => ({
+      exception_date: exc.exceptionDate || '',
+      exception_type: exc.exceptionType || 'REMOVED',
+      ...(exc.description && { description: exc.description }),
+    })),
+  };
+
+  // Add ID if exists (for edit mode)
+  if (schedule.id) {
+    scheduleObj.id = schedule.id;
+  }
+
+  return { schedule: scheduleObj };
+}
+
+// ============================================================================
+// JSON DESERIALIZATION (JSON -> Data)
+// ============================================================================
+
+/**
+ * Parse JSON format to partial ScheduleWorkspaceData
+ * 
+ * Note: This only updates schedules data, not the route selection or available routes.
+ * The route context is maintained from the current workspace state.
+ */
+export function parseSchedulesFromJson(jsonText: string): { 
+  schedules: Schedule[];
+  error?: string;
+} {
+  try {
+    if (!jsonText.trim()) {
+      return { schedules: [], error: 'Empty JSON content' };
+    }
+
+    const parsed = JSON.parse(jsonText);
+    
+    if (!parsed || typeof parsed !== 'object') {
+      return { schedules: [], error: 'Invalid JSON structure' };
+    }
+
+    // Handle schedule_workspace wrapper
+    const workspaceData = parsed.schedule_workspace;
+    if (!workspaceData) {
+      return { schedules: [], error: 'Missing schedule_workspace root element' };
+    }
+
+    // Parse schedules array
+    const schedulesArray = workspaceData.schedules;
+    if (!schedulesArray || !Array.isArray(schedulesArray)) {
+      return { schedules: [], error: 'Missing or invalid schedules array' };
+    }
+
+    const schedules: Schedule[] = schedulesArray.map((wrapper: any, index: number) => {
+      const scheduleData = wrapper.schedule || wrapper;
+      return parseScheduleFromJson(scheduleData, index);
+    });
+
+    return { schedules };
+  } catch (error) {
+    console.error('Failed to parse JSON:', error);
+    return { 
+      schedules: [], 
+      error: error instanceof Error ? error.message : 'Failed to parse JSON' 
+    };
+  }
+}
+
+/**
+ * Parse a single schedule from JSON data
+ */
+function parseScheduleFromJson(data: any, index: number): Schedule {
+  const calendar = parseCalendarFromJson(data.calendar);
+  const scheduleStops = parseScheduleStopsFromJson(data.stops);
+  const exceptions = parseExceptionsFromJson(data.exceptions);
+
+  const schedule: Schedule = {
+    name: String(data.name || `Schedule ${index + 1}`),
+    routeId: String(data.route_id || ''),
+    routeName: data.route_name ? String(data.route_name) : undefined,
+    routeGroupId: data.route_group_id ? String(data.route_group_id) : undefined,
+    routeGroupName: data.route_group_name ? String(data.route_group_name) : undefined,
+    scheduleType: parseScheduleType(data.schedule_type),
+    effectiveStartDate: String(data.effective_start_date || new Date().toISOString().split('T')[0]),
+    effectiveEndDate: data.effective_end_date ? String(data.effective_end_date) : undefined,
+    status: parseScheduleStatus(data.status),
+    description: data.description ? String(data.description) : undefined,
+    generateTrips: data.generate_trips !== false,
+    scheduleStops,
+    calendar,
+    exceptions,
+  };
+
+  // Add ID if exists
+  if (data.id) {
+    schedule.id = String(data.id);
+  }
+
+  return schedule;
+}
+
+/**
+ * Parse calendar from JSON data
+ */
+function parseCalendarFromJson(data: any): ScheduleCalendar {
+  if (!data || typeof data !== 'object') {
+    return createEmptyCalendar();
+  }
+
+  return {
+    monday: Boolean(data.monday),
+    tuesday: Boolean(data.tuesday),
+    wednesday: Boolean(data.wednesday),
+    thursday: Boolean(data.thursday),
+    friday: Boolean(data.friday),
+    saturday: Boolean(data.saturday),
+    sunday: Boolean(data.sunday),
+  };
+}
+
+/**
+ * Parse schedule stops from JSON data
+ */
+function parseScheduleStopsFromJson(data: any): ScheduleStop[] {
+  if (!data || !Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((stopData: any, index: number) => {
+    // Handle both wrapped {stop: ...} and direct format
+    const stop = stopData.stop || stopData;
+    return parseScheduleStopFromJson(stop, index);
+  });
+}
+
+/**
+ * Parse a single schedule stop from JSON data
+ */
+function parseScheduleStopFromJson(data: any, defaultOrder: number): ScheduleStop {
+  const stop: ScheduleStop = {
+    stopId: String(data.stop_id || ''),
+    stopName: data.stop_name ? String(data.stop_name) : undefined,
+    stopOrder: data.stop_order !== undefined ? Number(data.stop_order) : defaultOrder,
+    arrivalTime: data.arrival_time ? String(data.arrival_time) : undefined,
+    departureTime: data.departure_time ? String(data.departure_time) : undefined,
+  };
+
+  // Add ID if exists
+  if (data.id) {
+    stop.id = String(data.id);
+  }
+
+  return stop;
+}
+
+/**
+ * Parse exceptions from JSON data
+ */
+function parseExceptionsFromJson(data: any): ScheduleException[] {
+  if (!data || !Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((excData: any) => {
+    // Handle both wrapped {exception: ...} and direct format
+    const exc = excData.exception || excData;
+    return parseExceptionFromJson(exc);
+  });
+}
+
+/**
+ * Parse a single exception from JSON data
+ */
+function parseExceptionFromJson(data: any): ScheduleException {
+  const exception: ScheduleException = {
+    id: `exc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    exceptionDate: String(data.exception_date || ''),
+    exceptionType: parseExceptionType(data.exception_type),
+    description: data.description ? String(data.description) : undefined,
+  };
+
+  return exception;
+}
+
+// ============================================================================
+// JSON EXAMPLE GENERATOR
+// ============================================================================
+
+/**
+ * Generate example JSON structure for reference
+ */
+export function generateExampleJson(): string {
+  const example = {
+    schedule_workspace: {
+      route_id: "",
+      route_name: "",
+      route_group_id: "",
+      route_group_name: "",
+      schedules: [
+        {
+          schedule: {
+            name: "Morning Express",
+            schedule_type: "REGULAR",
+            status: "PENDING",
+            description: "Weekday morning service",
+            effective_start_date: "2024-01-01",
+            effective_end_date: "",
+            generate_trips: true,
+            calendar: {
+              monday: true,
+              tuesday: true,
+              wednesday: true,
+              thursday: true,
+              friday: true,
+              saturday: false,
+              sunday: false
+            },
+            stops: [
+              {
+                stop_order: 0,
+                arrival_time: "06:00",
+                departure_time: "06:02"
+              },
+              {
+                stop_order: 1,
+                arrival_time: "06:15",
+                departure_time: "06:16"
+              }
+            ],
+            exceptions: [
+              {
+                exception_date: "2024-12-25",
+                exception_type: "REMOVED",
+                description: "Christmas Day"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  };
+
+  return JSON.stringify(example, null, 2);
+}

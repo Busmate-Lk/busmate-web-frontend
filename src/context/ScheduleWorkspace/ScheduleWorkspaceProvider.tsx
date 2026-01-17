@@ -36,6 +36,8 @@ import {
   serializeSchedulesToYaml,
   parseSchedulesFromYaml,
   mergeSchedulesWithRouteContext,
+  serializeSchedulesToJson,
+  parseSchedulesFromJson,
 } from '@/services/scheduleWorkspaceSerializer';
 
 interface ScheduleWorkspaceProviderProps {
@@ -242,6 +244,49 @@ export function ScheduleWorkspaceProvider({ children }: ScheduleWorkspaceProvide
     } catch (error) {
       console.error('Failed to parse YAML:', error);
       return error instanceof Error ? error.message : 'Failed to parse YAML';
+    }
+  }, [data]);
+
+  // ============================================================================
+  // JSON SERIALIZATION (for textual mode)
+  // ============================================================================
+
+  // Get current data as JSON string
+  const getJson = useCallback((): string => {
+    return serializeSchedulesToJson(data);
+  }, [data]);
+
+  // Update data from JSON string - returns error message or null on success
+  const updateFromJson = useCallback((jsonText: string): string | null => {
+    try {
+      const { schedules: parsedSchedules, error } = parseSchedulesFromJson(jsonText);
+      
+      if (error) {
+        return error;
+      }
+
+      if (parsedSchedules.length === 0 && jsonText.trim()) {
+        // If JSON is not empty but no schedules parsed, don't update
+        return null;
+      }
+
+      // Merge parsed schedules with current route context
+      const mergedSchedules = mergeSchedulesWithRouteContext(parsedSchedules, data);
+
+      // Update data with merged schedules
+      setData(prev => ({
+        ...prev,
+        schedules: mergedSchedules,
+        // Adjust active index if needed
+        activeScheduleIndex: mergedSchedules.length > 0 
+          ? Math.min(prev.activeScheduleIndex ?? 0, mergedSchedules.length - 1)
+          : null,
+      }));
+
+      return null;
+    } catch (error) {
+      console.error('Failed to parse JSON:', error);
+      return error instanceof Error ? error.message : 'Failed to parse JSON';
     }
   }, [data]);
 
@@ -629,6 +674,8 @@ export function ScheduleWorkspaceProvider({ children }: ScheduleWorkspaceProvide
     data,
     getYaml,
     updateFromYaml,
+    getJson,
+    updateFromJson,
     setSelectedRoute,
     loadAvailableRoutes,
     activeScheduleIndex: data.activeScheduleIndex,
@@ -660,7 +707,7 @@ export function ScheduleWorkspaceProvider({ children }: ScheduleWorkspaceProvide
     submitAllSchedules,
   }), [
     mode, isLoading, loadError, loadSchedulesForRoute, resetToCreateMode, data,
-    getYaml, updateFromYaml,
+    getYaml, updateFromYaml, getJson, updateFromJson,
     setSelectedRoute, loadAvailableRoutes, setActiveScheduleIndex, setHighlightedScheduleIndex,
     addNewSchedule, removeSchedule, duplicateSchedule, updateActiveSchedule, getActiveSchedule,
     updateScheduleStop, setAllStopTimes, clearAllStopTimes, updateScheduleStopByScheduleIndex,

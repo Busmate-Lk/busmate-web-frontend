@@ -32,6 +32,10 @@ export interface ScheduleWorkspaceContextType {
   getYaml: () => string;
   updateFromYaml: (yamlText: string) => string | null; // Returns error message or null on success
 
+  // JSON serialization (for textual mode)
+  getJson: () => string;
+  updateFromJson: (jsonText: string) => string | null; // Returns error message or null on success
+
   // Route selection (async - loads from API)
   setSelectedRoute: (routeId: string) => Promise<void>;
   loadAvailableRoutes: () => Promise<void>;
@@ -100,6 +104,10 @@ export const ScheduleWorkspaceContext = createContext<ScheduleWorkspaceContextTy
   // YAML serialization defaults
   getYaml: () => '',
   updateFromYaml: () => null,
+
+  // JSON serialization defaults
+  getJson: () => '',
+  updateFromJson: () => null,
 
   // Route selection defaults (async)
   setSelectedRoute: async () => {},
