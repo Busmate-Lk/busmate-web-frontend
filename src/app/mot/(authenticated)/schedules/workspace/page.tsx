@@ -7,10 +7,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import ScheduleFormMode from '@/components/mot/schedules/workspace/form-mode/ScheduleFormMode';
 import ScheduleTextualMode from '@/components/mot/schedules/workspace/textual-mode/ScheduleTextualMode';
+import { ScheduleAIStudio } from '@/components/mot/schedules/workspace/ai-studio';
 import { ScheduleWorkspaceProvider, useScheduleWorkspace } from '@/context/ScheduleWorkspace';
+import { Sparkles } from 'lucide-react';
 
 function ScheduleWorkspaceContent() {
-    const [activeTab, setActiveTab] = useState<'form' | 'textual'>('form');
+    const [activeTab, setActiveTab] = useState<'form' | 'textual' | 'ai-studio'>('form');
     const { mode, validateAllSchedules, submitAllSchedules, resetToCreateMode, data, setSelectedRoute, isLoading } = useScheduleWorkspace();
     const { toast } = useToast();
     const { schedules } = data;
@@ -109,6 +111,16 @@ function ScheduleWorkspaceContent() {
                         >
                             Textual Mode
                         </button>
+                        <button
+                            onClick={() => setActiveTab('ai-studio')}
+                            className={`px-4 py-2 font-medium transition-colors flex items-center gap-1.5 ${activeTab === 'ai-studio'
+                                ? 'text-white bg-purple-700'
+                                : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
+                                }`}
+                        >
+                            <Sparkles className="w-4 h-4" />
+                            AI Studio
+                        </button>
                         <span className="ml-4 text-sm text-gray-500 flex items-center gap-2">
                             Mode: <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                                 mode === 'create' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
@@ -136,6 +148,7 @@ function ScheduleWorkspaceContent() {
                 <div className="p-4">
                     {activeTab === 'form' && <ScheduleFormMode />}
                     {activeTab === 'textual' && <ScheduleTextualMode />}
+                    {activeTab === 'ai-studio' && <ScheduleAIStudio />}
                 </div>
             </div>
         </Layout>
