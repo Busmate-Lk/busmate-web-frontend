@@ -690,7 +690,7 @@ export default function RouteStopsList({ routeIndex }: RouteStopsListProps) {
     };
 
     return (
-        <div className="flex flex-col rounded-lg bg-slate-50 p-3">
+        <div className="flex flex-col border-r-3 border-gray-300 bg-gray-50 px-4 py-4">
             <div className="flex justify-between items-center mb-3">
                 <span className="text-sm font-medium text-slate-700">Route Stops List</span>
                 <div className='flex gap-2'>

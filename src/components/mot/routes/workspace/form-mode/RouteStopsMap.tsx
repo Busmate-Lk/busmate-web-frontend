@@ -231,7 +231,7 @@ export default function RouteStopsMap({ onToggle, collapsed, routeIndex }: Route
   };
 
   return (
-    <div className={`flex flex-col rounded-lg bg-slate-50 ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
+    <div className={`flex flex-col border-r-3 py-2 border-gray-300 ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
       <div className={`flex ${collapsed ? 'flex-col items-center py-3' : 'justify-between items-center px-3 py-2'}`}>
         {collapsed ? (
           <div className="flex flex-col gap-12">

@@ -524,7 +524,7 @@ export default function StopEditor({ onToggle, collapsed }: StopEditorProps) {
     };
 
     return (
-        <div className={`flex flex-col rounded-lg bg-slate-50 ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
+        <div className={`flex flex-col border-r-3 border-gray-300 px-2 py-2 ${collapsed ? 'w-12 overflow-hidden' : ''}`}>
             <div className={`flex ${collapsed ? 'flex-col items-center py-3' : 'justify-between items-center px-3 py-2'}`}>
                 {collapsed ? (
                     <div className="flex flex-col gap-8">

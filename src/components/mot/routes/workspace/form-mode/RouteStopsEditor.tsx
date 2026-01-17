@@ -34,7 +34,7 @@ export default function RouteStopsEditor({ routeIndex }: RouteStopsEditorProps) 
                 <div className="px-5 py-3 bg-slate-50 border-b border-slate-200">
                     <h3 className="text-sm font-semibold text-slate-700">Route Stops Editor</h3>
                 </div>
-                <div className="grid gap-3 p-4" style={{ gridTemplateColumns }}>
+                <div className="grid  " style={{ gridTemplateColumns }}>
                     <StopEditor collapsed={stopEditorCollapsed} onToggle={() => setStopEditorCollapsed(!stopEditorCollapsed)} />
                     <RouteStopsList routeIndex={routeIndex} />
                     <RouteStopsMap collapsed={routeStopsMapCollapsed} onToggle={() => setRouteStopsMapCollapsed(!routeStopsMapCollapsed)} routeIndex={routeIndex} />
