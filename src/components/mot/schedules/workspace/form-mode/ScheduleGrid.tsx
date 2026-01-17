@@ -114,8 +114,8 @@ export default function ScheduleGrid() {
                 </h3>
             </div>
 
-            <div className="overflow-x-auto p-4">
-                <table className="min-w-full bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-slate-200  overflow-hidden">
                     <thead>
                         {/* First header row: Schedule names */}
                         <tr className="bg-slate-100">
@@ -133,7 +133,7 @@ export default function ScheduleGrid() {
                                     className={cn(
                                         'px-2 py-2.5 border-b border-r border-slate-200 text-center text-xs font-semibold cursor-pointer transition-all duration-200',
                                         activeScheduleIndex === scheduleIndex
-                                            ? 'bg-blue-700 text-white'
+                                            ? 'border-3 border-blue-700 text-blue-700'
                                             : 'text-slate-700 hover:bg-slate-200',
                                         highlightedScheduleIndex === scheduleIndex && 'animate-pulse bg-amber-100'
                                     )}

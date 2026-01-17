@@ -126,7 +126,7 @@ export function ScheduleTabs() {
                                 'group relative flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 min-w-[170px]',
                                 'border hover:shadow-sm',
                                 activeScheduleIndex === index
-                                    ? 'bg-blue-700 text-white border-blue-700 shadow-sm'
+                                    ? 'text-blue-700 border-3 border-blue-700 shadow-sm'
                                     : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             )}
                         >
@@ -135,7 +135,7 @@ export function ScheduleTabs() {
                                 className={cn(
                                     'flex items-center gap-1 text-xs font-medium',
                                     activeScheduleIndex === index
-                                        ? 'text-blue-100'
+                                        ? 'text-blue-700'
                                         : 'text-slate-500'
                                 )}
                             >
@@ -161,7 +161,7 @@ export function ScheduleTabs() {
                                     className={cn(
                                         'p-1 rounded transition-colors',
                                         activeScheduleIndex === index
-                                            ? 'text-blue-100 hover:text-white hover:bg-blue-600'
+                                            ? 'text-blue-700 hover:text-blue-900 hover:bg-blue-200'
                                             : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                                     )}
                                 >
@@ -175,7 +175,7 @@ export function ScheduleTabs() {
                                         className={cn(
                                             'p-1 rounded transition-colors',
                                             activeScheduleIndex === index
-                                                ? 'text-blue-100 hover:text-rose-200 hover:bg-blue-600'
+                                                ? 'text-blue-700 hover:text-rose-600 hover:bg-rose-100'
                                                 : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
                                         )}
                                     >
