@@ -113,3 +113,26 @@ export { AI_SERVICE_OPTIONS, getEnvKeyForProvider, isProviderConfigured } from '
 
 // Export Gemini service
 export { GeminiAIService, createGeminiService } from './geminiService';
+
+// ============================================================================
+// ROUTE AI SERVICE EXPORTS
+// ============================================================================
+
+// Export route-specific types
+export type {
+  IRouteAIService,
+  AIRouteGenerationRequest,
+  AIRouteGenerationResponse,
+  RouteGenerationContext,
+} from './routeTypes';
+
+// Export route AI service factory and utilities
+export {
+  createRouteAIService,
+  getAvailableRouteAIServices,
+  isRouteProviderAvailable,
+  getDefaultRouteProvider,
+} from './routeAIService';
+
+// Export route Gemini service
+export { RouteGeminiAIService, createRouteGeminiService } from './routeGeminiService';

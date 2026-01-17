@@ -4,6 +4,7 @@ import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import RouteFormMode from '@/components/mot/routes/workspace/form-mode/RouteFormMode';
 import RouteTextualMode from '@/components/mot/routes/workspace/textual-mode/RouteTextualMode';
+import RouteAIStudio from '@/components/mot/routes/workspace/ai-studio/RouteAIStudio';
 import { Layout } from '@/components/shared/layout';
 import { RouteWorkspaceProvider } from '@/context/RouteWorkspace/RouteWorkspaceProvider';
 import { useRouteWorkspace } from '@/context/RouteWorkspace/useRouteWorkspace';
@@ -11,10 +12,10 @@ import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import RouteSubmissionModal from '@/components/mot/routes/workspace/RouteSubmissionModal';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 
 function RouteWorkspaceContent() {
-    const [activeTab, setActiveTab] = useState<'form' | 'textual'>('form');
+    const [activeTab, setActiveTab] = useState<'form' | 'textual' | 'ai-studio'>('form');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { getRouteGroupData, mode, isLoading, loadError, loadRouteGroup, routeGroupId } = useRouteWorkspace();
     const searchParams = useSearchParams();
@@ -125,6 +126,16 @@ function RouteWorkspaceContent() {
                         >
                             Textual Mode
                         </button>
+                        <button
+                            onClick={() => setActiveTab('ai-studio')}
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center gap-1.5 ${activeTab === 'ai-studio'
+                                ? 'bg-blue-700 text-white shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                }`}
+                        >
+                            <Sparkles className="w-4 h-4" />
+                            AI Studio
+                        </button>
                         {/* Mode indicator badge */}
                         <span className={`px-3 py-1.5 text-xs font-medium rounded-full ml-2 ${mode === 'edit'
                             ? 'bg-amber-100 text-amber-700'
@@ -146,6 +157,7 @@ function RouteWorkspaceContent() {
                 <div className="p-4">
                     {activeTab === 'form' && <RouteFormMode />}
                     {activeTab === 'textual' && <RouteTextualMode />}
+                    {activeTab === 'ai-studio' && <RouteAIStudio />}
                 </div>
             </div>
             <RouteSubmissionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
