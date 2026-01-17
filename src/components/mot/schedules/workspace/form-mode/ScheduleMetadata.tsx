@@ -178,7 +178,7 @@ export default function ScheduleMetadata() {
                     <input
                         type="checkbox"
                         id="generateTrips"
-                        checked={activeSchedule.generateTrips ?? true}
+                        checked={activeSchedule.generateTrips ?? false}
                         onChange={(e) => updateActiveSchedule({ generateTrips: e.target.checked })}
                         className="cursor-pointer"
                     />

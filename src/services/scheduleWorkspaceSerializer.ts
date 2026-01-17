@@ -66,7 +66,7 @@ function serializeSchedule(schedule: Schedule, index: number): any {
     effective_end_date: schedule.effectiveEndDate || '',
     
     // Options
-    generate_trips: schedule.generateTrips ?? true,
+    generate_trips: schedule.generateTrips ?? false,
     
     // Calendar (operating days)
     calendar: serializeCalendar(schedule.calendar),
