@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Layout } from '@/components/shared/layout';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
@@ -9,9 +10,22 @@ import { ScheduleWorkspaceProvider, useScheduleWorkspace } from '@/context/Sched
 
 function ScheduleWorkspaceContent() {
     const [activeTab, setActiveTab] = useState<'form' | 'textual'>('form');
-    const { mode, validateAllSchedules, submitAllSchedules, resetToCreateMode, data } = useScheduleWorkspace();
+    const { mode, validateAllSchedules, submitAllSchedules, resetToCreateMode, data, setSelectedRoute, isLoading } = useScheduleWorkspace();
     const { toast } = useToast();
     const { schedules } = data;
+    const searchParams = useSearchParams();
+
+    // Load route from query param on mount
+    useEffect(() => {
+        const routeIdParam = searchParams.get('routeId');
+        if (routeIdParam && !isLoading && data.availableRoutes.length > 0 && !data.selectedRouteId) {
+            // Check if route exists in available routes
+            const routeExists = data.availableRoutes.some(route => route.id === routeIdParam);
+            if (routeExists) {
+                setSelectedRoute(routeIdParam);
+            }
+        }
+    }, [searchParams, setSelectedRoute, isLoading, data.availableRoutes, data.selectedRouteId]);
 
     const handleSubmit = async () => {
         const validation = validateAllSchedules();

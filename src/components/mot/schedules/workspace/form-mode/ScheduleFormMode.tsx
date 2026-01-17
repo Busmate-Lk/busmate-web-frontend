@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useScheduleWorkspace } from '@/context/ScheduleWorkspace';
 import { ScheduleTabs } from './ScheduleTabs';
 import ScheduleMetadata from './ScheduleMetadata';
@@ -7,6 +8,8 @@ import ScheduleExceptions from './ScheduleExceptions';
 import ScheduleGrid from './ScheduleGrid';
 
 export default function ScheduleFormMode() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const { data, setSelectedRoute, isLoading, activeScheduleIndex } = useScheduleWorkspace();
     const { availableRoutes, selectedRouteId, selectedRouteName, selectedRouteGroupName, schedules } = data;
 
@@ -14,6 +17,15 @@ export default function ScheduleFormMode() {
         const routeId = e.target.value;
         if (routeId) {
             setSelectedRoute(routeId);
+            // Update URL query param
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('routeId', routeId);
+            router.push(`?${params.toString()}`);
+        } else {
+            // Clear query param if route is deselected
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('routeId');
+            router.push(`?${params.toString()}`);
         }
     };
 
@@ -43,22 +55,6 @@ export default function ScheduleFormMode() {
                     ))}
                 </select>
             </div>
-
-            {/* Show selected route info */}
-            {selectedRouteId && (
-                <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
-                    <span className="font-medium">Selected Route: </span>
-                    {selectedRouteName}
-                    {selectedRouteGroupName && (
-                        <span className="ml-2 text-gray-500">
-                            (Group: {selectedRouteGroupName})
-                        </span>
-                    )}
-                    <span className="ml-4 text-blue-600 font-medium">
-                        {schedules.length} Schedule{schedules.length !== 1 ? 's' : ''}
-                    </span>
-                </div>
-            )}
 
             {/* Schedule Tabs - Horizontal list of all schedules */}
             {selectedRouteId && <ScheduleTabs />}
