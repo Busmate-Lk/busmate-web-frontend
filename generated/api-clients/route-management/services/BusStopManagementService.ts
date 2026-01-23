@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { PageStopResponse } from '../models/PageStopResponse';
+import type { RouteGroupStopDetailResponse } from '../models/RouteGroupStopDetailResponse';
 import type { RouteStopDetailResponse } from '../models/RouteStopDetailResponse';
 import type { ScheduleStopDetailResponse } from '../models/ScheduleStopDetailResponse';
 import type { StopBulkUpdateResponse } from '../models/StopBulkUpdateResponse';
@@ -272,6 +273,28 @@ export class BusStopManagementService {
                 401: `Unauthorized`,
                 413: `File too large`,
                 415: `Unsupported file type`,
+            },
+        });
+    }
+    /**
+     * Get stops for all routes in a route group
+     * Retrieve all stops for all routes within a specific route group, ordered by route name and stop order. Each stop includes both stop details and route information to distinguish stops across different routes.
+     * @param routeGroupId Route Group ID
+     * @returns RouteGroupStopDetailResponse Route group stops retrieved successfully
+     * @throws ApiError
+     */
+    public static getStopsByRouteGroup(
+        routeGroupId: string,
+    ): CancelablePromise<Array<RouteGroupStopDetailResponse>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/stops/route-group/{routeGroupId}',
+            path: {
+                'routeGroupId': routeGroupId,
+            },
+            errors: {
+                400: `Invalid route group ID format`,
+                404: `Route group not found`,
             },
         });
     }

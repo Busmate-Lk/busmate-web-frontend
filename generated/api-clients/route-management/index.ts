@@ -86,6 +86,7 @@ export type { RouteFilterOptionsResponse } from './models/RouteFilterOptionsResp
 export type { RouteGroupOption } from './models/RouteGroupOption';
 export type { RouteGroupRequest } from './models/RouteGroupRequest';
 export type { RouteGroupResponse } from './models/RouteGroupResponse';
+export type { RouteGroupStopDetailResponse } from './models/RouteGroupStopDetailResponse';
 export type { RouteOption } from './models/RouteOption';
 export type { RoutePerformance } from './models/RoutePerformance';
 export type { RouteRequest } from './models/RouteRequest';
